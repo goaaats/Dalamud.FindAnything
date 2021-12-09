@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
@@ -10,6 +11,8 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using Dalamud.Data;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Logging;
@@ -17,6 +20,7 @@ using Dalamud.Utility;
 using ImGuiNET;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
+using TeleporterPlugin.Managers;
 
 namespace SamplePlugin
 {
@@ -26,12 +30,14 @@ namespace SamplePlugin
 
         private const string commandName = "/pmycommand";
 
-        private DalamudPluginInterface PluginInterface { get; init; }
-        private CommandManager CommandManager { get; init; }
-        private Configuration Configuration { get; init; }
-        private Framework Framework { get; init; }
-        private DataManager Data { get; init; }
-        private KeyState Keys { get; init; }
+        public static DalamudPluginInterface PluginInterface { get; private set; }
+        public static CommandManager CommandManager { get; private set; }
+        public static Configuration Configuration { get; private set; }
+        public static Framework Framework { get; private set; }
+        public static DataManager Data { get; private set; }
+        public static KeyState Keys { get; private set; }
+        public static ClientState ClientState { get; private set; }
+        public static Dalamud.Game.ClientState.Conditions.Condition Condition { get; private set; }
 
         private bool finderOpen = false;
         private string searchTerm = string.Empty;
@@ -41,47 +47,77 @@ namespace SamplePlugin
 
         private int framesSinceLastKbChange = 0;
 
-        private class SearchResult
+        private interface ISearchResult
         {
-            public enum ResultKind
-            {
-                ContentFinderCondition,
-            }
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
 
+            public void Selected();
+        }
+
+        private static void OpenWikiPage(string input)
+        {
+            var name = input.Replace(' ', '_');
+            Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{name}?useskin=Vector");
+        }
+
+        private class ContentFinderConditionSearchResult : ISearchResult
+        {
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public uint DataKey { get; set; }
-            public ResultKind Kind { get; set; }
+
+            public void Selected()
+            {
+                var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(DataKey);
+                OpenWikiPage(row!.Name.ToDalamudString().TextValue);
+            }
         }
 
-        private SearchResult[]? results;
+        private class AetheryteSearchResult : ISearchResult
+        {
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public uint DataKey { get; set; }
+
+            public void Selected()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private ISearchResult[]? results;
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
             [RequiredVersion("1.0")] CommandManager commandManager,
             Framework framework,
             DataManager data,
-            KeyState keys)
+            KeyState keys,
+            ClientState state,
+            Dalamud.Game.ClientState.Conditions.Condition cond)
         {
-            this.PluginInterface = pluginInterface;
-            this.CommandManager = commandManager;
-            this.Framework = framework;
-            this.Data = data;
-            this.Keys = keys;
+            PluginInterface = pluginInterface;
+            CommandManager = commandManager;
+            Framework = framework;
+            Data = data;
+            Keys = keys;
+            ClientState = state;
+            Condition = cond;
 
-            this.Configuration = this.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Configuration.Initialize(this.PluginInterface);
+            Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Configuration.Initialize(PluginInterface);
 
-            this.CommandManager.AddHandler(commandName, new CommandInfo(OnCommand)
+            CommandManager.AddHandler(commandName, new CommandInfo(OnCommand)
             {
                 HelpMessage = "A useful message to display in /xlhelp"
             });
 
-            this.PluginInterface.UiBuilder.Draw += DrawUI;
-            this.Framework.Update += FrameworkOnUpdate;
+            PluginInterface.UiBuilder.Draw += DrawUI;
+            Framework.Update += FrameworkOnUpdate;
 
-            this.PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
-            this.PluginInterface.UiBuilder.DisableUserUiHide = true;
+            PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
+            PluginInterface.UiBuilder.DisableUserUiHide = true;
 
             SetupData();
         }
@@ -90,8 +126,7 @@ namespace SamplePlugin
         {
             if (Keys[VirtualKey.CONTROL] && Keys[VirtualKey.T])
             {
-                finderOpen = true;
-                PluginLog.Information("FindAnything opened!");
+                OpenFinder();
             }
             else if (Keys[VirtualKey.ESCAPE])
             {
@@ -104,6 +139,8 @@ namespace SamplePlugin
             var ic = Data.GetExcelSheet<ContentFinderCondition>();
             instanceContentSearchData = ic.ToDictionary(x => x.RowId, x => x.Name.ToDalamudString().TextValue.ToLower());
             PluginLog.Information($"{instanceContentSearchData.Count} CFC");
+
+            AetheryteManager.Load();
         }
 
         private void UpdateSearchResults()
@@ -116,22 +153,42 @@ namespace SamplePlugin
 
             PluginLog.Information("Searching: " + searchTerm);
 
-            var cResults = new List<SearchResult>();
+            var cResults = new List<ISearchResult>();
 
             foreach (var cfc in instanceContentSearchData)
             {
                 if (cfc.Value.Contains(searchTerm.ToLower()))
                 {
-                    cResults.Add(new SearchResult
+                    cResults.Add(new ContentFinderConditionSearchResult()
                     {
                         Name = cfc.Value,
-                        DataKey = cfc.Key,
-                        Kind = SearchResult.ResultKind.ContentFinderCondition
+                        DataKey = cfc.Key
                     });
                 }
 
                 if (cResults.Count > MAX_TO_SEARCH)
                     break;
+            }
+
+            if (!(Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
+                  Condition[ConditionFlag.BoundByDuty95]))
+            {
+                foreach (var aetheryte in AetheryteManager.AvailableAetherytes)
+                {
+                    var aetheryteName = AetheryteManager.AetheryteNames[aetheryte.AetheryteId];
+                    var terriName = Data.GetExcelSheet<TerritoryType>()!.GetRow(aetheryte.TerritoryId)!.PlaceName.Value!.Name!.ToDalamudString().TextValue;
+                    if (aetheryteName.ToLower().Contains(searchTerm.ToLower()) || terriName.ToLower().Contains(searchTerm.ToLower()))
+                    {
+                        cResults.Add(new AetheryteSearchResult
+                        {
+                            Name = aetheryteName,
+                            DataKey = aetheryte.AetheryteId
+                        });
+                    }
+
+                    if (cResults.Count > MAX_TO_SEARCH)
+                        break;
+                }
             }
 
             results = cResults.ToArray();
@@ -140,15 +197,22 @@ namespace SamplePlugin
 
         public void Dispose()
         {
-            this.PluginInterface.UiBuilder.Draw -= DrawUI;
-            this.Framework.Update -= FrameworkOnUpdate;
-            this.CommandManager.RemoveHandler(commandName);
+            PluginInterface.UiBuilder.Draw -= DrawUI;
+            Framework.Update -= FrameworkOnUpdate;
+            CommandManager.RemoveHandler(commandName);
         }
 
         private void OnCommand(string command, string args)
         {
             // in response to the slash command, just display our main ui
             //this.PluginUi.Visible = true;
+        }
+
+        private void OpenFinder()
+        {
+            AetheryteManager.UpdateAvailableAetherytes();
+            finderOpen = true;
+            PluginLog.Information("FindAnything opened!");
         }
 
         private void CloseFinder()
@@ -210,27 +274,66 @@ namespace SamplePlugin
                 CloseFinder();
             }
 
+            var textSize = ImGui.CalcTextSize("poop");
+
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 4));
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 4));
+
             if (results != null)
             {
-                if (ImGui.IsKeyDown((int) VirtualKey.DOWN) && selectedIndex != results.Length - 1 && framesSinceLastKbChange > 10)
+                if (ImGui.BeginChild("###findAnythingScroller"))
                 {
-                    selectedIndex++;
-                    framesSinceLastKbChange = 0;
-                }
-                else if ((ImGui.IsKeyDown((int) VirtualKey.UP) && selectedIndex != 0) && framesSinceLastKbChange > 10)
-                {
-                    selectedIndex--;
-                    framesSinceLastKbChange = 0;
+                    var childSize = ImGui.GetWindowSize();
+
+                    if (ImGui.IsKeyDown((int) VirtualKey.DOWN) && selectedIndex != results.Length - 1 && framesSinceLastKbChange > 10)
+                    {
+                        selectedIndex++;
+                        framesSinceLastKbChange = 0;
+                    }
+                    else if ((ImGui.IsKeyDown((int) VirtualKey.UP) && selectedIndex != 0) && framesSinceLastKbChange > 10)
+                    {
+                        selectedIndex--;
+                        framesSinceLastKbChange = 0;
+                    } 
+                    else if (ImGui.IsKeyDown((int) VirtualKey.PRIOR) && framesSinceLastKbChange > 10)
+                    {
+                        selectedIndex = Math.Max(0, selectedIndex - MAX_ONE_PAGE);
+                        framesSinceLastKbChange = 0;
+                    }
+                    else if (ImGui.IsKeyDown((int) VirtualKey.NEXT) && framesSinceLastKbChange > 10)
+                    {
+                        selectedIndex = Math.Min(results.Length, selectedIndex + MAX_ONE_PAGE);
+                        framesSinceLastKbChange = 0;
+                    }
+
+                    framesSinceLastKbChange++;
+
+                    for (var i = 0; i < results.Length; i++)
+                    {
+                        var result = results[i];
+                        ImGui.Selectable($"{result.Name} ({result.GetType().Name})", i == selectedIndex, ImGuiSelectableFlags.None, new Vector2(childSize.X, textSize.Y));
+                    }
+
+                    if (selectedIndex > 1)
+                    {
+                        ImGui.SetScrollY((selectedIndex - 1) * (textSize.Y + 4));
+                    }
+                    else
+                    {
+                        ImGui.SetScrollY(0);
+                    }
+
+                    if (ImGui.IsKeyDown((int) VirtualKey.RETURN))
+                    {
+                        results[selectedIndex].Selected();
+                        CloseFinder();
+                    }
                 }
 
-                framesSinceLastKbChange++;
-
-                for (var i = 0; i < results.Length; i++)
-                {
-                    var result = results[i];
-                    ImGui.Selectable(result.Name, i == selectedIndex);
-                }
+                ImGui.EndChild();
             }
+
+            ImGui.PopStyleVar(2);
 
             ImGui.End();
         }
