@@ -16,7 +16,9 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Logging;
+using Dalamud.Plugin.Ipc;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
@@ -78,15 +80,17 @@ namespace SamplePlugin
         {
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
-            public uint DataKey { get; set; }
+            public TeleportInfo Data { get; set; }
 
             public void Selected()
             {
-                throw new NotImplementedException();
+                PluginLog.Information(TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex).ToString());
             }
         }
 
         private ISearchResult[]? results;
+
+        public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
@@ -118,6 +122,8 @@ namespace SamplePlugin
 
             PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
             PluginInterface.UiBuilder.DisableUserUiHide = true;
+
+            TeleportIpc = PluginInterface.GetIpcSubscriber<uint, byte, bool>("Teleport");
 
             SetupData();
         }
@@ -182,7 +188,7 @@ namespace SamplePlugin
                         cResults.Add(new AetheryteSearchResult
                         {
                             Name = aetheryteName,
-                            DataKey = aetheryte.AetheryteId
+                            Data = aetheryte
                         });
                     }
 
