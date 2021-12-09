@@ -14,9 +14,12 @@ using Dalamud.Data;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
+using Dalamud.Game.Gui;
+using Dalamud.Game.Gui.Toast;
 using Dalamud.Interface;
 using Dalamud.Logging;
 using Dalamud.Plugin.Ipc;
+using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
@@ -39,6 +42,8 @@ namespace SamplePlugin
         public static DataManager Data { get; private set; }
         public static KeyState Keys { get; private set; }
         public static ClientState ClientState { get; private set; }
+        public static ChatGui ChatGui { get; private set; }
+        public static ToastGui ToastGui { get; private set; }
         public static Dalamud.Game.ClientState.Conditions.Condition Condition { get; private set; }
 
         private bool finderOpen = false;
@@ -84,7 +89,27 @@ namespace SamplePlugin
 
             public void Selected()
             {
-                PluginLog.Information(TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex).ToString());
+                var didTeleport = false;
+                try
+                {
+                    didTeleport = TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex);
+                }
+                catch (IpcNotReadyError)
+                {
+                    PluginLog.Error("Teleport IPC not found.");
+                    didTeleport = false;
+                }
+
+                if (!didTeleport)
+                {
+                    var error = "To use Aetherytes within Find Anything, you must install the \"Teleporter\" plugin.";
+                    ChatGui.PrintError(error);
+                    ToastGui.ShowError(error);
+                }
+                else
+                {
+                    ChatGui.Print($"Teleporting to {Name}...");
+                }
             }
         }
 
@@ -99,7 +124,9 @@ namespace SamplePlugin
             DataManager data,
             KeyState keys,
             ClientState state,
-            Dalamud.Game.ClientState.Conditions.Condition cond)
+            Dalamud.Game.ClientState.Conditions.Condition cond,
+            ChatGui chatGui,
+            ToastGui toastGui)
         {
             PluginInterface = pluginInterface;
             CommandManager = commandManager;
@@ -108,6 +135,8 @@ namespace SamplePlugin
             Keys = keys;
             ClientState = state;
             Condition = cond;
+            ChatGui = chatGui;
+            ToastGui = toastGui;
 
             Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Configuration.Initialize(PluginInterface);
