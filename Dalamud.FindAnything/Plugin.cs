@@ -113,6 +113,18 @@ namespace SamplePlugin
             }
         }
 
+        private class MainCommandSearchResult : ISearchResult
+        {
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public uint CommandId { get; set; }
+
+            public unsafe void Selected()
+            {
+                FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->ExecuteMainCommand(CommandId);
+            }
+        }
+
         private ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
@@ -206,7 +218,7 @@ namespace SamplePlugin
             }
 
             if (!(Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
-                  Condition[ConditionFlag.BoundByDuty95]))
+                  Condition[ConditionFlag.BoundByDuty95]) || Condition[ConditionFlag.Occupied] || Condition[ConditionFlag.OccupiedInCutSceneEvent])
             {
                 foreach (var aetheryte in AetheryteManager.AvailableAetherytes)
                 {
@@ -223,6 +235,18 @@ namespace SamplePlugin
 
                     if (cResults.Count > MAX_TO_SEARCH)
                         break;
+                }
+            }
+
+            foreach (var mainCommand in Data.GetExcelSheet<MainCommand>())
+            {
+                if (mainCommand.Name.ToDalamudString().TextValue.ToLower().Contains(searchTerm))
+                {
+                    cResults.Add(new MainCommandSearchResult
+                    {
+                        CommandId = mainCommand.RowId,
+                        Name = mainCommand.Name.ToDalamudString().TextValue
+                    });
                 }
             }
 
