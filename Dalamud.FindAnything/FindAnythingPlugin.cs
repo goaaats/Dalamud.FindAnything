@@ -198,7 +198,7 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                var message = $"/gaction {Name}";
+                var message = $"/gaction \"{Name}\"";
                 xivCommon.Functions.Chat.SendMessage(message);
             }
         }
