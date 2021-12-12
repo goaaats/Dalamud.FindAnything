@@ -494,7 +494,7 @@ namespace Dalamud.FindAnything
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 4));
             ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 4));
 
-            if (results != null)
+            if (results != null && results.Length > 0)
             {
                 if (ImGui.BeginChild("###findAnythingScroller"))
                 {
