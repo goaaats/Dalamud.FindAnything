@@ -163,6 +163,9 @@ namespace Dalamud.FindAnything
                             case WikiSearchResult.DataCategory.Quest:
                                 Util.OpenLink($"https://garlandtools.org/db/#quest/{wikiSiteChoicerResult.DataKey}");
                                 break;
+                            case WikiSearchResult.DataCategory.Item:
+                                Util.OpenLink($"https://garlandtools.org/db/#item/{wikiSiteChoicerResult.DataKey}");
+                                break;
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
