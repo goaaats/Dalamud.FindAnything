@@ -25,12 +25,12 @@ public class SettingsWindow : Window
 
     public override void OnOpen()
     {
-        flags = (uint) plugin.Configuration.ToSearch;
-        openMode = plugin.Configuration.Open;
-        shiftShiftKey = plugin.Configuration.ShiftShiftKey;
-        shiftShiftDelay = (int) plugin.Configuration.ShiftShiftDelay;
-        comboKey = plugin.Configuration.ComboKey;
-        comboModifierKey = plugin.Configuration.ComboModifier;
+        flags = (uint) FindAnythingPlugin.Configuration.ToSearch;
+        openMode = FindAnythingPlugin.Configuration.Open;
+        shiftShiftKey = FindAnythingPlugin.Configuration.ShiftShiftKey;
+        shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
+        comboKey = FindAnythingPlugin.Configuration.ComboKey;
+        comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         base.OnOpen();
     }
 
@@ -77,16 +77,16 @@ public class SettingsWindow : Window
 
         if (ImGui.Button("Save"))
         {
-            plugin.Configuration.ToSearch = (Configuration.SearchSetting) this.flags;
+            FindAnythingPlugin.Configuration.ToSearch = (Configuration.SearchSetting) this.flags;
 
-            plugin.Configuration.Open = openMode;
-            plugin.Configuration.ShiftShiftKey = shiftShiftKey;
-            plugin.Configuration.ShiftShiftDelay = (uint) shiftShiftDelay;
+            FindAnythingPlugin.Configuration.Open = openMode;
+            FindAnythingPlugin.Configuration.ShiftShiftKey = shiftShiftKey;
+            FindAnythingPlugin.Configuration.ShiftShiftDelay = (uint) shiftShiftDelay;
 
-            plugin.Configuration.ComboKey = comboKey;
-            plugin.Configuration.ComboModifier = comboModifierKey;
+            FindAnythingPlugin.Configuration.ComboKey = comboKey;
+            FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;
 
-            plugin.Configuration.Save();
+            FindAnythingPlugin.Configuration.Save();
             IsOpen = false;
         }
 

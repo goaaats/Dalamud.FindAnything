@@ -42,7 +42,7 @@ namespace Dalamud.FindAnything
 
         [PluginService] public static DalamudPluginInterface PluginInterface { get; private set; }
         [PluginService] public static CommandManager CommandManager { get; private set; }
-        public Configuration Configuration { get; set; }
+        public static Configuration Configuration { get; set; }
         [PluginService] public static Framework Framework { get; private set; }
         [PluginService] public static DataManager Data { get; private set; }
         [PluginService] public static KeyState Keys { get; private set; }
@@ -53,12 +53,12 @@ namespace Dalamud.FindAnything
         [PluginService] public static AetheryteList Aetheryes { get; private set; }
 
         public static TextureCache TexCache { get; private set; }
-        private SearchDatabase SearchDatabase { get; init; }
-        private AetheryteManager AetheryteManager { get; init; }
+        private static SearchDatabase SearchDatabase { get; set; }
+        private static AetheryteManager AetheryteManager { get; set; }
 
         private bool finderOpen = false;
         private static string searchTerm = string.Empty;
-        private int selectedIndex = 0;
+        private static int selectedIndex = 0;
 
         private int framesSinceLastKbChange = 0;
         private int framesSinceButtonPress = 0;
@@ -76,36 +76,97 @@ namespace Dalamud.FindAnything
         {
             Top,
             Wiki,
+            WikiSiteChoicer,
         }
 
         private static SearchMode searchMode = SearchMode.Top;
+        private static WikiSearchResult? wikiSiteChoicerResult;
 
         private interface ISearchResult
         {
             public string CatName { get; }
             public string Name { get; }
             public TextureWrap? Icon { get; }
+            public bool CloseFinder { get; }
 
             public void Selected();
         }
 
         private class WikiSearchResult : ISearchResult
         {
-            public string CatName => "Duties";
+            public string CatName { get; set; }
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public uint DataKey { get; set; }
+            
+            public enum DataCategory
+            {
+                Instance,
+                Quest,
+            }
+            
+            public DataCategory DataCat { get; set; }
 
+            public bool CloseFinder => false;
+            
+            public void Selected()
+            {
+                wikiSiteChoicerResult = this;
+                SwitchSearchMode(SearchMode.WikiSiteChoicer);
+            }
+        }
+
+        private class WikiSiteChoicerResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+            public string Name => $"Open on {Site}";
+            public TextureWrap? Icon => TexCache.WikiIcon;
+
+            public enum SiteChoice
+            {
+                GamerEscape,
+                GarlandTools,
+            }
+            
+            public SiteChoice Site { get; set; }
+            
+            public bool CloseFinder => true;
+            
             private static void OpenWikiPage(string input)
             {
                 var name = input.Replace(' ', '_');
+                name = name.Replace('–', '-');
                 Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{name}?useskin=Vector");
             }
-
+            
             public void Selected()
             {
-                var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(DataKey);
-                OpenWikiPage(row!.Name.ToDalamudString().TextValue);
+                if (wikiSiteChoicerResult == null)
+                    throw new Exception("wikiSiteChoicerResult was null!");
+
+                switch (Site)
+                {
+                    case SiteChoice.GamerEscape:
+                    {
+                        OpenWikiPage(wikiSiteChoicerResult.Name);
+                    }
+                        break;
+                    case SiteChoice.GarlandTools:
+                    {
+                        switch (wikiSiteChoicerResult.DataCat)
+                        {
+                            case WikiSearchResult.DataCategory.Instance:
+                                Util.OpenLink($"https://garlandtools.org/db/#instance/{wikiSiteChoicerResult.DataKey}");
+                                break;
+                            case WikiSearchResult.DataCategory.Quest:
+                                Util.OpenLink($"https://garlandtools.org/db/#quest/{wikiSiteChoicerResult.DataKey}");
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    }
+                        break;
+                }
             }
         }
 
@@ -116,6 +177,8 @@ namespace Dalamud.FindAnything
             public TextureWrap? Icon => TexCache.WikiIcon;
 
             public string Query { get; set; }
+            
+            public bool CloseFinder => true;
 
             public void Selected()
             {
@@ -129,6 +192,8 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public AetheryteEntry Data { get; set; }
+            
+            public bool CloseFinder => true;
 
             public void Selected()
             {
@@ -162,6 +227,8 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public uint CommandId { get; set; }
+            
+            public bool CloseFinder => true;
 
             public unsafe void Selected()
             {
@@ -197,6 +264,8 @@ namespace Dalamud.FindAnything
             }
 
             public InternalSearchResultKind Kind { get; set; }
+            
+            public bool CloseFinder => Kind != InternalSearchResultKind.WikiMode;
 
             public static string GetNameForKind(InternalSearchResultKind kind) => kind switch {
                 InternalSearchResultKind.Settings => "Wotsit Settings",
@@ -220,7 +289,7 @@ namespace Dalamud.FindAnything
                         CommandManager.ProcessCommand("/xlsettings");
                         break;
                     case InternalSearchResultKind.WikiMode:
-                        searchMode = SearchMode.Wiki;
+                        SwitchSearchMode(SearchMode.Wiki);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -228,11 +297,22 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private static void SwitchSearchMode(SearchMode newMode)
+        {
+            searchMode = newMode;
+            searchTerm = string.Empty;
+            selectedIndex = 0;
+            UpdateSearchResults();
+            PluginLog.Information($"Now in mode: {newMode}");
+        }
+
         public class GeneralActionSearchResult : ISearchResult
         {
             public string CatName => "General Actions";
             public string Name { get; set;  }
             public TextureWrap? Icon { get; set; }
+            
+            public bool CloseFinder => true;
 
             public void Selected()
             {
@@ -241,7 +321,7 @@ namespace Dalamud.FindAnything
             }
         }
 
-        private ISearchResult[]? results;
+        private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
 
@@ -334,9 +414,9 @@ namespace Dalamud.FindAnything
             }
         }
 
-        private void UpdateSearchResults()
+        private static void UpdateSearchResults()
         {
-            if (searchTerm.IsNullOrEmpty())
+            if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer)
             {
                 results = null;
                 return;
@@ -384,12 +464,17 @@ namespace Dalamud.FindAnything
                                 searchable = "logout";
 
                             if (searchable.Contains(term))
+                            {
                                 cResults.Add(new MainCommandSearchResult
                                 {
                                     CommandId = mainCommand.Key,
                                     Name = mainCommand.Value.Display,
                                     Icon = TexCache.MainCommandIcons[mainCommand.Key]
                                 });
+                                
+                                if (cResults.Count > MAX_TO_SEARCH)
+                                    break;
+                            }
                         }
                     }
 
@@ -411,37 +496,82 @@ namespace Dalamud.FindAnything
                     }
 
                     foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
+                    {
                         if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))
+                        {
                             cResults.Add(new InternalSearchResult
                             {
                                 Kind = kind
                             });
+                        }
+                    }
                 }
                     break;
 
                 case SearchMode.Wiki:
                 {
-                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.Duty))
+                    foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                     {
-                        foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
-                        {
-                            if (cfc.Value.Searchable.Contains(term))
-                                cResults.Add(new WikiSearchResult
-                                {
-                                    Name = cfc.Value.Display,
-                                    DataKey = cfc.Key,
-                                    Icon = TexCache.WikiIcon
-                                });
+                        if (cfc.Value.Searchable.Contains(term))
+                            cResults.Add(new WikiSearchResult
+                            {
+                                Name = cfc.Value.Display,
+                                DataKey = cfc.Key,
+                                Icon = TexCache.WikiIcon,
+                                CatName = "Duty",
+                                DataCat = WikiSearchResult.DataCategory.Instance,
+                            });
 
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
+                        if (cResults.Count > MAX_TO_SEARCH)
+                            break;
+                    }
+                    
+                    foreach (var cfc in SearchDatabase.GetAll<Quest>())
+                    {
+                        if (cfc.Value.Searchable.Contains(term))
+                            cResults.Add(new WikiSearchResult
+                            {
+                                Name = cfc.Value.Display,
+                                DataKey = cfc.Key,
+                                Icon = TexCache.WikiIcon,
+                                CatName = "Quest",
+                                DataCat = WikiSearchResult.DataCategory.Quest,
+                            });
+
+                        if (cResults.Count > MAX_TO_SEARCH)
+                            break;
+                    }
+
+                    var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
+                        .FirstOrDefault(x => x.TerritoryType.Row == ClientState.TerritoryType);
+                    if ("here".Contains(term) && terriContent != null)
+                    {
+                        cResults.Add(new WikiSearchResult
+                        {
+                            Name = terriContent.Name,
+                            DataKey = terriContent.RowId,
+                            Icon = TexCache.WikiIcon,
+                            CatName = "Current Duty",
+                            DataCat = WikiSearchResult.DataCategory.Instance,
+                        });
                     }
 
                     cResults.Add(new SearchWikiSearchResult
                     {
                         Query = searchTerm
                     });
+                }
+                    break;
+
+                case SearchMode.WikiSiteChoicer:
+                {
+                    foreach (var kind in Enum.GetValues<WikiSiteChoicerResult.SiteChoice>())
+                    {
+                        cResults.Add(new WikiSiteChoicerResult
+                        {
+                            Site = kind
+                        });
+                    }
                 }
                     break;
                 default:
@@ -458,6 +588,7 @@ namespace Dalamud.FindAnything
             PluginInterface.UiBuilder.Draw -= DrawUI;
             Framework.Update -= FrameworkOnUpdate;
             CommandManager.RemoveHandler(commandName);
+            xivCommon.Dispose();
 
             TexCache.Dispose();
         }
@@ -469,6 +600,11 @@ namespace Dalamud.FindAnything
 
         private void OpenFinder()
         {
+#if !DEBUG
+            if (ClientState.LocalPlayer == null)
+                return;
+#endif
+            
             finderOpen = true;
         }
 
@@ -478,6 +614,7 @@ namespace Dalamud.FindAnything
             searchTerm = string.Empty;
             selectedIndex = 0;
             searchMode = SearchMode.Top;
+            wikiSiteChoicerResult = null;
             UpdateSearchResults();
         }
 
@@ -515,6 +652,7 @@ namespace Dalamud.FindAnything
             {
                 SearchMode.Top => "Type to search...",
                 SearchMode.Wiki => "Search in wikis...",
+                SearchMode.WikiSiteChoicer => "Choose site...",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -635,10 +773,10 @@ namespace Dalamud.FindAnything
                         ImGui.SetScrollY(0);
                     }
 
-                    if (ImGui.IsKeyDown((int) VirtualKey.RETURN))
+                    if (ImGui.IsKeyPressed((int) VirtualKey.RETURN))
                     {
+                        closeFinder = results[selectedIndex].CloseFinder;
                         results[selectedIndex].Selected();
-                        closeFinder = true;
                     }
                 }
 

@@ -24,10 +24,13 @@ namespace Dalamud.FindAnything
         {
             var data = new Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>>();
             InitData<ContentFinderCondition>(ref data, (r) => r.Name);
+            InitData<ContentRoulette>(ref data, (r) => r.Name);
             InitData<TerritoryType>(ref data, (r) => r.PlaceName?.Value?.Name);
             InitData<Aetheryte>(ref data, (r) => r.PlaceName?.Value?.Name);
             InitData<MainCommand>(ref data, (r) => r.Name);
             InitData<GeneralAction>(ref data, (r) => r.Name);
+            InitData<Emote>(ref data, (r) => r.Name);
+            InitData<Quest>(ref data, (r) => r.Name);
 
             SearchData = data;
         }
