@@ -55,6 +55,7 @@ namespace Dalamud.FindAnything
         public static TextureCache TexCache { get; private set; }
         private static SearchDatabase SearchDatabase { get; set; }
         private static AetheryteManager AetheryteManager { get; set; }
+        private static DalamudReflector DalamudReflector { get; set; }
 
         private bool finderOpen = false;
         private static string searchTerm = string.Empty;
@@ -332,6 +333,20 @@ namespace Dalamud.FindAnything
                 xivCommon.Functions.Chat.SendMessage(message);
             }
         }
+        
+        private class PluginSettingsSearchResult : ISearchResult
+        {
+            public string CatName => "Other Plugins";
+            public string Name { get; set; }
+            public TextureWrap? Icon => TexCache.PluginInstallerIcon;
+            public bool CloseFinder => true;
+            public DalamudReflector.PluginEntry Plugin { get; set; }
+            
+            public void Selected()
+            {
+                Plugin.OpenConfigUi();
+            }
+        }
 
         private static ISearchResult[]? results;
 
@@ -370,6 +385,7 @@ namespace Dalamud.FindAnything
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
             xivCommon = new XivCommonBase();
+            DalamudReflector = DalamudReflector.Load();
         }
 
         private void FrameworkOnUpdate(Framework framework)
@@ -442,7 +458,9 @@ namespace Dalamud.FindAnything
             {
                 case SearchMode.Top:
                 {
-                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.Aetheryte))
+                    DalamudReflector.RefreshPlugins();
+                    
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte))
                     {
                         if (!(Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
                               Condition[ConditionFlag.BoundByDuty95]) || Condition[ConditionFlag.Occupied] ||
@@ -467,7 +485,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.MainCommand))
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.MainCommand))
                     {
                         foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
                         {
@@ -490,7 +508,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.GeneralAction))
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction))
                     {
                         foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
                         {
@@ -504,6 +522,21 @@ namespace Dalamud.FindAnything
                                     Name = generalAction.Value.Display,
                                     Icon = TexCache.GeneralActionIcons[generalAction.Key]
                                 });
+                        }
+                    }
+
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.PluginSettings))
+                    {
+                        foreach (var plugin in DalamudReflector.OtherPlugins)
+                        {
+                            if (plugin.Name.ToLower().Contains(term))
+                            {
+                                cResults.Add(new PluginSettingsSearchResult
+                                {
+                                    Name = plugin.Name,
+                                    Plugin = plugin,
+                                });
+                            }
                         }
                     }
 

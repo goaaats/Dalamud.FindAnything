@@ -25,7 +25,7 @@ public class SettingsWindow : Window
 
     public override void OnOpen()
     {
-        flags = (uint) FindAnythingPlugin.Configuration.ToSearch;
+        flags = (uint) FindAnythingPlugin.Configuration.ToSearchV2;
         openMode = FindAnythingPlugin.Configuration.Open;
         shiftShiftKey = FindAnythingPlugin.Configuration.ShiftShiftKey;
         shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
@@ -41,6 +41,7 @@ public class SettingsWindow : Window
         ImGui.CheckboxFlags("Search in Commands", ref this.flags, (uint) Configuration.SearchSetting.MainCommand);
         ImGui.CheckboxFlags("Search in Aetherytes", ref this.flags, (uint) Configuration.SearchSetting.Aetheryte);
         ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
+        ImGui.CheckboxFlags("Search in other Plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
 
         ImGuiHelpers.ScaledDummy(30);
 
@@ -77,7 +78,7 @@ public class SettingsWindow : Window
 
         if (ImGui.Button("Save"))
         {
-            FindAnythingPlugin.Configuration.ToSearch = (Configuration.SearchSetting) this.flags;
+            FindAnythingPlugin.Configuration.ToSearchV2 = (Configuration.SearchSetting) this.flags;
 
             FindAnythingPlugin.Configuration.Open = openMode;
             FindAnythingPlugin.Configuration.ShiftShiftKey = shiftShiftKey;

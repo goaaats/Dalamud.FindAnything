@@ -10,7 +10,7 @@ namespace Dalamud.FindAnything
     {
         public int Version { get; set; } = 0;
 
-        public SearchSetting ToSearch { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction;
+        public SearchSetting ToSearchV2 { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction | SearchSetting.Emote | SearchSetting.PluginSettings;
 
         public OpenMode Open { get; set; } = OpenMode.Combo;
 
@@ -33,6 +33,8 @@ namespace Dalamud.FindAnything
             Aetheryte = 1 << 1,
             MainCommand = 1 << 2,
             GeneralAction = 1 << 3,
+            Emote = 1 << 4,
+            PluginSettings = 1 << 5,
         }
 
         // the below exist just to make saving less cumbersome
