@@ -14,7 +14,7 @@ namespace Dalamud.FindAnything
 
         public OpenMode Open { get; set; } = OpenMode.Combo;
 
-        public uint ShiftShiftDelay { get; set; } = 50;
+        public uint ShiftShiftDelay { get; set; } = 40;
         public VirtualKey ComboModifier { get; set; } = VirtualKey.CONTROL;
         public VirtualKey ComboKey { get; set; } = VirtualKey.T;
         public VirtualKey ShiftShiftKey { get; set; } = VirtualKey.OEM_MINUS;

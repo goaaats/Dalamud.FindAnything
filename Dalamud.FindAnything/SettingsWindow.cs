@@ -14,6 +14,7 @@ public class SettingsWindow : Window
     private uint flags;
     private Configuration.OpenMode openMode;
     private VirtualKey shiftShiftKey;
+    private int shiftShiftDelay;
     private VirtualKey comboModifierKey;
     private VirtualKey comboKey;
 
@@ -27,6 +28,7 @@ public class SettingsWindow : Window
         flags = (uint) plugin.Configuration.ToSearch;
         openMode = plugin.Configuration.Open;
         shiftShiftKey = plugin.Configuration.ShiftShiftKey;
+        shiftShiftDelay = (int) plugin.Configuration.ShiftShiftDelay;
         comboKey = plugin.Configuration.ComboKey;
         comboModifierKey = plugin.Configuration.ComboModifier;
         base.OnOpen();
@@ -59,6 +61,11 @@ public class SettingsWindow : Window
         {
             case Configuration.OpenMode.ShiftShift:
                 VirtualKeySelect("Key to double tap", ref shiftShiftKey);
+
+                if (ImGui.InputInt("Delay (ms)", ref shiftShiftDelay))
+                {
+                    shiftShiftDelay = Math.Max(shiftShiftDelay, 0);
+                }
                 break;
             case Configuration.OpenMode.Combo:
                 VirtualKeySelect("Combo Modifier", ref comboModifierKey);
@@ -74,6 +81,7 @@ public class SettingsWindow : Window
 
             plugin.Configuration.Open = openMode;
             plugin.Configuration.ShiftShiftKey = shiftShiftKey;
+            plugin.Configuration.ShiftShiftDelay = (uint) shiftShiftDelay;
 
             plugin.Configuration.ComboKey = comboKey;
             plugin.Configuration.ComboModifier = comboModifierKey;
