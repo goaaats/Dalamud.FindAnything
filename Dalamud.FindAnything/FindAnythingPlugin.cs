@@ -138,7 +138,7 @@ namespace Dalamud.FindAnything
             {
                 var name = input.Replace(' ', '_');
                 name = name.Replace('–', '-');
-                Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{name}?useskin=Vector");
+                Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{HttpUtility.UrlEncode(name)}?useskin=Vector");
             }
             
             public void Selected()
