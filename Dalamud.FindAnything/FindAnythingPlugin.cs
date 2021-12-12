@@ -432,7 +432,6 @@ namespace Dalamud.FindAnything
                 return;
             }
 
-            PluginLog.Information("Searching: " + searchTerm);
             var term = searchTerm.ToLower();
 
             var cResults = new List<ISearchResult>();
@@ -591,22 +590,42 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.WikiSiteChoicer:
                 {
-                    cResults.Add(new WikiSiteChoicerResult
+                    if (!term.IsNullOrEmpty())
                     {
-                        Site = WikiSiteChoicerResult.SiteChoice.GamerEscape
-                    });
-                    
-                    cResults.Add(new WikiSiteChoicerResult
-                    {
-                        Site = WikiSiteChoicerResult.SiteChoice.GarlandTools
-                    });
+                        foreach (var kind in Enum.GetValues<WikiSiteChoicerResult.SiteChoice>())
+                        {
+                            if (kind == WikiSiteChoicerResult.SiteChoice.TeamCraft && wikiSiteChoicerResult.DataCat == WikiSearchResult.DataCategory.Item)
+                                continue;
+                            
+                            if (kind.ToString().ToLower().Contains(term))
+                            {
+                                cResults.Add(new WikiSiteChoicerResult
+                                {
+                                    Site = kind
+                                });
+                            }
+                        }
+                    }
 
-                    if (wikiSiteChoicerResult.DataCat == WikiSearchResult.DataCategory.Item)
+                    if (cResults.Count == 0)
                     {
                         cResults.Add(new WikiSiteChoicerResult
                         {
-                            Site = WikiSiteChoicerResult.SiteChoice.TeamCraft
+                            Site = WikiSiteChoicerResult.SiteChoice.GamerEscape
                         });
+                    
+                        cResults.Add(new WikiSiteChoicerResult
+                        {
+                            Site = WikiSiteChoicerResult.SiteChoice.GarlandTools
+                        });
+
+                        if (wikiSiteChoicerResult.DataCat == WikiSearchResult.DataCategory.Item)
+                        {
+                            cResults.Add(new WikiSiteChoicerResult
+                            {
+                                Site = WikiSiteChoicerResult.SiteChoice.TeamCraft
+                            });
+                        }
                     }
                 }
                     break;
@@ -615,7 +634,6 @@ namespace Dalamud.FindAnything
             }
 
             results = cResults.ToArray();
-            PluginLog.Information($"{results.Length} results.");
         }
 
         public void Dispose()
