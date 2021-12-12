@@ -52,10 +52,16 @@ public class DalamudReflector
             var hasConfigUi = (bool)configUiProp.GetValue(uib);
             if (!hasConfigUi)
                 continue;
+
+            var name = (string)item.GetType().GetProperty("Name", BindingFlags.Public | BindingFlags.Instance)
+                .GetValue(item);
+            
+            if (name == "Wotsit")
+                continue;
             
             var entry = new PluginEntry()
             {
-                Name =  (string) item.GetType().GetProperty("Name", BindingFlags.Public | BindingFlags.Instance).GetValue(item) + " Settings",
+                Name =  name + " Settings",
                 UiBuilder = uib as UiBuilder,
             };
             list.Add(entry);
