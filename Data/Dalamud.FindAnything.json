@@ -2,7 +2,7 @@
   "Author": "goat",
   "Name": "Wotsit",
   "Punchline": "Find anything, go anywhere, in style.",
-  "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
+  "Description": "Adds a convenient quick search akin to Spotlight that lets you open game windows, teleport, find wiki articles, and more.\nPress Control + T to open the search window. This can be changed by searching for \"Wotsit Settings\".",
   "InternalName": "Dalamud.FindAnything",
   "ApplicableVersion": "any",
   "Tags": [
