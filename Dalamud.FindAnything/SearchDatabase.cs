@@ -31,6 +31,7 @@ namespace Dalamud.FindAnything
             InitData<GeneralAction>(ref data, (r) => r.Name);
             InitData<Emote>(ref data, (r) => r.Name);
             InitData<Quest>(ref data, (r) => r.Name);
+            InitData<Item>(ref data, (r) => r.Name);
 
             SearchData = data;
         }

@@ -103,6 +103,7 @@ namespace Dalamud.FindAnything
             {
                 Instance,
                 Quest,
+                Item,
             }
             
             public DataCategory DataCat { get; set; }
@@ -126,6 +127,7 @@ namespace Dalamud.FindAnything
             {
                 GamerEscape,
                 GarlandTools,
+                TeamCraft,
             }
             
             public SiteChoice Site { get; set; }
@@ -164,6 +166,11 @@ namespace Dalamud.FindAnything
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
+                    }
+                        break;
+                    case SiteChoice.TeamCraft:
+                    {
+                        Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{wikiSiteChoicerResult.DataKey}");
                     }
                         break;
                 }
@@ -526,16 +533,32 @@ namespace Dalamud.FindAnything
                             break;
                     }
                     
-                    foreach (var cfc in SearchDatabase.GetAll<Quest>())
+                    foreach (var quest in SearchDatabase.GetAll<Quest>())
                     {
-                        if (cfc.Value.Searchable.Contains(term))
+                        if (quest.Value.Searchable.Contains(term))
                             cResults.Add(new WikiSearchResult
                             {
-                                Name = cfc.Value.Display,
-                                DataKey = cfc.Key,
+                                Name = quest.Value.Display,
+                                DataKey = quest.Key,
                                 Icon = TexCache.WikiIcon,
                                 CatName = "Quest",
                                 DataCat = WikiSearchResult.DataCategory.Quest,
+                            });
+
+                        if (cResults.Count > MAX_TO_SEARCH)
+                            break;
+                    }
+                    
+                    foreach (var item in SearchDatabase.GetAll<Item>())
+                    {
+                        if (item.Value.Searchable.Contains(term))
+                            cResults.Add(new WikiSearchResult
+                            {
+                                Name = item.Value.Display,
+                                DataKey = item.Key,
+                                Icon = TexCache.WikiIcon,
+                                CatName = "Item",
+                                DataCat = WikiSearchResult.DataCategory.Item,
                             });
 
                         if (cResults.Count > MAX_TO_SEARCH)
@@ -565,11 +588,21 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.WikiSiteChoicer:
                 {
-                    foreach (var kind in Enum.GetValues<WikiSiteChoicerResult.SiteChoice>())
+                    cResults.Add(new WikiSiteChoicerResult
+                    {
+                        Site = WikiSiteChoicerResult.SiteChoice.GamerEscape
+                    });
+                    
+                    cResults.Add(new WikiSiteChoicerResult
+                    {
+                        Site = WikiSiteChoicerResult.SiteChoice.GarlandTools
+                    });
+
+                    if (wikiSiteChoicerResult.DataCat == WikiSearchResult.DataCategory.Item)
                     {
                         cResults.Add(new WikiSiteChoicerResult
                         {
-                            Site = kind
+                            Site = WikiSiteChoicerResult.SiteChoice.TeamCraft
                         });
                     }
                 }
