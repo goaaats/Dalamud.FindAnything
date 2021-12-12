@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Web;
 using Dalamud.Data;
 using Dalamud.FindAnything;
 using Dalamud.Game.ClientState;
@@ -56,7 +57,7 @@ namespace Dalamud.FindAnything
         private AetheryteManager AetheryteManager { get; init; }
 
         private bool finderOpen = false;
-        private string searchTerm = string.Empty;
+        private static string searchTerm = string.Empty;
         private int selectedIndex = 0;
 
         private int framesSinceLastKbChange = 0;
@@ -71,6 +72,14 @@ namespace Dalamud.FindAnything
 
         private static XivCommonBase xivCommon;
 
+        private enum SearchMode
+        {
+            Top,
+            Wiki,
+        }
+
+        private static SearchMode searchMode = SearchMode.Top;
+
         private interface ISearchResult
         {
             public string CatName { get; }
@@ -80,7 +89,7 @@ namespace Dalamud.FindAnything
             public void Selected();
         }
 
-        private class ContentFinderConditionSearchResult : ISearchResult
+        private class WikiSearchResult : ISearchResult
         {
             public string CatName => "Duties";
             public string Name { get; set; }
@@ -97,6 +106,20 @@ namespace Dalamud.FindAnything
             {
                 var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(DataKey);
                 OpenWikiPage(row!.Name.ToDalamudString().TextValue);
+            }
+        }
+
+        private class SearchWikiSearchResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+            public string Name => $"Search for \"{Query}\" in wikis...";
+            public TextureWrap? Icon => TexCache.WikiIcon;
+
+            public string Query { get; set; }
+
+            public void Selected()
+            {
+                Util.OpenLink($"https://ffxiv.gamerescape.com/w/index.php?search={HttpUtility.UrlEncode(Query)}&title=Special%3ASearch&fulltext=1&useskin=Vector");
             }
         }
 
@@ -148,12 +171,20 @@ namespace Dalamud.FindAnything
 
         private class InternalSearchResult : ISearchResult
         {
-            public string CatName => "Wotsit";
+            public string CatName => Kind switch
+            {
+                InternalSearchResultKind.Settings => "Wotsit",
+                InternalSearchResultKind.DalamudPlugins => "Dalamud",
+                InternalSearchResultKind.DalamudSettings => "Dalamud",
+                InternalSearchResultKind.WikiMode => string.Empty,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
             public string Name => GetNameForKind(this.Kind);
 
             public TextureWrap? Icon => Kind switch
             {
+                InternalSearchResultKind.WikiMode => TexCache.WikiIcon,
                 _ => TexCache.PluginInstallerIcon,
             };
 
@@ -162,6 +193,7 @@ namespace Dalamud.FindAnything
                 Settings,
                 DalamudPlugins,
                 DalamudSettings,
+                WikiMode,
             }
 
             public InternalSearchResultKind Kind { get; set; }
@@ -170,6 +202,7 @@ namespace Dalamud.FindAnything
                 InternalSearchResultKind.Settings => "Wotsit Settings",
                 InternalSearchResultKind.DalamudPlugins => "Dalamud Plugin Installer",
                 InternalSearchResultKind.DalamudSettings => "Dalamud Settings",
+                InternalSearchResultKind.WikiMode => "Search in wikis...",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -186,6 +219,11 @@ namespace Dalamud.FindAnything
                     case InternalSearchResultKind.DalamudSettings:
                         CommandManager.ProcessCommand("/xlsettings");
                         break;
+                    case InternalSearchResultKind.WikiMode:
+                        searchMode = SearchMode.Wiki;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
         }
@@ -309,98 +347,105 @@ namespace Dalamud.FindAnything
 
             var cResults = new List<ISearchResult>();
 
-            if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.Duty))
+            switch (searchMode)
             {
-                foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
+                case SearchMode.Top:
                 {
-                    if (cfc.Value.Searchable.Contains(term))
+                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.Aetheryte))
                     {
-                        cResults.Add(new ContentFinderConditionSearchResult()
+                        if (!(Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
+                              Condition[ConditionFlag.BoundByDuty95]) || Condition[ConditionFlag.Occupied] ||
+                            Condition[ConditionFlag.OccupiedInCutSceneEvent])
                         {
-                            Name = cfc.Value.Display,
-                            DataKey = cfc.Key,
-                            Icon = TexCache.WikiIcon,
-                        });
-                    }
-
-                    if (cResults.Count > MAX_TO_SEARCH)
-                        break;
-                }
-            }
-
-            if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.Aetheryte))
-            {
-                if (!(Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
-                      Condition[ConditionFlag.BoundByDuty95]) || Condition[ConditionFlag.Occupied] || Condition[ConditionFlag.OccupiedInCutSceneEvent])
-                {
-                    foreach (var aetheryte in Aetheryes)
-                    {
-                        var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
-                        var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
-                        if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
-                        {
-                            cResults.Add(new AetheryteSearchResult
+                            foreach (var aetheryte in Aetheryes)
                             {
-                                Name = aetheryteName,
-                                Data = aetheryte,
-                                Icon = TexCache.AetheryteIcon,
-                            });
+                                var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
+                                var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
+                                if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
+                                    cResults.Add(new AetheryteSearchResult
+                                    {
+                                        Name = aetheryteName,
+                                        Data = aetheryte,
+                                        Icon = TexCache.AetheryteIcon
+                                    });
+
+                                if (cResults.Count > MAX_TO_SEARCH)
+                                    break;
+                            }
                         }
-
-                        if (cResults.Count > MAX_TO_SEARCH)
-                            break;
                     }
-                }
-            }
 
-            if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.MainCommand))
-            {
-                foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
-                {
-                    var searchable = mainCommand.Value.Searchable;
-                    if (searchable == "log out")
-                        searchable = "logout";
-
-                    if (searchable.Contains(term))
+                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.MainCommand))
                     {
-                        cResults.Add(new MainCommandSearchResult
+                        foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
                         {
-                            CommandId = mainCommand.Key,
-                            Name = mainCommand.Value.Display,
-                            Icon = TexCache.MainCommandIcons[mainCommand.Key]
-                        });
+                            var searchable = mainCommand.Value.Searchable;
+                            if (searchable == "log out")
+                                searchable = "logout";
+
+                            if (searchable.Contains(term))
+                                cResults.Add(new MainCommandSearchResult
+                                {
+                                    CommandId = mainCommand.Key,
+                                    Name = mainCommand.Value.Display,
+                                    Icon = TexCache.MainCommandIcons[mainCommand.Key]
+                                });
+                        }
                     }
-                }
-            }
 
-            if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.GeneralAction))
-            {
-                foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
-                {
-                    // Skip invalid entries, jump, etc
-                    if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
-                        continue;
-
-                    if (generalAction.Value.Searchable.Contains(term))
+                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.GeneralAction))
                     {
-                        cResults.Add(new GeneralActionSearchResult
+                        foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
                         {
-                            Name = generalAction.Value.Display,
-                            Icon = TexCache.GeneralActionIcons[generalAction.Key]
-                        });
-                    }
-                }
-            }
+                            // Skip invalid entries, jump, etc
+                            if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
+                                continue;
 
-            foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
-            {
-                if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))
+                            if (generalAction.Value.Searchable.Contains(term))
+                                cResults.Add(new GeneralActionSearchResult
+                                {
+                                    Name = generalAction.Value.Display,
+                                    Icon = TexCache.GeneralActionIcons[generalAction.Key]
+                                });
+                        }
+                    }
+
+                    foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
+                        if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))
+                            cResults.Add(new InternalSearchResult
+                            {
+                                Kind = kind
+                            });
+                }
+                    break;
+
+                case SearchMode.Wiki:
                 {
-                    cResults.Add(new InternalSearchResult
+                    if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.Duty))
                     {
-                        Kind = kind
+                        foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
+                        {
+                            if (cfc.Value.Searchable.Contains(term))
+                                cResults.Add(new WikiSearchResult
+                                {
+                                    Name = cfc.Value.Display,
+                                    DataKey = cfc.Key,
+                                    Icon = TexCache.WikiIcon
+                                });
+
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
+                        }
+                    }
+
+                    cResults.Add(new SearchWikiSearchResult
+                    {
+                        Query = searchTerm
                     });
                 }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             results = cResults.ToArray();
@@ -432,6 +477,7 @@ namespace Dalamud.FindAnything
             finderOpen = false;
             searchTerm = string.Empty;
             selectedIndex = 0;
+            searchMode = SearchMode.Top;
             UpdateSearchResults();
         }
 
@@ -465,7 +511,14 @@ namespace Dalamud.FindAnything
 
             ImGui.PushItemWidth(size.X - 45);
 
-            if (ImGui.InputTextWithHint("###findeverythinginput", "Type to search...", ref searchTerm, 1000,
+            var searchHint = searchMode switch
+            {
+                SearchMode.Top => "Type to search...",
+                SearchMode.Wiki => "Search in wikis...",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchTerm, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
             {
                 UpdateSearchResults();
