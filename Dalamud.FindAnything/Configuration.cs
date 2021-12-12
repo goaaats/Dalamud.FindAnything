@@ -1,6 +1,7 @@
 ﻿using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
+using Dalamud.Game.ClientState.Keys;
 
 namespace Dalamud.FindAnything
 {
@@ -10,6 +11,19 @@ namespace Dalamud.FindAnything
         public int Version { get; set; } = 0;
 
         public SearchSetting ToSearch { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction;
+
+        public OpenMode Open { get; set; } = OpenMode.Combo;
+
+        public uint ShiftShiftDelay { get; set; } = 50;
+        public VirtualKey ComboModifier { get; set; } = VirtualKey.CONTROL;
+        public VirtualKey ComboKey { get; set; } = VirtualKey.T;
+        public VirtualKey ShiftShiftKey { get; set; } = VirtualKey.OEM_MINUS;
+
+        public enum OpenMode
+        {
+            ShiftShift,
+            Combo,
+        }
 
         [Flags]
         public enum SearchSetting : uint

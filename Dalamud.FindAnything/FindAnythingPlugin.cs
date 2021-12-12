@@ -37,7 +37,7 @@ namespace Dalamud.FindAnything
     {
         public string Name => "Wotsit";
 
-        private const string commandName = "/pmycommand";
+        private const string commandName = "/wotsit";
 
         [PluginService] public static DalamudPluginInterface PluginInterface { get; private set; }
         [PluginService] public static CommandManager CommandManager { get; private set; }
@@ -61,6 +61,10 @@ namespace Dalamud.FindAnything
 
         private int framesSinceLastKbChange = 0;
         private int framesSinceButtonPress = 0;
+
+        private int timeSinceLastShift = 0;
+        private bool shiftArmed = false;
+        private bool shiftOk = false;
 
         private WindowSystem windowSystem;
         private static SettingsWindow settingsWindow;
@@ -210,7 +214,7 @@ namespace Dalamud.FindAnything
 
             CommandManager.AddHandler(commandName, new CommandInfo(OnCommand)
             {
-                HelpMessage = "A useful message to display in /xlhelp"
+                HelpMessage = "Open the Wotsit settings."
             });
 
             PluginInterface.UiBuilder.Draw += DrawUI;
@@ -218,6 +222,11 @@ namespace Dalamud.FindAnything
 
             PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
             PluginInterface.UiBuilder.DisableUserUiHide = true;
+
+            PluginInterface.UiBuilder.OpenConfigUi += () =>
+            {
+                settingsWindow.IsOpen = true;
+            };
 
             TeleportIpc = PluginInterface.GetIpcSubscriber<uint, byte, bool>("Teleport");
 
@@ -235,13 +244,55 @@ namespace Dalamud.FindAnything
 
         private void FrameworkOnUpdate(Framework framework)
         {
-            if (Keys[VirtualKey.CONTROL] && Keys[VirtualKey.T])
-            {
-                OpenFinder();
-            }
-            else if (Keys[VirtualKey.ESCAPE])
+            if (Keys[VirtualKey.ESCAPE])
             {
                 CloseFinder();
+            }
+            else
+            {
+                switch (Configuration.Open)
+                {
+                    case Configuration.OpenMode.ShiftShift:
+                        var shiftDown = Keys[Configuration.ShiftShiftKey];
+
+                        if (shiftDown && !shiftArmed)
+                        {
+                            shiftArmed = true;
+                        }
+
+                        if (!shiftDown && shiftArmed)
+                        {
+                            shiftOk = true;
+                        }
+
+                        if (shiftOk && !shiftDown)
+                        {
+                            timeSinceLastShift++;
+                        }
+                        else if (shiftDown && shiftOk && timeSinceLastShift < Configuration.ShiftShiftDelay)
+                        {
+                            OpenFinder();
+                            timeSinceLastShift = 0;
+                            shiftArmed = false;
+                            shiftOk = false;
+                        }
+                        else if (shiftOk && timeSinceLastShift > Configuration.ShiftShiftDelay)
+                        {
+                            timeSinceLastShift = 0;
+                            shiftArmed = false;
+                            shiftOk = false;
+                        }
+
+                        break;
+                    case Configuration.OpenMode.Combo:
+                        if (Keys[Configuration.ComboModifier] && Keys[Configuration.ComboKey])
+                        {
+                            OpenFinder();
+                        }
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
 
@@ -368,14 +419,12 @@ namespace Dalamud.FindAnything
 
         private void OnCommand(string command, string args)
         {
-            // in response to the slash command, just display our main ui
-            //this.PluginUi.Visible = true;
+            settingsWindow.IsOpen = true;
         }
 
         private void OpenFinder()
         {
             finderOpen = true;
-            PluginLog.Information("FindAnything opened!");
         }
 
         private void CloseFinder()
@@ -384,7 +433,6 @@ namespace Dalamud.FindAnything
             searchTerm = string.Empty;
             selectedIndex = 0;
             UpdateSearchResults();
-            PluginLog.Information("FindAnything closed!");
         }
 
         private const int MAX_ONE_PAGE = 10;
