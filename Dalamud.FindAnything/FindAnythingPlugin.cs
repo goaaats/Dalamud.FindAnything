@@ -442,6 +442,13 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private static bool CheckIllegalState()
+        {
+            return Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
+                   Condition[ConditionFlag.BoundByDuty95] || Condition[ConditionFlag.Occupied] ||
+                   Condition[ConditionFlag.OccupiedInCutSceneEvent];
+        }
+        
         private static void UpdateSearchResults()
         {
             if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer)
@@ -451,6 +458,7 @@ namespace Dalamud.FindAnything
             }
 
             var term = searchTerm.ToLower();
+            var illegalState = CheckIllegalState();
 
             var cResults = new List<ISearchResult>();
 
@@ -460,32 +468,27 @@ namespace Dalamud.FindAnything
                 {
                     DalamudReflector.RefreshPlugins();
                     
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte))
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !illegalState)
                     {
-                        if (!(Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
-                              Condition[ConditionFlag.BoundByDuty95]) || Condition[ConditionFlag.Occupied] ||
-                            Condition[ConditionFlag.OccupiedInCutSceneEvent])
+                        foreach (var aetheryte in Aetheryes)
                         {
-                            foreach (var aetheryte in Aetheryes)
-                            {
-                                var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
-                                var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
-                                if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
-                                    cResults.Add(new AetheryteSearchResult
-                                    {
-                                        Name = aetheryteName,
-                                        Data = aetheryte,
-                                        Icon = TexCache.AetheryteIcon,
-                                        TerriName = terriName.Display
-                                    });
+                            var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
+                            var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
+                            if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
+                                cResults.Add(new AetheryteSearchResult
+                                {
+                                    Name = aetheryteName,
+                                    Data = aetheryte,
+                                    Icon = TexCache.AetheryteIcon,
+                                    TerriName = terriName.Display
+                                });
 
-                                if (cResults.Count > MAX_TO_SEARCH)
-                                    break;
-                            }
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.MainCommand))
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.MainCommand) && !illegalState)
                     {
                         foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
                         {
@@ -508,7 +511,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction))
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction) && !illegalState)
                     {
                         foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
                         {
@@ -742,7 +745,7 @@ namespace Dalamud.FindAnything
             {
                 SearchMode.Top => "Type to search...",
                 SearchMode.Wiki => "Search in wikis...",
-                SearchMode.WikiSiteChoicer => "Choose site...",
+                SearchMode.WikiSiteChoicer => $"Choose site for \"{wikiSiteChoicerResult.Name}\"...",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
