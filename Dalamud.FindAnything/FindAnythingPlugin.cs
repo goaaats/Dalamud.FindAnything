@@ -856,16 +856,19 @@ namespace Dalamud.FindAnything
                             ImGui.Image(result.Icon.ImGuiHandle, new Vector2(16, 16));
                         }
                     }
-
-                    if (selectedIndex > 1)
+                    
+                    if(isUp || isDown || isPgUp || isPgDn)
                     {
-                        ImGui.SetScrollY((selectedIndex - 1) * (textSize.Y + 4));
+                        if (selectedIndex > 1)
+                        {
+                            ImGui.SetScrollY((selectedIndex - 1) * (textSize.Y + 4));
+                        }
+                        else
+                        {
+                            ImGui.SetScrollY(0);
+                        }
                     }
-                    else
-                    {
-                        ImGui.SetScrollY(0);
-                    }
-
+                    
                     if (ImGui.IsKeyPressed((int) VirtualKey.RETURN))
                     {
                         closeFinder = results[selectedIndex].CloseFinder;
