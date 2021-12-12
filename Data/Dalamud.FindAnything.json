@@ -1,13 +1,13 @@
 {
-  "Author": "your name here",
-  "Name": "Find Anything",
-  "Punchline": "A short one-liner that shows up in /xlplugins.",
+  "Author": "goat",
+  "Name": "Wotsit",
+  "Punchline": "Find anything, go anywhere, in style.",
   "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
-  "InternalName": "samplePlugin",
+  "InternalName": "Dalamud.FindAnything",
   "ApplicableVersion": "any",
   "Tags": [
-    "sample",
-    "plugin",
-    "goats"
+    "find",
+    "teleport",
+    "wiki"
   ]
 }

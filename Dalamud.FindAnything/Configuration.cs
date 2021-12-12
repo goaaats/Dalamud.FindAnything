@@ -2,14 +2,23 @@
 using Dalamud.Plugin;
 using System;
 
-namespace SamplePlugin
+namespace Dalamud.FindAnything
 {
     [Serializable]
     public class Configuration : IPluginConfiguration
     {
         public int Version { get; set; } = 0;
 
-        public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
+        public SearchSetting ToSearch { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand;
+
+        [Flags]
+        public enum SearchSetting : uint
+        {
+            None = 0,
+            Duty = 1 << 0,
+            Aetheryte = 1 << 1,
+            MainCommand = 1 << 2,
+        }
 
         // the below exist just to make saving less cumbersome
 
