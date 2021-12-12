@@ -29,6 +29,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
+using XivCommon;
 
 namespace Dalamud.FindAnything
 {
@@ -63,6 +64,8 @@ namespace Dalamud.FindAnything
 
         private WindowSystem windowSystem;
         private static SettingsWindow settingsWindow;
+
+        private static XivCommonBase xivCommon;
 
         private interface ISearchResult
         {
@@ -191,7 +194,8 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                throw new NotImplementedException();
+                var message = $"/gaction {Name}";
+                xivCommon.Functions.Chat.SendMessage(message);
             }
         }
 
@@ -225,6 +229,8 @@ namespace Dalamud.FindAnything
             settingsWindow = new SettingsWindow(this) { IsOpen = false };
             windowSystem.AddWindow(settingsWindow);
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+
+            xivCommon = new XivCommonBase();
         }
 
         private void FrameworkOnUpdate(Framework framework)
@@ -311,6 +317,25 @@ namespace Dalamud.FindAnything
                             CommandId = mainCommand.Key,
                             Name = mainCommand.Value.Display,
                             Icon = TexCache.MainCommandIcons[mainCommand.Key]
+                        });
+                    }
+                }
+            }
+
+            if (Configuration.ToSearch.HasFlag(Configuration.SearchSetting.GeneralAction))
+            {
+                foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
+                {
+                    // Skip invalid entries, jump, etc
+                    if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
+                        continue;
+
+                    if (generalAction.Value.Searchable.Contains(term))
+                    {
+                        cResults.Add(new GeneralActionSearchResult
+                        {
+                            Name = generalAction.Value.Display,
+                            Icon = TexCache.GeneralActionIcons[generalAction.Key]
                         });
                     }
                 }

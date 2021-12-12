@@ -27,6 +27,7 @@ namespace Dalamud.FindAnything
             InitData<TerritoryType>(ref data, (r) => r.PlaceName?.Value?.Name);
             InitData<Aetheryte>(ref data, (r) => r.PlaceName?.Value?.Name);
             InitData<MainCommand>(ref data, (r) => r.Name);
+            InitData<GeneralAction>(ref data, (r) => r.Name);
 
             SearchData = data;
         }

@@ -16,6 +16,8 @@ namespace Dalamud.FindAnything
         private readonly DataManager data;
 
         public IReadOnlyDictionary<uint, TextureWrap> MainCommandIcons { get; init; }
+        public IReadOnlyDictionary<uint, TextureWrap> GeneralActionIcons { get; init; }
+
         public TextureWrap AetheryteIcon { get; init; }
         public TextureWrap WikiIcon { get; init; }
 
@@ -33,6 +35,13 @@ namespace Dalamud.FindAnything
                 mainCommands.Add(mainCommand.RowId, data!.GetImGuiTextureHqIcon((uint) mainCommand.Icon)!);
             }
             MainCommandIcons = mainCommands;
+
+            var generalActions = new Dictionary<uint, TextureWrap>();
+            foreach (var action in data.GetExcelSheet<GeneralAction>()!)
+            {
+                generalActions.Add(action.RowId, data!.GetImGuiTextureHqIcon((uint) action.Icon)!);
+            }
+            GeneralActionIcons = generalActions;
 
             AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;

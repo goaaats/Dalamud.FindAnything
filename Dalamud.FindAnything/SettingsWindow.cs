@@ -26,6 +26,7 @@ public class SettingsWindow : Window
         ImGui.CheckboxFlags("Search in Duties", ref this.flags, (uint) Configuration.SearchSetting.Duty);
         ImGui.CheckboxFlags("Search in Commands", ref this.flags, (uint) Configuration.SearchSetting.MainCommand);
         ImGui.CheckboxFlags("Search in Aetherytes", ref this.flags, (uint) Configuration.SearchSetting.Aetheryte);
+        ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
 
         ImGuiHelpers.ScaledDummy(30);
 

@@ -9,7 +9,7 @@ namespace Dalamud.FindAnything
     {
         public int Version { get; set; } = 0;
 
-        public SearchSetting ToSearch { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand;
+        public SearchSetting ToSearch { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction;
 
         [Flags]
         public enum SearchSetting : uint
@@ -18,6 +18,7 @@ namespace Dalamud.FindAnything
             Duty = 1 << 0,
             Aetheryte = 1 << 1,
             MainCommand = 1 << 2,
+            GeneralAction = 1 << 3,
         }
 
         // the below exist just to make saving less cumbersome
