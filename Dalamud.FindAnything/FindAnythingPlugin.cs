@@ -198,10 +198,12 @@ namespace Dalamud.FindAnything
 
         private class AetheryteSearchResult : ISearchResult
         {
-            public string CatName => "Aetherytes";
+            public string CatName => $"Aetherytes ({TerriName})";
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public AetheryteEntry Data { get; set; }
+            
+            public string TerriName { get; set; }
             
             public bool CloseFinder => true;
 
@@ -455,7 +457,8 @@ namespace Dalamud.FindAnything
                                     {
                                         Name = aetheryteName,
                                         Data = aetheryte,
-                                        Icon = TexCache.AetheryteIcon
+                                        Icon = TexCache.AetheryteIcon,
+                                        TerriName = terriName.Display
                                     });
 
                                 if (cResults.Count > MAX_TO_SEARCH)
