@@ -431,7 +431,10 @@ namespace Dalamud.FindAnything
 
                         break;
                     case Configuration.OpenMode.Combo:
-                        if (Keys[Configuration.ComboModifier] && Keys[Configuration.ComboKey])
+                        var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Keys[Configuration.ComboModifier];
+                        var key = Configuration.ComboKey == VirtualKey.NO_KEY || Keys[Configuration.ComboKey];
+                        
+                        if (mod && key)
                         {
                             OpenFinder();
                         }
