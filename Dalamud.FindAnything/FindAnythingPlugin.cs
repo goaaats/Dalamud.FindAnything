@@ -522,6 +522,10 @@ namespace Dalamud.FindAnything
                     {
                         foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
                         {
+                            // Record ready check, internal ones
+                            if (mainCommand.Key is 79 or 38 or 39 or 40 or 43 or 26)
+                                continue;
+                            
                             var searchable = mainCommand.Value.Searchable;
                             if (searchable == "log out")
                                 searchable = "logout";
