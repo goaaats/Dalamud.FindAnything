@@ -547,12 +547,20 @@ namespace Dalamud.FindAnything
 
                     if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction) && !illegalState)
                     {
+                        var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176);
+                        
                         foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
                         {
                             // Skip invalid entries, jump, etc
                             if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
                                 continue;
 
+                            // Skip Materia Melding/Advanced Material Melding, based on what is unlocked
+                            if (hasAdvancedMelding && generalAction.Key is 12)
+                                continue;
+                            if (!hasAdvancedMelding && generalAction.Key is 13)
+                                continue;
+                            
                             if (generalAction.Value.Searchable.Contains(term))
                                 cResults.Add(new GeneralActionSearchResult
                                 {
