@@ -1,6 +1,7 @@
 ﻿using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
+using System.Collections.Generic;
 using Dalamud.Game.ClientState.Keys;
 
 namespace Dalamud.FindAnything
@@ -36,6 +37,29 @@ namespace Dalamud.FindAnything
             Emote = 1 << 4,
             PluginSettings = 1 << 5,
         }
+        
+        public class MacroEntry
+        {
+            public bool Shared { get; set; }
+            public int Id { get; set; }
+            public string SearchName { get; set; }
+            public int IconId { get; set; }
+
+            public MacroEntry()
+            {
+                
+            }
+
+            public MacroEntry(MacroEntry initial)
+            {
+                Shared = initial.Shared;
+                Id = initial.Id;
+                SearchName = initial.SearchName;
+                IconId = initial.IconId;
+            }
+        }
+
+        public List<MacroEntry> MacroLinks { get; set; } = new();
 
         // the below exist just to make saving less cumbersome
 

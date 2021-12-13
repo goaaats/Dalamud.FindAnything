@@ -17,6 +17,8 @@ namespace Dalamud.FindAnything
 
         public IReadOnlyDictionary<uint, TextureWrap> MainCommandIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> GeneralActionIcons { get; init; }
+        
+        public Dictionary<int, TextureWrap> MacroIcons { get; private set; }
 
         public TextureWrap AetheryteIcon { get; init; }
         public TextureWrap WikiIcon { get; init; }
@@ -47,6 +49,23 @@ namespace Dalamud.FindAnything
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;
             PluginInstallerIcon = data.GetImGuiTextureHqIcon(066472)!;
             LogoutIcon = data.GetImGuiTextureHqIcon(066403)!;
+            
+            ReloadMacroIcons();
+        }
+
+        public void ReloadMacroIcons()
+        {
+            MacroIcons ??= new();
+            foreach (var macroLink in FindAnythingPlugin.Configuration.MacroLinks)
+            {
+                if (MacroIcons.ContainsKey(macroLink.IconId))
+                    continue;
+
+                var tex = data.GetImGuiTextureHqIcon((uint) macroLink.IconId);
+                
+                if (tex != null)
+                    MacroIcons[macroLink.IconId] = tex;
+            }
         }
 
         public static TextureCache Load(UiBuilder uiBuilder, DataManager data) => new TextureCache(uiBuilder, data);

@@ -27,6 +27,8 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
@@ -347,6 +349,31 @@ namespace Dalamud.FindAnything
                 Plugin.OpenConfigUi();
             }
         }
+        
+        private class MacroLinkSearchResult : ISearchResult
+        {
+            public string CatName => "Macros";
+            public string Name => Entry.SearchName;
+            public TextureWrap? Icon
+            {
+                get
+                {
+                    if (TexCache.MacroIcons.ContainsKey(Entry.IconId))
+                        return TexCache.MacroIcons[Entry.IconId];
+
+                    return null;
+                }
+            }
+
+            public bool CloseFinder => true;
+            
+            public Configuration.MacroEntry Entry { get; set; }
+            
+            public unsafe void Selected()
+            {
+                RaptureShellModule.Instance->ExecuteMacro((Entry.Shared ? RaptureMacroModule.Instance->Shared : RaptureMacroModule.Instance->Individual)[Entry.Id]);
+            }
+        }
 
         private static ISearchResult[]? results;
 
@@ -546,6 +573,20 @@ namespace Dalamud.FindAnything
                         }
                     }
 
+                    if (!illegalState)
+                    {
+                        foreach (var macroLink in Configuration.MacroLinks)
+                        {
+                            if (macroLink.SearchName.ToLower().Contains(term))
+                            {
+                                cResults.Add(new MacroLinkSearchResult
+                                {
+                                    Entry = macroLink,
+                                });
+                            }
+                        }
+                    }
+                    
                     foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
                     {
                         if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))

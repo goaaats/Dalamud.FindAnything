@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using ImGuiNET;
@@ -17,9 +21,12 @@ public class SettingsWindow : Window
     private int shiftShiftDelay;
     private VirtualKey comboModifierKey;
     private VirtualKey comboKey;
+    private List<Configuration.MacroEntry> macros = new();
 
-    public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoResize)
+    public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
+        this.SizeCondition = ImGuiCond.Always;
+        this.Size = new Vector2(700, 550);
         this.plugin = plugin;
     }
 
@@ -31,6 +38,7 @@ public class SettingsWindow : Window
         shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
         comboKey = FindAnythingPlugin.Configuration.ComboKey;
         comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
+        this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         base.OnOpen();
     }
 
@@ -75,6 +83,15 @@ public class SettingsWindow : Window
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        
+        ImGuiHelpers.ScaledDummy(30);
+
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro Links");
+        ImGui.TextWrapped("Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.");
+        
+        DrawMacrosSection();
+        
+        ImGuiHelpers.ScaledDummy(10);
 
         if (ImGui.Button("Save"))
         {
@@ -87,7 +104,11 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.ComboKey = comboKey;
             FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;
 
+            FindAnythingPlugin.Configuration.MacroLinks = this.macros;
+
             FindAnythingPlugin.Configuration.Save();
+
+            FindAnythingPlugin.TexCache.ReloadMacroIcons();
             IsOpen = false;
         }
 
@@ -97,6 +118,107 @@ public class SettingsWindow : Window
         {
             IsOpen = false;
         }
+    }
+
+    private void DrawMacrosSection()
+    {
+        ImGui.Columns(5);
+        ImGui.SetColumnWidth(0, 200 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(1, 80 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(2, 160 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(3, 160 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(4, 30 + 5 * ImGuiHelpers.GlobalScale);
+        /*
+        
+        ImGui.SetColumnWidth(1,
+            ImGui.GetWindowContentRegionWidth() - (18 + 16 + 14) - (5 + 45 + 26) * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(2, 16 + 45 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(2, 16 + 45 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(3, 14 + 26 * ImGuiHelpers.GlobalScale);
+        */
+
+        ImGui.Separator();
+
+        ImGui.Text("Search Name");
+        ImGui.NextColumn();
+        ImGui.Text("Shared");
+        ImGui.NextColumn();
+        ImGui.Text("ID");
+        ImGui.NextColumn();
+        ImGui.Text("Icon");
+        ImGui.NextColumn();
+        ImGui.Text(string.Empty);
+        ImGui.NextColumn();
+
+        ImGui.Separator();
+
+        for (var macroNumber = this.macros.Count - 1; macroNumber >= 0; macroNumber--)
+        {
+            var macro = this.macros[macroNumber];
+            ImGui.PushID($"macro_{macroNumber}");
+
+            ImGui.SetNextItemWidth(-1);
+            
+            var text = macro.SearchName;
+            if (ImGui.InputText($"###macroSn", ref text, 100))
+            {
+                macro.SearchName = text;
+            }
+            
+            ImGui.NextColumn();
+
+            var isShared = macro.Shared;
+            if (ImGui.Checkbox($"###macroSh", ref isShared))
+            {
+                macro.Shared = isShared;
+            }
+
+            ImGui.NextColumn();
+
+            var id = macro.Id;
+            if (ImGui.InputInt($"###macroId", ref id))
+            {
+                id = Math.Max(0, id);
+                id = Math.Min(99, id);
+                macro.Id = id;
+            }
+            
+            ImGui.NextColumn();
+            
+            var icon = macro.IconId;
+            if (ImGui.InputInt($"###macroIcon", ref icon))
+            {
+                icon = Math.Max(0, icon);
+                macro.IconId = icon;
+            } 
+            
+            ImGui.NextColumn();
+
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash)) this.macros.RemoveAt(macroNumber);
+
+            ImGui.PopID();
+
+            ImGui.NextColumn();
+            ImGui.Separator();
+        }
+
+        ImGui.NextColumn();
+        ImGui.NextColumn();
+        ImGui.NextColumn();
+        ImGui.NextColumn();
+        
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus))
+        {
+            this.macros.Add(new Configuration.MacroEntry
+            {
+                Id = 0,
+                SearchName = "New Macro",
+                Shared = false,
+                IconId = 066001,
+            });
+        }
+
+        ImGui.Columns(1);
     }
 
     private void VirtualKeySelect(string text, ref VirtualKey chosen)
