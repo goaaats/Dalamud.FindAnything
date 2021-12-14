@@ -809,8 +809,12 @@ namespace Dalamud.FindAnything
                     {
                         var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
                         var slashCmd = emoteRow.TextCommand.Value!;
+                        var slashCmdMatch = slashCmd.Command.RawString.Contains(term) ||
+                                            slashCmd.Alias.RawString.Contains(term) ||
+                                            slashCmd.ShortCommand.RawString.Contains(term) ||
+                                            slashCmd.ShortAlias.RawString.Contains(term);
 
-                        if (text.Searchable.Contains(term) || slashCmd.Command.RawString.Contains(term) || slashCmd.Alias.RawString.Contains(term))
+                        if (text.Searchable.Contains(term) || slashCmdMatch)
                         {
                             cResults.Add(new EmoteSearchResult
                             {
