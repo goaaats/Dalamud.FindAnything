@@ -60,7 +60,7 @@ namespace Dalamud.FindAnything
         private static AetheryteManager AetheryteManager { get; set; }
         private static DalamudReflector DalamudReflector { get; set; }
         private static UnlocksCache UnlocksCache { get; set; }
-        private static Input Input { get; set; }
+        private static Input? Input { get; set; }
 
         private bool finderOpen = false;
         private static string searchTerm = string.Empty;
@@ -410,6 +410,29 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class EmoteSearchResult : ISearchResult
+        {
+            public string CatName => "Emote";
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public string SlashCommand { get; set; }
+            
+            // TODO: optional submenu for only-motion
+            public bool CloseFinder => true;
+            
+            public void Selected()
+            {
+                var cmd = SlashCommand;
+                if (!cmd.StartsWith("/"))
+                    throw new Exception($"SlashCommand prop does not actually start with a slash: {SlashCommand}");
+
+                if (Configuration.EmoteAlwaysMotion)
+                    cmd += " motion";
+                
+                xivCommon.Functions.Chat.SendMessage(cmd);
+            }
+        }
+
         private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
@@ -454,7 +477,7 @@ namespace Dalamud.FindAnything
 
         private void FrameworkOnUpdate(Framework framework)
         {
-            if (Input.Disabled)
+            if (Input.Disabled || Input == null)
                 return;
             
             Input.Update();
@@ -694,6 +717,24 @@ namespace Dalamud.FindAnything
                             {
                                 Kind = kind
                             });
+                        }
+                    }
+
+                    foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && UnlocksCache.UnlockedEmoteKeys.Contains(x.RowId)))
+                    {
+                        var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
+
+                        if (text.Searchable.Contains(term))
+                        {
+                            cResults.Add(new EmoteSearchResult
+                            {
+                                Name = text.Display,
+                                SlashCommand = emoteRow.TextCommand.Value.Command.RawString,
+                                Icon = TexCache.EmoteIcons[emoteRow.RowId]
+                            });
+                            
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
                         }
                     }
                 }

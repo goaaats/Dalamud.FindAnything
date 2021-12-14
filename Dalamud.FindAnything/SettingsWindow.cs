@@ -23,6 +23,7 @@ public class SettingsWindow : Window
     private VirtualKey comboKey;
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
+    private bool emoteAlwaysMotion;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -41,6 +42,7 @@ public class SettingsWindow : Window
         comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
+        this.emoteAlwaysMotion = FindAnythingPlugin.Configuration.EmoteAlwaysMotion;
         base.OnOpen();
     }
 
@@ -53,7 +55,7 @@ public class SettingsWindow : Window
         ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
         ImGui.CheckboxFlags("Search in other Plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
 
-        ImGuiHelpers.ScaledDummy(30);
+        ImGuiHelpers.ScaledDummy(20);
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "How to open");
 
@@ -86,18 +88,19 @@ public class SettingsWindow : Window
                 throw new ArgumentOutOfRangeException();
         }
         
-        ImGuiHelpers.ScaledDummy(30);
+        ImGuiHelpers.ScaledDummy(20);
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro Links");
         ImGui.TextWrapped("Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
 
         DrawMacrosSection();
         
-        ImGuiHelpers.ScaledDummy(30);
+        ImGuiHelpers.ScaledDummy(20);
         
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Others");
 
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
+        ImGui.Checkbox("Always use emotes as motion-only", ref this.emoteAlwaysMotion);
         
         ImGuiHelpers.ScaledDummy(10);
 
@@ -115,6 +118,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
+            FindAnythingPlugin.Configuration.EmoteAlwaysMotion = this.emoteAlwaysMotion;
 
             FindAnythingPlugin.Configuration.Save();
 

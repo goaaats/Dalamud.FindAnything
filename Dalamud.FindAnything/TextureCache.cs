@@ -18,6 +18,7 @@ namespace Dalamud.FindAnything
         public IReadOnlyDictionary<uint, TextureWrap> MainCommandIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> GeneralActionIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> ContentTypeIcons { get; init; }
+        public IReadOnlyDictionary<uint, TextureWrap> EmoteIcons { get; init; }
 
         public Dictionary<int, TextureWrap> MacroIcons { get; private set; }
 
@@ -55,6 +56,17 @@ namespace Dalamud.FindAnything
                 contentTypes.Add(cType.RowId, data!.GetImGuiTextureHqIcon((uint) cType.Icon)!);
             }
             ContentTypeIcons = contentTypes;
+            
+            var emotes = new Dictionary<uint, TextureWrap>();
+            foreach (var emote in data.GetExcelSheet<Emote>()!)
+            {
+                var icon = data!.GetImGuiTextureHqIcon((uint)emote.Icon);
+                if (icon == null)
+                    continue;
+                
+                emotes.Add(emote.RowId, icon);
+            }
+            EmoteIcons = emotes;
 
             AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;
@@ -83,12 +95,35 @@ namespace Dalamud.FindAnything
 
         public void Dispose()
         {
-            foreach (var mainCommandIcon in MainCommandIcons)
+            foreach (var icon in MainCommandIcons)
             {
-                mainCommandIcon.Value.Dispose();
+                icon.Value.Dispose();
             }
-
+            
+            foreach (var icon in GeneralActionIcons)
+            {
+                icon.Value.Dispose();
+            }
+            
+            foreach (var icon in ContentTypeIcons)
+            {
+                icon.Value.Dispose();
+            }
+            
+            foreach (var icon in EmoteIcons)
+            {
+                icon.Value.Dispose();
+            }
+            
+            foreach (var icon in MacroIcons)
+            {
+                icon.Value.Dispose();
+            }
+            
+            WikiIcon.Dispose();
             AetheryteIcon.Dispose();
+            PluginInstallerIcon.Dispose();
+            LogoutIcon.Dispose();
         }
     }
 }
