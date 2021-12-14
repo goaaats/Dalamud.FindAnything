@@ -17,7 +17,8 @@ namespace Dalamud.FindAnything
 
         public IReadOnlyDictionary<uint, TextureWrap> MainCommandIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> GeneralActionIcons { get; init; }
-        
+        public IReadOnlyDictionary<uint, TextureWrap> ContentTypeIcons { get; init; }
+
         public Dictionary<int, TextureWrap> MacroIcons { get; private set; }
 
         public TextureWrap AetheryteIcon { get; init; }
@@ -44,6 +45,16 @@ namespace Dalamud.FindAnything
                 generalActions.Add(action.RowId, data!.GetImGuiTextureHqIcon((uint) action.Icon)!);
             }
             GeneralActionIcons = generalActions;
+            
+            var contentTypes = new Dictionary<uint, TextureWrap>();
+            foreach (var cType in data.GetExcelSheet<ContentType>()!)
+            {
+                if (cType.Icon == 0)
+                    continue;
+                
+                contentTypes.Add(cType.RowId, data!.GetImGuiTextureHqIcon((uint) cType.Icon)!);
+            }
+            ContentTypeIcons = contentTypes;
 
             AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;

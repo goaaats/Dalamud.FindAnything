@@ -87,8 +87,8 @@ public class SettingsWindow : Window
         ImGuiHelpers.ScaledDummy(30);
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro Links");
-        ImGui.TextWrapped("Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.");
-        
+        ImGui.TextWrapped("Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
+
         DrawMacrosSection();
         
         ImGuiHelpers.ScaledDummy(10);
@@ -225,11 +225,11 @@ public class SettingsWindow : Window
     {
         if (ImGui.BeginCombo(text, chosen.ToString()))
         {
-            foreach (var key in Enum.GetValues<VirtualKey>())
+            foreach (var key in Enum.GetValues<VirtualKey>().Where(x => x != VirtualKey.LBUTTON))
             {
                 if (ImGui.Selectable(key.ToString(), key == chosen))
                 {
-                    chosen = (VirtualKey) key;
+                    chosen = key;
                 }
             }
 

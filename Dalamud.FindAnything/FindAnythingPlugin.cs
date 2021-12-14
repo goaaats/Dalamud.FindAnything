@@ -53,11 +53,14 @@ namespace Dalamud.FindAnything
         [PluginService] public static ToastGui ToastGui { get; private set; }
         [PluginService] public static Dalamud.Game.ClientState.Conditions.Condition Condition { get; private set; }
         [PluginService] public static AetheryteList Aetheryes { get; private set; }
+        [PluginService] public static SigScanner TargetScanner { get; private set; }
 
         public static TextureCache TexCache { get; private set; }
         private static SearchDatabase SearchDatabase { get; set; }
         private static AetheryteManager AetheryteManager { get; set; }
         private static DalamudReflector DalamudReflector { get; set; }
+        private static UnlocksCache UnlocksCache { get; set; }
+        private static Input Input { get; set; }
 
         private bool finderOpen = false;
         private static string searchTerm = string.Empty;
@@ -353,7 +356,7 @@ namespace Dalamud.FindAnything
         private class MacroLinkSearchResult : ISearchResult
         {
             public string CatName => "Macros";
-            public string Name => Entry.SearchName;
+            public string Name => Entry.SearchName.Split(';', StringSplitOptions.TrimEntries).First();
             public TextureWrap? Icon
             {
                 get
@@ -372,6 +375,21 @@ namespace Dalamud.FindAnything
             public unsafe void Selected()
             {
                 RaptureShellModule.Instance->ExecuteMacro((Entry.Shared ? RaptureMacroModule.Instance->Shared : RaptureMacroModule.Instance->Individual)[Entry.Id]);
+            }
+        }
+        
+        private class DutySearchResult : ISearchResult
+        {
+            public string CatName { get; set; }
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public bool CloseFinder => true;
+            
+            public uint DataKey { get; set; }
+
+            public void Selected()
+            {
+                xivCommon.Functions.DutyFinder.OpenDuty(DataKey);
             }
         }
 
@@ -413,11 +431,18 @@ namespace Dalamud.FindAnything
 
             xivCommon = new XivCommonBase();
             DalamudReflector = DalamudReflector.Load();
+            UnlocksCache = UnlocksCache.Load();
+            Input = new Input();
         }
 
         private void FrameworkOnUpdate(Framework framework)
         {
-            if (Keys[VirtualKey.ESCAPE])
+            if (Input.Disabled)
+                return;
+            
+            Input.Update();
+            
+            if (Input.IsDown(VirtualKey.ESCAPE))
             {
                 CloseFinder();
             }
@@ -426,7 +451,7 @@ namespace Dalamud.FindAnything
                 switch (Configuration.Open)
                 {
                     case Configuration.OpenMode.ShiftShift:
-                        var shiftDown = Keys[Configuration.ShiftShiftKey];
+                        var shiftDown = Input.IsDown(Configuration.ShiftShiftKey);
 
                         if (shiftDown && !shiftArmed)
                         {
@@ -458,8 +483,8 @@ namespace Dalamud.FindAnything
 
                         break;
                     case Configuration.OpenMode.Combo:
-                        var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Keys[Configuration.ComboModifier];
-                        var key = Configuration.ComboKey == VirtualKey.NO_KEY || Keys[Configuration.ComboKey];
+                        var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier);
+                        var key = Configuration.ComboKey == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboKey);
                         
                         if (mod && key)
                         {
@@ -498,6 +523,20 @@ namespace Dalamud.FindAnything
                 {
                     DalamudReflector.RefreshPlugins();
                     
+                    if (!illegalState)
+                    {
+                        foreach (var macroLink in Configuration.MacroLinks)
+                        {
+                            if (macroLink.SearchName.ToLower().Contains(term))
+                            {
+                                cResults.Add(new MacroLinkSearchResult
+                                {
+                                    Entry = macroLink,
+                                });
+                            }
+                        }
+                    }
+                    
                     if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !illegalState)
                     {
                         foreach (var aetheryte in Aetheryes)
@@ -513,6 +552,47 @@ namespace Dalamud.FindAnything
                                     TerriName = terriName.Display
                                 });
 
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
+                        }
+                    }
+
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Duty) && !illegalState)
+                    {
+                        foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
+                        {
+                            if (!UnlocksCache.UnlockedDutyKeys.Contains(cfc.Key))
+                                continue;
+                            
+                            var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(cfc.Key);
+                            
+                            if (row == null || row.ContentType == null)
+                                continue;
+
+                            switch (row.ContentType.Row)
+                            {
+                                case 0: // Invalid
+                                case 3: // Guildhests
+                                case 7: // Quest Battles
+                                case 8: // FATEs
+                                case 9: // Treasure Hunts
+                                case 20: // Novice Hall
+                                case 21: // DD
+                                case 26: // Eureka
+                                    continue;
+                            }
+
+                            if (cfc.Value.Searchable.Contains(term))
+                            {
+                                cResults.Add(new DutySearchResult
+                                {
+                                    CatName = row.ContentType?.Value?.Name ?? "Duty",
+                                    DataKey = cfc.Key,
+                                    Name = cfc.Value.Display,
+                                    Icon = TexCache.ContentTypeIcons[row.ContentType.Row],
+                                });
+                            }
+                            
                             if (cResults.Count > MAX_TO_SEARCH)
                                 break;
                         }
@@ -547,7 +627,8 @@ namespace Dalamud.FindAnything
 
                     if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction) && !illegalState)
                     {
-                        var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176);
+                        var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
+                        var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
                         
                         foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
                         {
@@ -556,7 +637,7 @@ namespace Dalamud.FindAnything
                                 continue;
 
                             // Skip Materia Melding/Advanced Material Melding, based on what is unlocked
-                            if (hasAdvancedMelding && generalAction.Key is 12)
+                            if ((!hasMelding || hasAdvancedMelding) && generalAction.Key is 12)
                                 continue;
                             if (!hasAdvancedMelding && generalAction.Key is 13)
                                 continue;
@@ -585,20 +666,6 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (!illegalState)
-                    {
-                        foreach (var macroLink in Configuration.MacroLinks)
-                        {
-                            if (macroLink.SearchName.ToLower().Contains(term))
-                            {
-                                cResults.Add(new MacroLinkSearchResult
-                                {
-                                    Entry = macroLink,
-                                });
-                            }
-                        }
-                    }
-                    
                     foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
                     {
                         if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))
@@ -753,7 +820,10 @@ namespace Dalamud.FindAnything
             if (ClientState.LocalPlayer == null)
                 return;
 #endif
+            if (this.finderOpen == true)
+                return;
             
+            UnlocksCache.Refresh();
             finderOpen = true;
         }
 
@@ -824,8 +894,9 @@ namespace Dalamud.FindAnything
             ImGui.Text(FontAwesomeIcon.Search.ToIconString());
             ImGui.PopFont();
 
-            if (!ImGui.IsWindowFocused() || ImGui.IsKeyDown((int) VirtualKey.ESCAPE))
+            if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown((int) VirtualKey.ESCAPE))
             {
+                PluginLog.Verbose("Focus loss or escape");
                 closeFinder = true;
             }
 
@@ -894,11 +965,17 @@ namespace Dalamud.FindAnything
                     }
 
                     framesSinceLastKbChange++;
+                    var wasClick = false;
 
                     for (var i = 0; i < results.Length; i++)
                     {
                         var result = results[i];
-                        ImGui.Selectable($"{result.Name}", i == selectedIndex, ImGuiSelectableFlags.None, new Vector2(childSize.X, textSize.Y));
+                        if (ImGui.Selectable($"{result.Name}", i == selectedIndex, ImGuiSelectableFlags.None,
+                                new Vector2(childSize.X, textSize.Y)))
+                        {
+                            PluginLog.Information("Selectable click");
+                            wasClick = true;
+                        }
 
                         var thisTextSize = ImGui.CalcTextSize(result.Name);
 
@@ -925,7 +1002,7 @@ namespace Dalamud.FindAnything
                         }
                     }
                     
-                    if (ImGui.IsKeyPressed((int) VirtualKey.RETURN))
+                    if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || wasClick)
                     {
                         closeFinder = results[selectedIndex].CloseFinder;
                         results[selectedIndex].Selected();
