@@ -583,6 +583,7 @@ namespace Dalamud.FindAnything
                             if (row == null || row.ContentType == null)
                                 continue;
 
+                            /*
                             switch (row.ContentType.Row)
                             {
                                 case 0: // Invalid
@@ -595,6 +596,11 @@ namespace Dalamud.FindAnything
                                 case 26: // Eureka
                                     continue;
                             }
+                            */
+                            
+                            // Only include dungeon, trials, raids, ultimates
+                            if (row.ContentType.Row is not (2 or 4 or 5 or 28))
+                                continue;
 
                             if (cfc.Value.Searchable.Contains(term))
                             {
