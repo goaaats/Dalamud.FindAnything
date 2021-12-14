@@ -27,6 +27,7 @@ namespace Dalamud.FindAnything
         public TextureWrap PluginInstallerIcon { get; init; }
         public TextureWrap LogoutIcon { get; init; }
         public TextureWrap EmoteIcon { get; init; }
+        public TextureWrap HintIcon { get; set; }
 
         private TextureCache(UiBuilder uiBuilder, DataManager data)
         {
@@ -73,6 +74,7 @@ namespace Dalamud.FindAnything
             PluginInstallerIcon = data.GetImGuiTextureHqIcon(066472)!;
             LogoutIcon = data.GetImGuiTextureHqIcon(066403)!;
             EmoteIcon = data.GetImGuiTextureHqIcon(066420)!;
+            HintIcon = data.GetImGuiTextureHqIcon(066453)!;
             
             ReloadMacroIcons();
         }
@@ -126,6 +128,7 @@ namespace Dalamud.FindAnything
             PluginInstallerIcon.Dispose();
             LogoutIcon.Dispose();
             EmoteIcon.Dispose();
+            HintIcon.Dispose();
         }
     }
 }

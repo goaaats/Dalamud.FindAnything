@@ -65,6 +65,18 @@ namespace Dalamud.FindAnything
         public EmoteMotionMode EmoteMode { get; set; } = EmoteMotionMode.Default;
         public bool ShowEmoteCommand { get; set; } = false;
 
+        public HintKind HintLevel { get; set; } = HintKind.HintTyping;
+
+        public enum HintKind
+        {
+            HintTyping,
+            HintEnter,
+            HintUpDown,
+            HintTeleport,
+            HintEmoteDuty,
+            HintGameCmd,
+        }
+
         public enum EmoteMotionMode
         {
             Default,

@@ -490,6 +490,32 @@ namespace Dalamud.FindAnything
                 emoteRes.Selected();
             }
         }
+        
+        private class HintResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+
+            public string Name => HintLevel switch
+            {
+                Configuration.HintKind.HintTyping => "Just start typing to search!",
+                Configuration.HintKind.HintEnter => "Press enter to select results!",
+                Configuration.HintKind.HintUpDown => "Press the up and down buttons to scroll!",
+                Configuration.HintKind.HintTeleport => "Search for aetherytes or zone names!",
+                Configuration.HintKind.HintEmoteDuty =>  "Search for emotes or duties!",
+                Configuration.HintKind.HintGameCmd => "Search for game commands, like timers!",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            
+            public TextureWrap? Icon => TexCache.HintIcon;
+            public bool CloseFinder => false;
+            
+            public Configuration.HintKind HintLevel { get; set; }
+            
+            public void Selected()
+            {
+                // ignored
+            }
+        }
 
         private static ISearchResult[]? results;
 
@@ -607,6 +633,7 @@ namespace Dalamud.FindAnything
             if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
             {
                 results = null;
+                
                 return;
             }
 
@@ -945,6 +972,12 @@ namespace Dalamud.FindAnything
         private void OnCommand(string command, string args)
         {
             settingsWindow.IsOpen = true;
+
+            if (args.Contains("reset"))
+            {
+                Configuration.HintLevel = Configuration.HintKind.HintTyping;
+                Configuration.Save();
+            }
         }
 
         private void OpenFinder()
@@ -955,6 +988,20 @@ namespace Dalamud.FindAnything
 #endif
             if (this.finderOpen == true)
                 return;
+            
+            if (Configuration.HintLevel != Configuration.HintKind.HintGameCmd + 1)
+            {
+                var nextHint = Configuration.HintLevel++;
+                PluginLog.Information($"Hint: {nextHint}");
+                results = new ISearchResult[]
+                {
+                    new HintResult
+                    {
+                        HintLevel = nextHint
+                    }
+                };
+                Configuration.Save();
+            }
             
             UnlocksCache.Refresh();
             finderOpen = true;
