@@ -540,17 +540,14 @@ namespace Dalamud.FindAnything
                 {
                     DalamudReflector.RefreshPlugins();
                     
-                    if (!illegalState)
+                    foreach (var macroLink in Configuration.MacroLinks)
                     {
-                        foreach (var macroLink in Configuration.MacroLinks)
+                        if (macroLink.SearchName.ToLower().Contains(term))
                         {
-                            if (macroLink.SearchName.ToLower().Contains(term))
+                            cResults.Add(new MacroLinkSearchResult
                             {
-                                cResults.Add(new MacroLinkSearchResult
-                                {
-                                    Entry = macroLink,
-                                });
-                            }
+                                Entry = macroLink,
+                            });
                         }
                     }
                     
