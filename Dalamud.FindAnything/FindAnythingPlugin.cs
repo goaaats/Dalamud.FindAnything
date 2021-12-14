@@ -723,13 +723,14 @@ namespace Dalamud.FindAnything
                     foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && UnlocksCache.UnlockedEmoteKeys.Contains(x.RowId)))
                     {
                         var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
+                        var slashCmd = emoteRow.TextCommand.Value!;
 
-                        if (text.Searchable.Contains(term))
+                        if (text.Searchable.Contains(term) || slashCmd.Command.RawString.Contains(term) || slashCmd.Alias.RawString.Contains(term))
                         {
                             cResults.Add(new EmoteSearchResult
                             {
                                 Name = text.Display,
-                                SlashCommand = emoteRow.TextCommand.Value.Command.RawString,
+                                SlashCommand = slashCmd.Command.RawString,
                                 Icon = TexCache.EmoteIcons[emoteRow.RowId]
                             });
                             
