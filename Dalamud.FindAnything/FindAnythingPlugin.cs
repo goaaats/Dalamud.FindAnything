@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Reflection;
 using System.Web;
 using Dalamud.Data;
-using Dalamud.FindAnything;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Game.ClientState.Conditions;
@@ -26,7 +21,6 @@ using Dalamud.Logging;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
@@ -83,10 +77,11 @@ namespace Dalamud.FindAnything
             Top,
             Wiki,
             WikiSiteChoicer,
+            EmoteModeChoicer,
         }
 
         private static SearchMode searchMode = SearchMode.Top;
-        private static WikiSearchResult? wikiSiteChoicerResult;
+        private static ISearchResult? choicerTempResult;
 
         private interface ISearchResult
         {
@@ -118,7 +113,7 @@ namespace Dalamud.FindAnything
             
             public void Selected()
             {
-                wikiSiteChoicerResult = this;
+                choicerTempResult = this;
                 SwitchSearchMode(SearchMode.WikiSiteChoicer);
             }
         }
@@ -149,28 +144,30 @@ namespace Dalamud.FindAnything
             
             public void Selected()
             {
-                if (wikiSiteChoicerResult == null)
+                if (choicerTempResult == null)
                     throw new Exception("wikiSiteChoicerResult was null!");
+
+                var wikiResult = choicerTempResult as WikiSearchResult;
 
                 switch (Site)
                 {
                     case SiteChoice.GamerEscape:
                     {
-                        OpenWikiPage(wikiSiteChoicerResult.Name);
+                        OpenWikiPage(choicerTempResult.Name);
                     }
                         break;
                     case SiteChoice.GarlandTools:
                     {
-                        switch (wikiSiteChoicerResult.DataCat)
+                        switch (wikiResult.DataCat)
                         {
                             case WikiSearchResult.DataCategory.Instance:
-                                Util.OpenLink($"https://garlandtools.org/db/#instance/{wikiSiteChoicerResult.DataKey}");
+                                Util.OpenLink($"https://garlandtools.org/db/#instance/{wikiResult.DataKey}");
                                 break;
                             case WikiSearchResult.DataCategory.Quest:
-                                Util.OpenLink($"https://garlandtools.org/db/#quest/{wikiSiteChoicerResult.DataKey}");
+                                Util.OpenLink($"https://garlandtools.org/db/#quest/{wikiResult.DataKey}");
                                 break;
                             case WikiSearchResult.DataCategory.Item:
-                                Util.OpenLink($"https://garlandtools.org/db/#item/{wikiSiteChoicerResult.DataKey}");
+                                Util.OpenLink($"https://garlandtools.org/db/#item/{wikiResult.DataKey}");
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -179,7 +176,7 @@ namespace Dalamud.FindAnything
                         break;
                     case SiteChoice.TeamCraft:
                     {
-                        Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{wikiSiteChoicerResult.DataKey}");
+                        Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{wikiResult.DataKey}");
                     }
                         break;
                 }
@@ -417,19 +414,69 @@ namespace Dalamud.FindAnything
             public TextureWrap? Icon { get; set; }
             public string SlashCommand { get; set; }
             
-            // TODO: optional submenu for only-motion
-            public bool CloseFinder => true;
+            public bool CloseFinder => Configuration.EmoteMode != Configuration.EmoteMotionMode.Ask;
+
+            public Configuration.EmoteMotionMode MotionMode { get; set; } = Configuration.EmoteMode;
             
             public void Selected()
             {
+                if (MotionMode == Configuration.EmoteMotionMode.Ask)
+                {
+                    choicerTempResult = this;
+                    SwitchSearchMode(SearchMode.EmoteModeChoicer);
+                    return;
+                }
+                
                 var cmd = SlashCommand;
                 if (!cmd.StartsWith("/"))
                     throw new Exception($"SlashCommand prop does not actually start with a slash: {SlashCommand}");
 
-                if (Configuration.EmoteAlwaysMotion)
+                if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
                     cmd += " motion";
                 
                 xivCommon.Functions.Chat.SendMessage(cmd);
+            }
+        }
+
+        private class EmoteModeChoicerResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+
+            public string Name => Choice switch
+            {
+                EmoteModeChoice.Default => "Default Choice",
+                EmoteModeChoice.MotionOnly => "Only Motion",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            public TextureWrap? Icon => TexCache.EmoteIcon;
+            public bool CloseFinder => true;
+
+            public enum EmoteModeChoice
+            {
+                Default,
+                MotionOnly,
+            }
+            
+            public EmoteModeChoice Choice { get; set; }
+            
+            public void Selected()
+            {
+                var emoteRes = choicerTempResult as EmoteSearchResult;
+
+                switch (this.Choice)
+                {
+                    case EmoteModeChoice.Default:
+                        emoteRes.MotionMode = Configuration.EmoteMotionMode.Default;
+                        break;
+                    case EmoteModeChoice.MotionOnly:
+                        emoteRes.MotionMode = Configuration.EmoteMotionMode.AlwaysMotion;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                
+                emoteRes.Selected();
             }
         }
 
@@ -546,7 +593,7 @@ namespace Dalamud.FindAnything
         
         private static void UpdateSearchResults()
         {
-            if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer)
+            if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
             {
                 results = null;
                 return;
@@ -814,11 +861,12 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.WikiSiteChoicer:
                 {
+                    var wikiResult = choicerTempResult as WikiSearchResult;
                     if (!term.IsNullOrEmpty())
                     {
                         foreach (var kind in Enum.GetValues<WikiSiteChoicerResult.SiteChoice>())
                         {
-                            if (kind == WikiSiteChoicerResult.SiteChoice.TeamCraft && wikiSiteChoicerResult.DataCat == WikiSearchResult.DataCategory.Item)
+                            if (kind == WikiSiteChoicerResult.SiteChoice.TeamCraft && wikiResult.DataCat == WikiSearchResult.DataCategory.Item)
                                 continue;
                             
                             if (kind.ToString().ToLower().Contains(term))
@@ -843,13 +891,25 @@ namespace Dalamud.FindAnything
                             Site = WikiSiteChoicerResult.SiteChoice.GarlandTools
                         });
 
-                        if (wikiSiteChoicerResult.DataCat == WikiSearchResult.DataCategory.Item)
+                        if (wikiResult.DataCat == WikiSearchResult.DataCategory.Item)
                         {
                             cResults.Add(new WikiSiteChoicerResult
                             {
                                 Site = WikiSiteChoicerResult.SiteChoice.TeamCraft
                             });
                         }
+                    }
+                }
+                    break;
+
+                case SearchMode.EmoteModeChoicer:
+                {
+                    foreach (var choice in Enum.GetValues<EmoteModeChoicerResult.EmoteModeChoice>())
+                    {
+                        cResults.Add(new EmoteModeChoicerResult
+                        {
+                            Choice = choice,
+                        });
                     }
                 }
                     break;
@@ -895,7 +955,7 @@ namespace Dalamud.FindAnything
             searchTerm = string.Empty;
             selectedIndex = 0;
             searchMode = SearchMode.Top;
-            wikiSiteChoicerResult = null;
+            choicerTempResult = null;
             UpdateSearchResults();
         }
 
@@ -933,7 +993,8 @@ namespace Dalamud.FindAnything
             {
                 SearchMode.Top => "Type to search...",
                 SearchMode.Wiki => "Search in wikis...",
-                SearchMode.WikiSiteChoicer => $"Choose site for \"{wikiSiteChoicerResult.Name}\"...",
+                SearchMode.WikiSiteChoicer => $"Choose site for \"{choicerTempResult.Name}\"...",
+                SearchMode.EmoteModeChoicer => $"Choose emote mode for \"{choicerTempResult.Name}\"...",
                 _ => throw new ArgumentOutOfRangeException()
             };
 

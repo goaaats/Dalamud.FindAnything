@@ -62,7 +62,14 @@ namespace Dalamud.FindAnything
         public List<MacroEntry> MacroLinks { get; set; } = new();
 
         public bool DoAetheryteGilCost { get; set; } = false;
-        public bool EmoteAlwaysMotion { get; set; } = false;
+        public EmoteMotionMode EmoteMode { get; set; } = EmoteMotionMode.Default;
+
+        public enum EmoteMotionMode
+        {
+            Default,
+            Ask,
+            AlwaysMotion,
+        }
 
         // the below exist just to make saving less cumbersome
 

@@ -23,7 +23,7 @@ public class SettingsWindow : Window
     private VirtualKey comboKey;
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
-    private bool emoteAlwaysMotion;
+    private Configuration.EmoteMotionMode emoteMotionMode;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -42,7 +42,7 @@ public class SettingsWindow : Window
         comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
-        this.emoteAlwaysMotion = FindAnythingPlugin.Configuration.EmoteAlwaysMotion;
+        this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         base.OnOpen();
     }
 
@@ -100,7 +100,19 @@ public class SettingsWindow : Window
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Others");
 
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
-        ImGui.Checkbox("Always use emotes as motion-only", ref this.emoteAlwaysMotion);
+
+        if (ImGui.BeginCombo("Emote Motion-Only?", this.emoteMotionMode.ToString()))
+        {
+            foreach (var key in Enum.GetValues<Configuration.EmoteMotionMode>())
+            {
+                if (ImGui.Selectable(key.ToString(), key == this.emoteMotionMode))
+                {
+                    this.emoteMotionMode = key;
+                }
+            }
+
+            ImGui.EndCombo();
+        }
         
         ImGuiHelpers.ScaledDummy(10);
 
@@ -118,7 +130,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
-            FindAnythingPlugin.Configuration.EmoteAlwaysMotion = this.emoteAlwaysMotion;
+            FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
 
             FindAnythingPlugin.Configuration.Save();
 
