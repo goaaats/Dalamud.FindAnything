@@ -63,6 +63,7 @@ namespace Dalamud.FindAnything
 
         public bool DoAetheryteGilCost { get; set; } = false;
         public EmoteMotionMode EmoteMode { get; set; } = EmoteMotionMode.Default;
+        public bool ShowEmoteCommand { get; set; } = false;
 
         public enum EmoteMotionMode
         {

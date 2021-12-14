@@ -409,7 +409,18 @@ namespace Dalamud.FindAnything
 
         private class EmoteSearchResult : ISearchResult
         {
-            public string CatName => "Emote";
+            public string CatName
+            {
+                get
+                {
+                    var cat = "Emote";
+                    if (Configuration.ShowEmoteCommand)
+                        cat += $" ({SlashCommand})";
+
+                    return cat;
+                }
+            }
+            
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public string SlashCommand { get; set; }

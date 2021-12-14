@@ -24,6 +24,7 @@ public class SettingsWindow : Window
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
     private Configuration.EmoteMotionMode emoteMotionMode;
+    private bool showEmoteCommand;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -34,15 +35,16 @@ public class SettingsWindow : Window
 
     public override void OnOpen()
     {
-        flags = (uint) FindAnythingPlugin.Configuration.ToSearchV2;
-        openMode = FindAnythingPlugin.Configuration.Open;
-        shiftShiftKey = FindAnythingPlugin.Configuration.ShiftShiftKey;
-        shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
-        comboKey = FindAnythingPlugin.Configuration.ComboKey;
-        comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
+        this.flags = (uint) FindAnythingPlugin.Configuration.ToSearchV2;
+        this.openMode = FindAnythingPlugin.Configuration.Open;
+        this.shiftShiftKey = FindAnythingPlugin.Configuration.ShiftShiftKey;
+        this.shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
+        this.comboKey = FindAnythingPlugin.Configuration.ComboKey;
+        this.comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
+        this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
         base.OnOpen();
     }
 
@@ -113,6 +115,8 @@ public class SettingsWindow : Window
 
             ImGui.EndCombo();
         }
+
+        ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
         
         ImGuiHelpers.ScaledDummy(10);
 
@@ -131,6 +135,7 @@ public class SettingsWindow : Window
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
+            FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
 
             FindAnythingPlugin.Configuration.Save();
 
