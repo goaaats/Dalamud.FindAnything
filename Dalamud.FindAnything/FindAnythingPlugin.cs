@@ -1174,7 +1174,7 @@ namespace Dalamud.FindAnything
                         if (result.Icon != null)
                         {
                             ImGui.SameLine(size.X - (50 * ImGuiHelpers.GlobalScale));
-                            ImGui.Image(result.Icon.ImGuiHandle, new Vector2(16, 16) * ImGuiHelpers.GlobalScale);
+                            ImGui.Image(result.Icon.ImGuiHandle, new Vector2(17, 17) * ImGuiHelpers.GlobalScale);
                         }
                     }
                     

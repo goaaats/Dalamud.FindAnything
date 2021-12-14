@@ -1,12 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Authors></Authors>
-    <Company></Company>
-    <Version>0.0.0.8</Version>
+    <Authors>goat</Authors>
+    <Version>0.0.0.9</Version>
     <Description>A sample plugin.</Description>
-    <Copyright></Copyright>
-    <PackageProjectUrl>https://github.com/goatcorp/SamplePlugin</PackageProjectUrl>
+    <Copyright>(c) 2021 goaaats</Copyright>
+    <PackageProjectUrl>https://github.com/goaaats/Dalamud.FindAnything</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
