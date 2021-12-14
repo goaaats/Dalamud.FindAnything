@@ -1026,16 +1026,16 @@ namespace Dalamud.FindAnything
                     }
 
                     framesSinceLastKbChange++;
-                    var wasClick = false;
+                    var clickedIndex= -1;
 
                     for (var i = 0; i < results.Length; i++)
                     {
                         var result = results[i];
-                        if (ImGui.Selectable($"{result.Name}", i == selectedIndex, ImGuiSelectableFlags.None,
+                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, ImGuiSelectableFlags.None,
                                 new Vector2(childSize.X, textSize.Y)))
                         {
                             PluginLog.Information("Selectable click");
-                            wasClick = true;
+                            clickedIndex = i;
                         }
 
                         var thisTextSize = ImGui.CalcTextSize(result.Name);
@@ -1063,10 +1063,11 @@ namespace Dalamud.FindAnything
                         }
                     }
                     
-                    if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || wasClick)
+                    if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || clickedIndex != -1)
                     {
-                        closeFinder = results[selectedIndex].CloseFinder;
-                        results[selectedIndex].Selected();
+                        var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
+                        closeFinder = results[index].CloseFinder;
+                        results[index].Selected();
                     }
                 }
 
