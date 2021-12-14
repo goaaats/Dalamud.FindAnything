@@ -517,6 +517,24 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class ChatCommandSearchResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+            public string Name => $"Run chat command \"{Command}\"";
+            public TextureWrap? Icon => TexCache.ChatIcon;
+            public bool CloseFinder => true;
+            
+            public string Command { get; set; }
+            
+            public void Selected()
+            {
+                if (!Command.StartsWith("/"))
+                    throw new Exception("Command in ChatCommandSearchResult didn't start with slash!");
+                
+                xivCommon.Functions.Chat.SendMessage(Command);
+            }
+        }
+
         private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
@@ -957,6 +975,14 @@ namespace Dalamud.FindAnything
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+
+            if (!illegalState && searchTerm.StartsWith("/"))
+            {
+                cResults.Add(new ChatCommandSearchResult
+                {
+                    Command = searchTerm,
+                });
             }
 
             results = cResults.ToArray();
