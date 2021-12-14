@@ -983,22 +983,26 @@ namespace Dalamud.FindAnything
             ImGuiHelpers.ForceNextWindowMainViewport();
 
             var size = new Vector2(500, 40);
+            size *= ImGuiHelpers.GlobalScale;
+            
             var mainViewportSize = ImGuiHelpers.MainViewport.Size;
             var mainViewportMiddle = mainViewportSize / 2;
             var startPos = ImGuiHelpers.MainViewport.Pos + (mainViewportMiddle - (size / 2));
 
             startPos.Y -= 200;
 
+            var scaledFour = 4 * ImGuiHelpers.GlobalScale;
+
             if (results != null)
-                size.Y += Math.Min(results.Length, MAX_ONE_PAGE) * 21;
+                size.Y += Math.Min(results.Length, MAX_ONE_PAGE) * (21 * ImGuiHelpers.GlobalScale);
 
             ImGui.SetNextWindowPos(startPos);
             ImGui.SetNextWindowSize(size);
-            ImGui.SetNextWindowSizeConstraints(size, new Vector2(size.X, size.Y + 400));
+            ImGui.SetNextWindowSizeConstraints(size, new Vector2(size.X, size.Y + (400 * ImGuiHelpers.GlobalScale)));
 
             ImGui.Begin("###findeverything", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
-            ImGui.PushItemWidth(size.X - 45);
+            ImGui.PushItemWidth(size.X - (45 * ImGuiHelpers.GlobalScale));
 
             var searchHint = searchMode switch
             {
@@ -1009,12 +1013,15 @@ namespace Dalamud.FindAnything
                 _ => throw new ArgumentOutOfRangeException()
             };
 
+            var resetScroll = false;
+            
             if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchTerm, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
             {
                 UpdateSearchResults();
                 selectedIndex = 0;
                 framesSinceLastKbChange = 0;
+                resetScroll = true;
             }
 
             ImGui.PopItemWidth();
@@ -1036,8 +1043,8 @@ namespace Dalamud.FindAnything
 
             var textSize = ImGui.CalcTextSize("poop");
 
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8, 4));
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(4, 4));
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ImGuiHelpers.GlobalScale, scaledFour));
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(scaledFour, scaledFour));
 
             if (results != null && results.Length > 0)
             {
@@ -1113,22 +1120,22 @@ namespace Dalamud.FindAnything
 
                         var thisTextSize = ImGui.CalcTextSize(result.Name);
 
-                        ImGui.SameLine(thisTextSize.X + 4);
+                        ImGui.SameLine(thisTextSize.X + scaledFour);
 
                         ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
 
                         if (result.Icon != null)
                         {
-                            ImGui.SameLine(size.X - 50);
-                            ImGui.Image(result.Icon.ImGuiHandle, new Vector2(16, 16));
+                            ImGui.SameLine(size.X - (50 * ImGuiHelpers.GlobalScale));
+                            ImGui.Image(result.Icon.ImGuiHandle, new Vector2(16, 16) * ImGuiHelpers.GlobalScale);
                         }
                     }
                     
-                    if(isUp || isDown || isPgUp || isPgDn)
+                    if(isUp || isDown || isPgUp || isPgDn || resetScroll)
                     {
                         if (selectedIndex > 1)
                         {
-                            ImGui.SetScrollY((selectedIndex - 1) * (textSize.Y + 4));
+                            ImGui.SetScrollY((selectedIndex - 1) * (textSize.Y + scaledFour));
                         }
                         else
                         {
