@@ -204,7 +204,24 @@ namespace Dalamud.FindAnything
 
         private class AetheryteSearchResult : ISearchResult
         {
-            public string CatName => $"Aetherytes ({TerriName})";
+            public string CatName
+            {
+                get
+                {
+                    var name = "Aetherytes";
+                    if (Configuration.DoAetheryteGilCost)
+                    {
+                        name += $" ({TerriName} - {Data.GilCost} Gil)";
+                    }
+                    else
+                    {
+                        name += $" ({TerriName})";
+                    }
+
+                    return name;
+                }
+            }
+
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public AetheryteEntry Data { get; set; }

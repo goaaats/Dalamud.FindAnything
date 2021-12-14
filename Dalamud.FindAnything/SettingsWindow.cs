@@ -22,6 +22,7 @@ public class SettingsWindow : Window
     private VirtualKey comboModifierKey;
     private VirtualKey comboKey;
     private List<Configuration.MacroEntry> macros = new();
+    private bool aetheryteGilCost;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -39,6 +40,7 @@ public class SettingsWindow : Window
         comboKey = FindAnythingPlugin.Configuration.ComboKey;
         comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
+        this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         base.OnOpen();
     }
 
@@ -91,6 +93,12 @@ public class SettingsWindow : Window
 
         DrawMacrosSection();
         
+        ImGuiHelpers.ScaledDummy(30);
+        
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Others");
+
+        ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
+        
         ImGuiHelpers.ScaledDummy(10);
 
         if (ImGui.Button("Save"))
@@ -105,6 +113,8 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;
 
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
+
+            FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
 
             FindAnythingPlugin.Configuration.Save();
 
@@ -128,14 +138,6 @@ public class SettingsWindow : Window
         ImGui.SetColumnWidth(2, 160 + 5 * ImGuiHelpers.GlobalScale);
         ImGui.SetColumnWidth(3, 160 + 5 * ImGuiHelpers.GlobalScale);
         ImGui.SetColumnWidth(4, 30 + 5 * ImGuiHelpers.GlobalScale);
-        /*
-        
-        ImGui.SetColumnWidth(1,
-            ImGui.GetWindowContentRegionWidth() - (18 + 16 + 14) - (5 + 45 + 26) * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(2, 16 + 45 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(2, 16 + 45 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(3, 14 + 26 * ImGuiHelpers.GlobalScale);
-        */
 
         ImGui.Separator();
 
