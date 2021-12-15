@@ -303,7 +303,7 @@ public class SettingsWindow : Window
         
         if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus))
         {
-            this.macros.Add(new Configuration.MacroEntry
+            this.macros.Insert(0, new Configuration.MacroEntry
             {
                 Id = 0,
                 SearchName = "New Macro",
