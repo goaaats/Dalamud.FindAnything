@@ -246,11 +246,11 @@ public class SettingsWindow : Window
 
     private void VirtualKeySelect(string text, ref VirtualKey chosen)
     {
-        if (ImGui.BeginCombo(text, chosen.ToString()))
+        if (ImGui.BeginCombo(text, chosen.GetFancyName()))
         {
             foreach (var key in Enum.GetValues<VirtualKey>().Where(x => x != VirtualKey.LBUTTON))
             {
-                if (ImGui.Selectable(key.ToString(), key == chosen))
+                if (ImGui.Selectable(key.GetFancyName(), key == chosen))
                 {
                     chosen = key;
                 }
