@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>goat</Authors>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.1</Version>
     <Description>Finder of anything</Description>
     <Copyright>(c) 2021 goaaats</Copyright>
     <PackageProjectUrl>https://github.com/goaaats/Dalamud.FindAnything</PackageProjectUrl>
@@ -24,6 +24,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
+    <AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
+    <PathMap>$(AppOutputBase)=C:\goatsoft\smile\</PathMap>
+  </PropertyGroup>
 
   <PropertyGroup>
     <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
