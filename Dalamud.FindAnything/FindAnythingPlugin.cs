@@ -390,7 +390,23 @@ namespace Dalamud.FindAnything
             
             public unsafe void Selected()
             {
-                RaptureShellModule.Instance->ExecuteMacro((Entry.Shared ? RaptureMacroModule.Instance->Shared : RaptureMacroModule.Instance->Individual)[Entry.Id]);
+                switch (Entry.Kind)
+                {
+                    case Configuration.MacroEntry.MacroEntryKind.Id:
+                        RaptureShellModule.Instance->ExecuteMacro((Entry.Shared ? RaptureMacroModule.Instance->Shared : RaptureMacroModule.Instance->Individual)[Entry.Id]);
+                        break;
+                    case Configuration.MacroEntry.MacroEntryKind.SingleLine:
+                        if (!Entry.Line.StartsWith("/") || Entry.Line.Length > 100)
+                        {
+                            PluginLog.Error("Invalid slash command:" + Entry.Line);
+                            return;
+                        }
+                        
+                        xivCommon.Functions.Chat.SendMessage(Entry.Line);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
         

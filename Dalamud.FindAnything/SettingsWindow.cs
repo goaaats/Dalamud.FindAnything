@@ -29,7 +29,7 @@ public class SettingsWindow : Window
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
         this.SizeCondition = ImGuiCond.Always;
-        this.Size = new Vector2(700, 550);
+        this.Size = new Vector2(850, 660);
         this.plugin = plugin;
     }
 
@@ -153,20 +153,23 @@ public class SettingsWindow : Window
 
     private void DrawMacrosSection()
     {
-        ImGui.Columns(5);
+        ImGui.Columns(6);
         ImGui.SetColumnWidth(0, 200 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(1, 80 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(2, 160 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(1, 140 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(2, 80 + 5 * ImGuiHelpers.GlobalScale);
         ImGui.SetColumnWidth(3, 160 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(4, 30 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(4, 160 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(5, 30 + 5 * ImGuiHelpers.GlobalScale);
 
         ImGui.Separator();
 
         ImGui.Text("Search Name");
         ImGui.NextColumn();
+        ImGui.Text("Kind");
+        ImGui.NextColumn();
         ImGui.Text("Shared");
         ImGui.NextColumn();
-        ImGui.Text("ID");
+        ImGui.Text("ID/Line");
         ImGui.NextColumn();
         ImGui.Text("Icon");
         ImGui.NextColumn();
@@ -181,7 +184,7 @@ public class SettingsWindow : Window
             ImGui.PushID($"macro_{macroNumber}");
 
             ImGui.SetNextItemWidth(-1);
-            
+
             var text = macro.SearchName;
             if (ImGui.InputText($"###macroSn", ref text, 100))
             {
@@ -190,25 +193,91 @@ public class SettingsWindow : Window
             
             ImGui.NextColumn();
 
-            var isShared = macro.Shared;
-            if (ImGui.Checkbox($"###macroSh", ref isShared))
+            if (ImGui.BeginCombo("###macroKnd", macro.Kind.ToString()))
             {
-                macro.Shared = isShared;
+                foreach (var macroEntryKind in Enum.GetValues<Configuration.MacroEntry.MacroEntryKind>())
+                {
+                    if (ImGui.Selectable(macroEntryKind.ToString(), macroEntryKind == macro.Kind))
+                    {
+                        macro.Kind = macroEntryKind;
+                    }
+                }
+                ImGui.EndCombo();
             }
+            
+            ImGui.NextColumn();
+
+            if (macro.Kind == Configuration.MacroEntry.MacroEntryKind.Id)
+            {
+                var isShared = macro.Shared;
+                if (ImGui.Checkbox($"###macroSh", ref isShared))
+                {
+                    macro.Shared = isShared;
+                }
+            }
+            else
+            {
+                ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.ParsedGrey);
+                ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ImGuiColors.ParsedGrey);
+                ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ImGuiColors.ParsedGrey);
+                ImGui.PushStyleColor(ImGuiCol.CheckMark, ImGuiColors.ParsedGrey);
+                
+                var isShared = false;
+                ImGui.Checkbox("###macroSh", ref isShared);
+                
+                ImGui.PopStyleColor(4);
+            }
+            
 
             ImGui.NextColumn();
 
-            var id = macro.Id;
-            if (ImGui.InputInt($"###macroId", ref id))
+            switch (macro.Kind)
             {
-                id = Math.Max(0, id);
-                id = Math.Min(99, id);
-                macro.Id = id;
+                case Configuration.MacroEntry.MacroEntryKind.Id:
+                    ImGui.SetNextItemWidth(-1);
+                    
+                    var id = macro.Id;
+                    if (ImGui.InputInt($"###macroId", ref id))
+                    {
+                        id = Math.Max(0, id);
+                        id = Math.Min(99, id);
+                        macro.Id = id;
+                    }
+                    
+                    break;
+                case Configuration.MacroEntry.MacroEntryKind.SingleLine:
+                    var line = macro.Line;
+                    line ??= string.Empty;
+                    var didColor = false;
+                    if (!line.StartsWith("/"))
+                    {
+                        didColor = true;
+                        ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
+                    }
+                    
+                    ImGui.SetNextItemWidth(-1);
+                    
+                    if (ImGui.InputText($"###macroId", ref line, 100))
+                    {
+                        macro.Line = line;
+                    }
+                    
+                    if (didColor)
+                    {
+                        ImGui.PopStyleColor();
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
             
             ImGui.NextColumn();
             
             var icon = macro.IconId;
+            
+            ImGui.SetNextItemWidth(-1);
+            
             if (ImGui.InputInt($"###macroIcon", ref icon))
             {
                 icon = Math.Max(0, icon);
@@ -217,6 +286,8 @@ public class SettingsWindow : Window
             
             ImGui.NextColumn();
 
+            this.macros[macroNumber] = macro;
+            
             if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash)) this.macros.RemoveAt(macroNumber);
 
             ImGui.PopID();
@@ -238,6 +309,7 @@ public class SettingsWindow : Window
                 SearchName = "New Macro",
                 Shared = false,
                 IconId = 066001,
+                Line = string.Empty,
             });
         }
 

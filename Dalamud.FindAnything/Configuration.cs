@@ -42,8 +42,16 @@ namespace Dalamud.FindAnything
         {
             public bool Shared { get; set; }
             public int Id { get; set; }
+            public string Line { get; set; } = string.Empty;
             public string SearchName { get; set; }
             public int IconId { get; set; }
+            public MacroEntryKind Kind { get; set; }
+            
+            public enum MacroEntryKind
+            {
+                Id,
+                SingleLine
+            }
 
             public MacroEntry()
             {
@@ -56,6 +64,8 @@ namespace Dalamud.FindAnything
                 Id = initial.Id;
                 SearchName = initial.SearchName;
                 IconId = initial.IconId;
+                Kind = initial.Kind;
+                Line = initial.Line;
             }
         }
 
