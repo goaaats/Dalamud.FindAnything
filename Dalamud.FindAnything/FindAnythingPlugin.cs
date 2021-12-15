@@ -639,13 +639,18 @@ namespace Dalamud.FindAnything
             }
         }
 
-        private static bool CheckIllegalState()
+        private static bool CheckInDuty()
         {
             return Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
-                   Condition[ConditionFlag.BoundByDuty95] || Condition[ConditionFlag.Occupied] ||
+                   Condition[ConditionFlag.BoundByDuty95];
+        }
+
+        private static bool CheckInEvent()
+        {
+            return Condition[ConditionFlag.Occupied] ||
                    Condition[ConditionFlag.OccupiedInCutSceneEvent];
         }
-        
+
         private static void UpdateSearchResults()
         {
             if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
@@ -656,7 +661,8 @@ namespace Dalamud.FindAnything
             }
 
             var term = searchTerm.ToLower();
-            var illegalState = CheckIllegalState();
+            var isInDuty = CheckInDuty();
+            var isInEvent = CheckInEvent();
 
             var cResults = new List<ISearchResult>();
 
@@ -677,7 +683,7 @@ namespace Dalamud.FindAnything
                         }
                     }
                     
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !illegalState)
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty)
                     {
                         foreach (var aetheryte in Aetheryes)
                         {
@@ -697,7 +703,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Duty) && !illegalState)
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Duty) && !isInDuty)
                     {
                         foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                         {
@@ -744,7 +750,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.MainCommand) && !illegalState)
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.MainCommand) && !isInEvent)
                     {
                         foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
                         {
@@ -771,7 +777,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction) && !illegalState)
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction) && !isInEvent)
                     {
                         var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
                         var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
@@ -823,26 +829,29 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && UnlocksCache.UnlockedEmoteKeys.Contains(x.RowId)))
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Emote) && !isInEvent)
                     {
-                        var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
-                        var slashCmd = emoteRow.TextCommand.Value!;
-                        var slashCmdMatch = slashCmd.Command.RawString.Contains(term) ||
-                                            slashCmd.Alias.RawString.Contains(term) ||
-                                            slashCmd.ShortCommand.RawString.Contains(term) ||
-                                            slashCmd.ShortAlias.RawString.Contains(term);
-
-                        if (text.Searchable.Contains(term) || slashCmdMatch)
+                        foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && UnlocksCache.UnlockedEmoteKeys.Contains(x.RowId)))
                         {
-                            cResults.Add(new EmoteSearchResult
+                            var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
+                            var slashCmd = emoteRow.TextCommand.Value!;
+                            var slashCmdMatch = slashCmd.Command.RawString.Contains(term) ||
+                                                slashCmd.Alias.RawString.Contains(term) ||
+                                                slashCmd.ShortCommand.RawString.Contains(term) ||
+                                                slashCmd.ShortAlias.RawString.Contains(term);
+
+                            if (text.Searchable.Contains(term) || slashCmdMatch)
                             {
-                                Name = text.Display,
-                                SlashCommand = slashCmd.Command.RawString,
-                                Icon = TexCache.EmoteIcons[emoteRow.RowId]
-                            });
+                                cResults.Add(new EmoteSearchResult
+                                {
+                                    Name = text.Display,
+                                    SlashCommand = slashCmd.Command.RawString,
+                                    Icon = TexCache.EmoteIcons[emoteRow.RowId]
+                                });
                             
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
+                                if (cResults.Count > MAX_TO_SEARCH)
+                                    break;
+                            }
                         }
                     }
                 }
@@ -977,7 +986,7 @@ namespace Dalamud.FindAnything
                     throw new ArgumentOutOfRangeException();
             }
 
-            if (!illegalState && searchTerm.StartsWith("/"))
+            if (!isInDuty && searchTerm.StartsWith("/"))
             {
                 cResults.Add(new ChatCommandSearchResult
                 {
