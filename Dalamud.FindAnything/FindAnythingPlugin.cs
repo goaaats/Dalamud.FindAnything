@@ -6,6 +6,7 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Web;
 using Dalamud.Data;
 using Dalamud.Game.ClientState;
@@ -55,6 +56,7 @@ namespace Dalamud.FindAnything
         private static DalamudReflector DalamudReflector { get; set; }
         private static UnlocksCache UnlocksCache { get; set; }
         private static Input? Input { get; set; }
+        private static IpcSystem Ipc { get; set; }
 
         private bool finderOpen = false;
         private static string searchTerm = string.Empty;
@@ -375,8 +377,8 @@ namespace Dalamud.FindAnything
             {
                 get
                 {
-                    if (TexCache.MacroIcons.ContainsKey(Entry.IconId))
-                        return TexCache.MacroIcons[Entry.IconId];
+                    if (TexCache.ExtraIcons.ContainsKey((uint) Entry.IconId))
+                        return TexCache.ExtraIcons[(uint) Entry.IconId];
 
                     return null;
                 }
@@ -552,6 +554,21 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class IpcSearchResult : ISearchResult
+        {
+            public string CatName { get; set; }
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public bool CloseFinder => true;
+            
+            public string Guid { get; set; }
+
+            public void Selected()
+            {
+                Ipc.Invoke(Guid);
+            }
+        }
+
         private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
@@ -592,6 +609,7 @@ namespace Dalamud.FindAnything
             DalamudReflector = DalamudReflector.Load();
             UnlocksCache = UnlocksCache.Load();
             Input = new Input();
+            Ipc = new IpcSystem(PluginInterface, Data, TexCache);
         }
 
         private void FrameworkOnUpdate(Framework framework)
@@ -850,6 +868,27 @@ namespace Dalamud.FindAnything
                                 });
                             }
                         }
+
+                        foreach (var plugin in Ipc.TrackedIpcs)
+                        {
+                            foreach (var ipcBinding in plugin.Value)
+                            {
+                                if (ipcBinding.Search.Contains(term))
+                                {
+                                    cResults.Add(new IpcSearchResult
+                                    {
+                                        CatName = plugin.Key,
+                                        Name = ipcBinding.Display,
+                                        Guid = ipcBinding.Guid,
+                                        Icon = TexCache.ExtraIcons[ipcBinding.IconId],
+                                    });
+                                }
+                            
+                                // Limit IPC results to 25
+                                if (cResults.Count > 25)
+                                    break;
+                            }
+                        }
                     }
 
                     foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
@@ -1040,6 +1079,7 @@ namespace Dalamud.FindAnything
             xivCommon.Dispose();
 
             TexCache.Dispose();
+            Ipc.Dispose();
         }
 
         private void OnCommand(string command, string args)

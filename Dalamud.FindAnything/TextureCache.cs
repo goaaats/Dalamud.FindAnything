@@ -20,7 +20,7 @@ namespace Dalamud.FindAnything
         public IReadOnlyDictionary<uint, TextureWrap> ContentTypeIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> EmoteIcons { get; init; }
 
-        public Dictionary<int, TextureWrap> MacroIcons { get; private set; }
+        public Dictionary<uint, TextureWrap> ExtraIcons { get; private set; }
 
         public TextureWrap AetheryteIcon { get; init; }
         public TextureWrap WikiIcon { get; init; }
@@ -78,22 +78,28 @@ namespace Dalamud.FindAnything
             HintIcon = data.GetImGuiTextureHqIcon(066453)!;
             ChatIcon = data.GetImGuiTextureHqIcon(066473)!;
                 
+            this.ExtraIcons = new Dictionary<uint, TextureWrap>();
+            
             ReloadMacroIcons();
         }
 
         public void ReloadMacroIcons()
         {
-            MacroIcons ??= new();
             foreach (var macroLink in FindAnythingPlugin.Configuration.MacroLinks)
             {
-                if (MacroIcons.ContainsKey(macroLink.IconId))
-                    continue;
-
-                var tex = data.GetImGuiTextureHqIcon((uint) macroLink.IconId);
-                
-                if (tex != null)
-                    MacroIcons[macroLink.IconId] = tex;
+                EnsureExtraIcon((uint) macroLink.IconId);
             }
+        }
+
+        public void EnsureExtraIcon(uint iconId)
+        {
+            if (this.ExtraIcons.ContainsKey(iconId))
+                return;
+
+            var tex = this.data.GetImGuiTextureHqIcon(iconId);
+                
+            if (tex != null)
+                this.ExtraIcons[iconId] = tex;
         }
 
         public static TextureCache Load(UiBuilder uiBuilder, DataManager data) => new TextureCache(uiBuilder, data);
@@ -120,7 +126,7 @@ namespace Dalamud.FindAnything
                 icon.Value.Dispose();
             }
             
-            foreach (var icon in MacroIcons)
+            foreach (var icon in this.ExtraIcons)
             {
                 icon.Value.Dispose();
             }

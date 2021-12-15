@@ -55,7 +55,7 @@ public class SettingsWindow : Window
         ImGui.CheckboxFlags("Search in Commands", ref this.flags, (uint) Configuration.SearchSetting.MainCommand);
         ImGui.CheckboxFlags("Search in Aetherytes", ref this.flags, (uint) Configuration.SearchSetting.Aetheryte);
         ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
-        ImGui.CheckboxFlags("Search in other Plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
+        ImGui.CheckboxFlags("Search in other plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
 
         ImGuiHelpers.ScaledDummy(20);
 
