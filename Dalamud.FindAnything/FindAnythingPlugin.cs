@@ -950,6 +950,9 @@ namespace Dalamud.FindAnything
                 {
                     foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                     {
+                        if (!UnlocksCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
+                            continue;
+                        
                         if (cfc.Value.Searchable.Contains(term))
                             cResults.Add(new WikiSearchResult
                             {

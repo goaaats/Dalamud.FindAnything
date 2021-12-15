@@ -25,7 +25,8 @@ public class SettingsWindow : Window
     private bool aetheryteGilCost;
     private Configuration.EmoteMotionMode emoteMotionMode;
     private bool showEmoteCommand;
-
+    private bool wikiModeNoSpoilers;
+    
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
         this.SizeCondition = ImGuiCond.Always;
@@ -45,6 +46,7 @@ public class SettingsWindow : Window
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
+        this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
         base.OnOpen();
     }
 
@@ -117,6 +119,7 @@ public class SettingsWindow : Window
         }
 
         ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
+        ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.showEmoteCommand);
         
         ImGuiHelpers.ScaledDummy(10);
 
@@ -136,6 +139,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
+            FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;
 
             FindAnythingPlugin.Configuration.Save();
 
