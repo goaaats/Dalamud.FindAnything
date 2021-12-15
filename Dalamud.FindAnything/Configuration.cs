@@ -75,6 +75,8 @@ namespace Dalamud.FindAnything
             HintTeleport,
             HintEmoteDuty,
             HintGameCmd,
+            HintChatCmd,
+            HintMacroLink,
         }
 
         public enum EmoteMotionMode

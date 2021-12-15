@@ -518,6 +518,8 @@ namespace Dalamud.FindAnything
                 Configuration.HintKind.HintTeleport => "Search for aetherytes or zone names!",
                 Configuration.HintKind.HintEmoteDuty =>  "Search for emotes or duties!",
                 Configuration.HintKind.HintGameCmd => "Search for game commands, like timers!",
+                Configuration.HintKind.HintChatCmd => "Run chat commands by typing them here!",
+                Configuration.HintKind.HintMacroLink => "Link macros to search in \"wotsit settings\"!",
                 _ => throw new ArgumentOutOfRangeException()
             };
             
@@ -1060,7 +1062,7 @@ namespace Dalamud.FindAnything
             if (this.finderOpen == true)
                 return;
             
-            if (Configuration.HintLevel != Configuration.HintKind.HintGameCmd + 1)
+            if (Configuration.HintLevel != Configuration.HintKind.HintMacroLink + 1)
             {
                 var nextHint = Configuration.HintLevel++;
                 PluginLog.Information($"Hint: {nextHint}");
