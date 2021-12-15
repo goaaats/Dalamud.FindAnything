@@ -407,6 +407,21 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class ContentRouletteSearchResult : ISearchResult
+        {
+            public string CatName => "Duty Roulette";
+            public string Name { get; set; }
+            public TextureWrap? Icon => TexCache.ContentTypeIcons[1];
+            public bool CloseFinder => true;
+            
+            public byte DataKey { get; set; }
+            
+            public void Selected()
+            {
+                xivCommon.Functions.DutyFinder.OpenRoulette(DataKey);
+            }
+        }
+
         private class EmoteSearchResult : ISearchResult
         {
             public string CatName
@@ -742,6 +757,23 @@ namespace Dalamud.FindAnything
                                     DataKey = cfc.Key,
                                     Name = cfc.Value.Display,
                                     Icon = TexCache.ContentTypeIcons[row.ContentType.Row],
+                                });
+                            }
+                            
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
+                        }
+                        
+                        foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder))
+                        {
+                            var text = SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
+                            
+                            if (text.Searchable.Contains(term))
+                            {
+                                cResults.Add(new ContentRouletteSearchResult()
+                                {
+                                    DataKey = (byte) contentRoulette.RowId,
+                                    Name = contentRoulette.Category.ToDalamudString().TextValue
                                 });
                             }
                             
