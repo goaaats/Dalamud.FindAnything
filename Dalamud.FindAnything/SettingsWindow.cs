@@ -119,7 +119,7 @@ public class SettingsWindow : Window
         }
 
         ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
-        ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.showEmoteCommand);
+        ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
         
         ImGuiHelpers.ScaledDummy(10);
 
