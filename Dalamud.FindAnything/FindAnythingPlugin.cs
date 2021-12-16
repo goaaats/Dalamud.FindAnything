@@ -74,6 +74,9 @@ namespace Dalamud.FindAnything
 
         private static XivCommonBase xivCommon;
 
+        private readonly List<string> searchHistory = new List<string>();
+        private int historyIndex = 0;
+
         private enum SearchMode
         {
             Top,
@@ -541,6 +544,7 @@ namespace Dalamud.FindAnything
                 Configuration.HintKind.HintGameCmd => "Search for game commands, like timers!",
                 Configuration.HintKind.HintChatCmd => "Run chat commands by typing them here!",
                 Configuration.HintKind.HintMacroLink => "Link macros to search in \"wotsit settings\"!",
+                Configuration.HintKind.HintSearchHistory => "Press up arrow to go through older searches!",
                 _ => throw new ArgumentOutOfRangeException()
             };
             
@@ -1130,7 +1134,7 @@ namespace Dalamud.FindAnything
             if (this.finderOpen == true)
                 return;
             
-            if (Configuration.HintLevel != Configuration.HintKind.HintMacroLink + 1)
+            if (Configuration.HintLevel != Configuration.HintKind.HintSearchHistory + 1)
             {
                 var nextHint = Configuration.HintLevel++;
                 PluginLog.Information($"Hint: {nextHint}");
@@ -1165,6 +1169,11 @@ namespace Dalamud.FindAnything
         {
             if (!finderOpen)
                 return;
+            
+            var isDown = ImGui.IsKeyDown((int)VirtualKey.DOWN);
+            var isUp = ImGui.IsKeyDown((int)VirtualKey.UP);
+            var isPgUp = ImGui.IsKeyDown((int)VirtualKey.PRIOR);
+            var isPgDn = ImGui.IsKeyDown((int)VirtualKey.NEXT);
 
             var closeFinder = false;
 
@@ -1202,6 +1211,17 @@ namespace Dalamud.FindAnything
             };
 
             var resetScroll = false;
+
+            if (isUp && this.searchHistory.Count > 0 && (searchTerm.IsNullOrEmpty() || this.historyIndex != 0))
+            {
+                PluginLog.Information($"HistCount: {this.searchHistory.Count} Index: {this.historyIndex} Now: {this.searchHistory.Count - this.historyIndex}");
+                searchTerm = this.searchHistory[this.searchHistory.Count - this.historyIndex - 1];
+                PluginLog.Information($"New term: {searchTerm}");
+                if (this.historyIndex < this.searchHistory.Count - 1)
+                {
+                    this.historyIndex++;
+                }
+            }
             
             if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchTerm, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
@@ -1239,11 +1259,6 @@ namespace Dalamud.FindAnything
                 if (ImGui.BeginChild("###findAnythingScroller"))
                 {
                     var childSize = ImGui.GetWindowSize();
-
-                    var isDown = ImGui.IsKeyDown((int)VirtualKey.DOWN);
-                    var isUp = ImGui.IsKeyDown((int)VirtualKey.UP);
-                    var isPgUp = ImGui.IsKeyDown((int)VirtualKey.PRIOR);
-                    var isPgDn = ImGui.IsKeyDown((int)VirtualKey.NEXT);
 
                     if (isDown && framesSinceButtonPress is 0 or > 20)
                     {
@@ -1336,6 +1351,9 @@ namespace Dalamud.FindAnything
                         var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
                         closeFinder = results[index].CloseFinder;
                         results[index].Selected();
+                        
+                        if (closeFinder)
+                            this.searchHistory.Add(searchTerm);
                     }
                 }
 

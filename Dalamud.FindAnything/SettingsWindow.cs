@@ -26,6 +26,7 @@ public class SettingsWindow : Window
     private Configuration.EmoteMotionMode emoteMotionMode;
     private bool showEmoteCommand;
     private bool wikiModeNoSpoilers;
+    private bool enableSearchHistory;
     
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -47,6 +48,7 @@ public class SettingsWindow : Window
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
         this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
+        this.enableSearchHistory = FindAnythingPlugin.Configuration.EnableSearchHistory;
         base.OnOpen();
     }
 
@@ -119,7 +121,8 @@ public class SettingsWindow : Window
         }
 
         ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
-        ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
+        ImGui.Checkbox("Try to prevent spoilers in wiki mode (not 100% reliable)", ref this.wikiModeNoSpoilers);
+        ImGui.Checkbox("Enable search history (up arrow with empty search bar)", ref this.enableSearchHistory);
         
         ImGuiHelpers.ScaledDummy(10);
 
@@ -140,6 +143,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;
+            FindAnythingPlugin.Configuration.EnableSearchHistory = this.enableSearchHistory;
 
             FindAnythingPlugin.Configuration.Save();
 
