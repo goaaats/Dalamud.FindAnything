@@ -705,6 +705,11 @@ namespace Dalamud.FindAnything
                    Condition[ConditionFlag.OccupiedInCutSceneEvent];
         }
 
+        private static bool CheckInCombat()
+        {
+            return Condition[ConditionFlag.InCombat];
+        }
+
         private static void UpdateSearchResults()
         {
             if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
@@ -717,6 +722,7 @@ namespace Dalamud.FindAnything
             var term = searchTerm.ToLower();
             var isInDuty = CheckInDuty();
             var isInEvent = CheckInEvent();
+            var isInCombat = CheckInCombat();
 
             var cResults = new List<ISearchResult>();
 
@@ -737,7 +743,7 @@ namespace Dalamud.FindAnything
                         }
                     }
                     
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty)
+                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                     {
                         foreach (var aetheryte in Aetheryes)
                         {
