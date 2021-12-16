@@ -231,28 +231,31 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                var didTeleport = false;
                 try
                 {
-                    didTeleport = TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex);
+                    var didTeleport = TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex);
+                    
+                    if (!didTeleport)
+                    {
+                        UserError("Cannot teleport in this situation.");
+                    }
+                    else
+                    {
+                        ChatGui.Print($"Teleporting to {Name}...");
+                    }
                 }
                 catch (IpcNotReadyError)
                 {
                     PluginLog.Error("Teleport IPC not found.");
-                    didTeleport = false;
-                }
-
-                if (!didTeleport)
-                {
-                    var error = "To use Aetherytes within Wotsit, you must install the \"Teleporter\" plugin.";
-                    ChatGui.PrintError(error);
-                    ToastGui.ShowError(error);
-                }
-                else
-                {
-                    ChatGui.Print($"Teleporting to {Name}...");
+                    UserError("To use Aetherytes within Wotsit, you must install the \"Teleporter\" plugin.");
                 }
             }
+        }
+
+        private static void UserError(string error)
+        {
+            ChatGui.PrintError(error);
+            ToastGui.ShowError(error);
         }
 
         private class MainCommandSearchResult : ISearchResult
