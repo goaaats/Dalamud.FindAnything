@@ -7,8 +7,8 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
 using ImGuiNET;
+using Newtonsoft.Json;
 
 namespace Dalamud.FindAnything;
 
@@ -316,8 +316,51 @@ public class SettingsWindow : Window
                 Line = string.Empty,
             });
         }
+        
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Add new macro link");
+        }
+        
+        ImGui.SameLine();
+
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy))
+        {
+            var json = JsonConvert.SerializeObject(this.macros);
+            ImGui.SetClipboardText("WM1" + json);
+        }
+        
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Copy macro links to clipboard");
+        }
+        
+        ImGui.SameLine();
+        
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport))
+        {
+            ImportMacros(ImGui.GetClipboardText());
+        }
+        
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Import macro links from clipboard");
+        }
 
         ImGui.Columns(1);
+    }
+
+    private void ImportMacros(string contents)
+    {
+        if (!contents.StartsWith("WM1"))
+            return;
+        
+        var data = JsonConvert.DeserializeObject<List<Configuration.MacroEntry>>(contents.Substring(3));
+
+        if (data == null)
+            return;
+            
+        this.macros.InsertRange(0, data);
     }
 
     private void VirtualKeySelect(string text, ref VirtualKey chosen)
