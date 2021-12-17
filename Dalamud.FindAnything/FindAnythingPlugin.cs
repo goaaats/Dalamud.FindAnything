@@ -993,7 +993,15 @@ namespace Dalamud.FindAnything
                                     args.HasResult = true;
                                     break;
                                 default:
-                                    args.Result = 0;
+                                    if (Configuration.MathConstants.ContainsKey(sender))
+                                    {
+                                        args.Result = Configuration.MathConstants[sender];
+                                        args.HasResult = true;
+                                    }
+                                    else
+                                    {
+                                        args.Result = 0;
+                                    }
                                     break;
                             }
 

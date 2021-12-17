@@ -26,7 +26,8 @@ public class SettingsWindow : Window
     private Configuration.EmoteMotionMode emoteMotionMode;
     private bool showEmoteCommand;
     private bool wikiModeNoSpoilers;
-    
+    private Dictionary<string, float> constants = new();
+
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
         this.SizeCondition = ImGuiCond.Always;
@@ -47,6 +48,7 @@ public class SettingsWindow : Window
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
         this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
+        this.constants = FindAnythingPlugin.Configuration.MathConstants;
         base.OnOpen();
     }
 
@@ -59,7 +61,9 @@ public class SettingsWindow : Window
         ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
         ImGui.CheckboxFlags("Search in other plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
 
-        ImGuiHelpers.ScaledDummy(20);
+        ImGuiHelpers.ScaledDummy(15);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(15);
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "How to open");
 
@@ -91,16 +95,29 @@ public class SettingsWindow : Window
             default:
                 throw new ArgumentOutOfRangeException();
         }
-        
-        ImGuiHelpers.ScaledDummy(20);
+
+        ImGuiHelpers.ScaledDummy(15);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(15);
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro Links");
         ImGui.TextWrapped("Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
 
         DrawMacrosSection();
-        
-        ImGuiHelpers.ScaledDummy(20);
-        
+
+        ImGuiHelpers.ScaledDummy(15);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(15);
+
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Math Constants");
+        ImGui.TextWrapped("Use this menu to tie constants to values, to be used in expressions.\nAdd a constant again to edit it.");
+
+        DrawConstantsSection();
+
+        ImGuiHelpers.ScaledDummy(15);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(15);
+
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Others");
 
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
@@ -120,8 +137,10 @@ public class SettingsWindow : Window
 
         ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
         ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
-        
-        ImGuiHelpers.ScaledDummy(10);
+
+        ImGuiHelpers.ScaledDummy(5);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(5);
 
         if (ImGui.Button("Save"))
         {
@@ -194,7 +213,7 @@ public class SettingsWindow : Window
             {
                 macro.SearchName = text;
             }
-            
+
             ImGui.NextColumn();
 
             if (ImGui.BeginCombo("###macroKnd", macro.Kind.ToString()))
@@ -208,7 +227,7 @@ public class SettingsWindow : Window
                 }
                 ImGui.EndCombo();
             }
-            
+
             ImGui.NextColumn();
 
             if (macro.Kind == Configuration.MacroEntry.MacroEntryKind.Id)
@@ -225,13 +244,13 @@ public class SettingsWindow : Window
                 ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ImGuiColors.ParsedGrey);
                 ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ImGuiColors.ParsedGrey);
                 ImGui.PushStyleColor(ImGuiCol.CheckMark, ImGuiColors.ParsedGrey);
-                
+
                 var isShared = false;
                 ImGui.Checkbox("###macroSh", ref isShared);
-                
+
                 ImGui.PopStyleColor(4);
             }
-            
+
 
             ImGui.NextColumn();
 
@@ -239,7 +258,7 @@ public class SettingsWindow : Window
             {
                 case Configuration.MacroEntry.MacroEntryKind.Id:
                     ImGui.SetNextItemWidth(-1);
-                    
+
                     var id = macro.Id;
                     if (ImGui.InputInt($"###macroId", ref id))
                     {
@@ -247,7 +266,7 @@ public class SettingsWindow : Window
                         id = Math.Min(99, id);
                         macro.Id = id;
                     }
-                    
+
                     break;
                 case Configuration.MacroEntry.MacroEntryKind.SingleLine:
                     var line = macro.Line;
@@ -258,14 +277,14 @@ public class SettingsWindow : Window
                         didColor = true;
                         ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
                     }
-                    
+
                     ImGui.SetNextItemWidth(-1);
-                    
+
                     if (ImGui.InputText($"###macroId", ref line, 100))
                     {
                         macro.Line = line;
                     }
-                    
+
                     if (didColor)
                     {
                         ImGui.PopStyleColor();
@@ -275,23 +294,23 @@ public class SettingsWindow : Window
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            
+
             ImGui.NextColumn();
-            
+
             var icon = macro.IconId;
-            
+
             ImGui.SetNextItemWidth(-1);
-            
+
             if (ImGui.InputInt($"###macroIcon", ref icon))
             {
                 icon = Math.Max(0, icon);
                 macro.IconId = icon;
-            } 
-            
+            }
+
             ImGui.NextColumn();
 
             this.macros[macroNumber] = macro;
-            
+
             if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash)) this.macros.RemoveAt(macroNumber);
 
             ImGui.PopID();
@@ -304,7 +323,7 @@ public class SettingsWindow : Window
         ImGui.NextColumn();
         ImGui.NextColumn();
         ImGui.NextColumn();
-        
+
         if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus))
         {
             this.macros.Insert(0, new Configuration.MacroEntry
@@ -316,12 +335,12 @@ public class SettingsWindow : Window
                 Line = string.Empty,
             });
         }
-        
+
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Add new macro link");
         }
-        
+
         ImGui.SameLine();
 
         if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy))
@@ -329,19 +348,19 @@ public class SettingsWindow : Window
             var json = JsonConvert.SerializeObject(this.macros);
             ImGui.SetClipboardText("WM1" + json);
         }
-        
+
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Copy macro links to clipboard");
         }
-        
+
         ImGui.SameLine();
-        
+
         if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport))
         {
             ImportMacros(ImGui.GetClipboardText());
         }
-        
+
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Import macro links from clipboard");
@@ -350,17 +369,144 @@ public class SettingsWindow : Window
         ImGui.Columns(1);
     }
 
+    private string tempConstantName = string.Empty;
+    private float tempConstantValue = 0;
+
+    private void DrawConstantsSection()
+    {
+        ImGui.Columns(3);
+        ImGui.SetColumnWidth(0, 200 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(1, 200 + 5 * ImGuiHelpers.GlobalScale);
+        ImGui.SetColumnWidth(2, 100 + 5 * ImGuiHelpers.GlobalScale);
+
+        ImGui.Separator();
+
+        ImGui.Text("Name");
+        ImGui.NextColumn();
+        ImGui.Text("Value");
+        ImGui.NextColumn();
+        ImGui.Text(string.Empty);
+        ImGui.NextColumn();
+
+        ImGui.Separator();
+
+        string? toRemoveKey = null;
+
+        foreach (var constant in this.constants) {
+            ImGui.PushID($"constant_{constant.Key}");
+
+            ImGui.SetNextItemWidth(-1);
+
+            ImGui.Text(constant.Key);
+
+            ImGui.NextColumn();
+
+            ImGui.Text(constant.Value.ToString());
+
+            ImGui.SetNextItemWidth(-1);
+
+            ImGui.NextColumn();
+
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash)) toRemoveKey = constant.Key;
+
+            ImGui.NextColumn();
+            ImGui.Separator();
+        }
+
+        if (toRemoveKey != null)
+            this.constants.Remove(toRemoveKey);
+
+        ImGui.SetNextItemWidth(-1);
+        ImGui.InputText($"###macroSn", ref this.tempConstantName, 100);
+
+        ImGui.NextColumn();
+
+        ImGui.SetNextItemWidth(-1);
+        ImGui.InputFloat("###macroId", ref this.tempConstantValue);
+
+        ImGui.NextColumn();
+
+        ImGui.PushID("constbtns");
+
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus))
+        {
+            if (constants.ContainsKey(tempConstantName))
+            {
+                constants[tempConstantName] = tempConstantValue;
+            }
+            else
+            {
+                constants.Add(tempConstantName, tempConstantValue);
+            }
+
+            this.tempConstantName = string.Empty;
+            this.tempConstantValue = 0;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Add new constant");
+        }
+
+        ImGui.SameLine();
+
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy))
+        {
+            var json = JsonConvert.SerializeObject(this.constants);
+            ImGui.SetClipboardText("WC1" + json);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Copy constants to clipboard");
+        }
+
+        ImGui.SameLine();
+
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport))
+        {
+            ImportConstants(ImGui.GetClipboardText());
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Import constants from clipboard");
+        }
+
+        ImGui.NextColumn();
+
+        ImGui.PopID();
+
+        ImGui.Columns(1);
+    }
+
     private void ImportMacros(string contents)
     {
         if (!contents.StartsWith("WM1"))
             return;
-        
+
         var data = JsonConvert.DeserializeObject<List<Configuration.MacroEntry>>(contents.Substring(3));
 
         if (data == null)
             return;
-            
+
         this.macros.InsertRange(0, data);
+    }
+
+    private void ImportConstants(string contents)
+    {
+        if (!contents.StartsWith("WC1"))
+            return;
+
+        var data = JsonConvert.DeserializeObject<Dictionary<string, float>>(contents.Substring(3));
+
+        data?.ToList().ForEach(x =>
+        {
+            if (!this.constants.ContainsKey(x.Key))
+            {
+                this.constants.Add(x.Key, x.Value);
+            }
+        });
     }
 
     private void VirtualKeySelect(string text, ref VirtualKey chosen)

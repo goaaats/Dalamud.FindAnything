@@ -39,7 +39,7 @@ namespace Dalamud.FindAnything
             Emote = 1 << 4,
             PluginSettings = 1 << 5,
         }
-        
+
         public class MacroEntry
         {
             public bool Shared { get; set; }
@@ -48,7 +48,7 @@ namespace Dalamud.FindAnything
             public string SearchName { get; set; }
             public int IconId { get; set; }
             public MacroEntryKind Kind { get; set; }
-            
+
             public enum MacroEntryKind
             {
                 Id,
@@ -57,7 +57,7 @@ namespace Dalamud.FindAnything
 
             public MacroEntry()
             {
-                
+
             }
 
             public MacroEntry(MacroEntry initial)
@@ -78,6 +78,8 @@ namespace Dalamud.FindAnything
         public bool ShowEmoteCommand { get; set; } = false;
 
         public HintKind HintLevel { get; set; } = HintKind.HintTyping;
+
+        public Dictionary<string, float> MathConstants { get; set; } = new();
 
         public enum HintKind
         {
