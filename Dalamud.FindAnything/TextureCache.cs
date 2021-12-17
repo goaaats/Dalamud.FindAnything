@@ -29,6 +29,7 @@ namespace Dalamud.FindAnything
         public TextureWrap EmoteIcon { get; init; }
         public TextureWrap HintIcon { get; set; }
         public TextureWrap ChatIcon { get; set; }
+        public TextureWrap MathsIcon { get; set; }
 
         private TextureCache(UiBuilder uiBuilder, DataManager data)
         {
@@ -48,24 +49,24 @@ namespace Dalamud.FindAnything
                 generalActions.Add(action.RowId, data!.GetImGuiTextureHqIcon((uint) action.Icon)!);
             }
             GeneralActionIcons = generalActions;
-            
+
             var contentTypes = new Dictionary<uint, TextureWrap>();
             foreach (var cType in data.GetExcelSheet<ContentType>()!)
             {
                 if (cType.Icon == 0)
                     continue;
-                
+
                 contentTypes.Add(cType.RowId, data!.GetImGuiTextureHqIcon((uint) cType.Icon)!);
             }
             ContentTypeIcons = contentTypes;
-            
+
             var emotes = new Dictionary<uint, TextureWrap>();
             foreach (var emote in data.GetExcelSheet<Emote>()!)
             {
                 var icon = data!.GetImGuiTextureHqIcon((uint)emote.Icon);
                 if (icon == null)
                     continue;
-                
+
                 emotes.Add(emote.RowId, icon);
             }
             EmoteIcons = emotes;
@@ -77,9 +78,10 @@ namespace Dalamud.FindAnything
             EmoteIcon = data.GetImGuiTextureHqIcon(066420)!;
             HintIcon = data.GetImGuiTextureHqIcon(066453)!;
             ChatIcon = data.GetImGuiTextureHqIcon(066473)!;
-                
+            MathsIcon = data.GetImGuiTextureHqIcon(062409)!;
+
             this.ExtraIcons = new Dictionary<uint, TextureWrap>();
-            
+
             ReloadMacroIcons();
         }
 
@@ -97,7 +99,7 @@ namespace Dalamud.FindAnything
                 return;
 
             var tex = this.data.GetImGuiTextureHqIcon(iconId);
-                
+
             if (tex != null)
                 this.ExtraIcons[iconId] = tex;
         }
@@ -110,27 +112,27 @@ namespace Dalamud.FindAnything
             {
                 icon.Value.Dispose();
             }
-            
+
             foreach (var icon in GeneralActionIcons)
             {
                 icon.Value.Dispose();
             }
-            
+
             foreach (var icon in ContentTypeIcons)
             {
                 icon.Value.Dispose();
             }
-            
+
             foreach (var icon in EmoteIcons)
             {
                 icon.Value.Dispose();
             }
-            
+
             foreach (var icon in this.ExtraIcons)
             {
                 icon.Value.Dispose();
             }
-            
+
             WikiIcon.Dispose();
             AetheryteIcon.Dispose();
             PluginInstallerIcon.Dispose();
@@ -138,6 +140,7 @@ namespace Dalamud.FindAnything
             EmoteIcon.Dispose();
             HintIcon.Dispose();
             ChatIcon.Dispose();
+            MathsIcon.Dispose();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
@@ -27,6 +28,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
+using NCalc;
 using XivCommon;
 
 namespace Dalamud.FindAnything
@@ -101,18 +103,18 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public uint DataKey { get; set; }
-            
+
             public enum DataCategory
             {
                 Instance,
                 Quest,
                 Item,
             }
-            
+
             public DataCategory DataCat { get; set; }
 
             public bool CloseFinder => false;
-            
+
             public void Selected()
             {
                 choicerTempResult = this;
@@ -132,18 +134,18 @@ namespace Dalamud.FindAnything
                 GarlandTools,
                 TeamCraft,
             }
-            
+
             public SiteChoice Site { get; set; }
-            
+
             public bool CloseFinder => true;
-            
+
             private static void OpenWikiPage(string input)
             {
                 var name = input.Replace(' ', '_');
                 name = name.Replace('–', '-');
                 Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{HttpUtility.UrlEncode(name)}?useskin=Vector");
             }
-            
+
             public void Selected()
             {
                 if (choicerTempResult == null)
@@ -192,7 +194,7 @@ namespace Dalamud.FindAnything
             public TextureWrap? Icon => TexCache.WikiIcon;
 
             public string Query { get; set; }
-            
+
             public bool CloseFinder => true;
 
             public void Selected()
@@ -224,9 +226,9 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public AetheryteEntry Data { get; set; }
-            
+
             public string TerriName { get; set; }
-            
+
             public bool CloseFinder => true;
 
             public void Selected()
@@ -234,7 +236,7 @@ namespace Dalamud.FindAnything
                 try
                 {
                     var didTeleport = TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex);
-                    
+
                     if (!didTeleport)
                     {
                         UserError("Cannot teleport in this situation.");
@@ -264,7 +266,7 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public uint CommandId { get; set; }
-            
+
             public bool CloseFinder => true;
 
             public unsafe void Selected()
@@ -301,7 +303,7 @@ namespace Dalamud.FindAnything
             }
 
             public InternalSearchResultKind Kind { get; set; }
-            
+
             public bool CloseFinder => Kind != InternalSearchResultKind.WikiMode;
 
             public static string GetNameForKind(InternalSearchResultKind kind) => kind switch {
@@ -348,7 +350,7 @@ namespace Dalamud.FindAnything
             public string CatName => "General Actions";
             public string Name { get; set;  }
             public TextureWrap? Icon { get; set; }
-            
+
             public bool CloseFinder => true;
 
             public void Selected()
@@ -357,7 +359,7 @@ namespace Dalamud.FindAnything
                 xivCommon.Functions.Chat.SendMessage(message);
             }
         }
-        
+
         private class PluginSettingsSearchResult : ISearchResult
         {
             public string CatName => "Other Plugins";
@@ -365,13 +367,13 @@ namespace Dalamud.FindAnything
             public TextureWrap? Icon => TexCache.PluginInstallerIcon;
             public bool CloseFinder => true;
             public DalamudReflector.PluginEntry Plugin { get; set; }
-            
+
             public void Selected()
             {
                 Plugin.OpenConfigUi();
             }
         }
-        
+
         private class MacroLinkSearchResult : ISearchResult
         {
             public string CatName => "Macros";
@@ -388,9 +390,9 @@ namespace Dalamud.FindAnything
             }
 
             public bool CloseFinder => true;
-            
+
             public Configuration.MacroEntry Entry { get; set; }
-            
+
             public unsafe void Selected()
             {
                 switch (Entry.Kind)
@@ -404,7 +406,7 @@ namespace Dalamud.FindAnything
                             PluginLog.Error("Invalid slash command:" + Entry.Line);
                             return;
                         }
-                        
+
                         xivCommon.Functions.Chat.SendMessage(Entry.Line);
                         break;
                     default:
@@ -412,14 +414,14 @@ namespace Dalamud.FindAnything
                 }
             }
         }
-        
+
         private class DutySearchResult : ISearchResult
         {
             public string CatName { get; set; }
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public bool CloseFinder => true;
-            
+
             public uint DataKey { get; set; }
 
             public void Selected()
@@ -434,9 +436,9 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon => TexCache.ContentTypeIcons[1];
             public bool CloseFinder => true;
-            
+
             public byte DataKey { get; set; }
-            
+
             public void Selected()
             {
                 xivCommon.Functions.DutyFinder.OpenRoulette(DataKey);
@@ -456,15 +458,15 @@ namespace Dalamud.FindAnything
                     return cat;
                 }
             }
-            
+
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public string SlashCommand { get; set; }
-            
+
             public bool CloseFinder => Configuration.EmoteMode != Configuration.EmoteMotionMode.Ask;
 
             public Configuration.EmoteMotionMode MotionMode { get; set; } = Configuration.EmoteMode;
-            
+
             public void Selected()
             {
                 if (MotionMode == Configuration.EmoteMotionMode.Ask)
@@ -473,14 +475,14 @@ namespace Dalamud.FindAnything
                     SwitchSearchMode(SearchMode.EmoteModeChoicer);
                     return;
                 }
-                
+
                 var cmd = SlashCommand;
                 if (!cmd.StartsWith("/"))
                     throw new Exception($"SlashCommand prop does not actually start with a slash: {SlashCommand}");
 
                 if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
                     cmd += " motion";
-                
+
                 xivCommon.Functions.Chat.SendMessage(cmd);
             }
         }
@@ -504,9 +506,9 @@ namespace Dalamud.FindAnything
                 Default,
                 MotionOnly,
             }
-            
+
             public EmoteModeChoice Choice { get; set; }
-            
+
             public void Selected()
             {
                 var emoteRes = choicerTempResult as EmoteSearchResult;
@@ -522,11 +524,11 @@ namespace Dalamud.FindAnything
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                
+
                 emoteRes.Selected();
             }
         }
-        
+
         private class HintResult : ISearchResult
         {
             public string CatName => string.Empty;
@@ -543,12 +545,12 @@ namespace Dalamud.FindAnything
                 Configuration.HintKind.HintMacroLink => "Link macros to search in \"wotsit settings\"!",
                 _ => throw new ArgumentOutOfRangeException()
             };
-            
+
             public TextureWrap? Icon => TexCache.HintIcon;
             public bool CloseFinder => false;
-            
+
             public Configuration.HintKind HintLevel { get; set; }
-            
+
             public void Selected()
             {
                 // ignored
@@ -561,14 +563,14 @@ namespace Dalamud.FindAnything
             public string Name => $"Run chat command \"{Command}\"";
             public TextureWrap? Icon => TexCache.ChatIcon;
             public bool CloseFinder => true;
-            
+
             public string Command { get; set; }
-            
+
             public void Selected()
             {
                 if (!Command.StartsWith("/"))
                     throw new Exception("Command in ChatCommandSearchResult didn't start with slash!");
-                
+
                 xivCommon.Functions.Chat.SendMessage(Command);
             }
         }
@@ -579,12 +581,30 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public bool CloseFinder => true;
-            
+
             public string Guid { get; set; }
 
             public void Selected()
             {
                 Ipc.Invoke(Guid);
+            }
+        }
+
+        private static object? lastAcceptedExpressionResult;
+
+        private class ExpressionResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+            public string Name => $" = {Result}";
+            public TextureWrap? Icon => TexCache.MathsIcon;
+            public bool CloseFinder => true;
+
+            public object Result { get; set; }
+
+            public void Selected()
+            {
+                lastAcceptedExpressionResult = Result;
+                ImGui.SetClipboardText(Result.ToString());
             }
         }
 
@@ -629,15 +649,18 @@ namespace Dalamud.FindAnything
             UnlocksCache = UnlocksCache.Load();
             Input = new Input();
             Ipc = new IpcSystem(PluginInterface, Data, TexCache);
+
+            Expression.CacheEnabled = true;
+            new Expression("1+1").Evaluate(); // Warm up evaluator, takes like 100ms
         }
 
         private void FrameworkOnUpdate(Framework framework)
         {
             if (Input.Disabled || Input == null)
                 return;
-            
+
             Input.Update();
-            
+
             if (Input.IsDown(VirtualKey.ESCAPE))
             {
                 CloseFinder();
@@ -681,7 +704,7 @@ namespace Dalamud.FindAnything
                     case Configuration.OpenMode.Combo:
                         var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier);
                         var key = Configuration.ComboKey == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboKey);
-                        
+
                         if (mod && key)
                         {
                             OpenFinder();
@@ -715,9 +738,13 @@ namespace Dalamud.FindAnything
             if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
             {
                 results = null;
-                
+
                 return;
             }
+
+#if DEBUG
+            var sw = Stopwatch.StartNew();
+#endif
 
             var term = searchTerm.ToLower();
             var isInDuty = CheckInDuty();
@@ -731,7 +758,7 @@ namespace Dalamud.FindAnything
                 case SearchMode.Top:
                 {
                     DalamudReflector.RefreshPlugins();
-                    
+
                     foreach (var macroLink in Configuration.MacroLinks)
                     {
                         if (macroLink.SearchName.ToLower().Contains(term))
@@ -742,7 +769,7 @@ namespace Dalamud.FindAnything
                             });
                         }
                     }
-                    
+
                     if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                     {
                         foreach (var aetheryte in Aetheryes)
@@ -769,9 +796,9 @@ namespace Dalamud.FindAnything
                         {
                             if (!UnlocksCache.UnlockedDutyKeys.Contains(cfc.Key))
                                 continue;
-                            
+
                             var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(cfc.Key);
-                            
+
                             if (row == null || row.ContentType == null)
                                 continue;
 
@@ -789,7 +816,7 @@ namespace Dalamud.FindAnything
                                     continue;
                             }
                             */
-                            
+
                             // Only include dungeon, trials, raids, ultimates
                             if (row.ContentType.Row is not (2 or 4 or 5 or 28))
                                 continue;
@@ -804,15 +831,15 @@ namespace Dalamud.FindAnything
                                     Icon = TexCache.ContentTypeIcons[row.ContentType.Row],
                                 });
                             }
-                            
+
                             if (cResults.Count > MAX_TO_SEARCH)
                                 break;
                         }
-                        
+
                         foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder))
                         {
                             var text = SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
-                            
+
                             if (text.Searchable.Contains(term))
                             {
                                 cResults.Add(new ContentRouletteSearchResult()
@@ -821,7 +848,7 @@ namespace Dalamud.FindAnything
                                     Name = contentRoulette.Category.ToDalamudString().TextValue
                                 });
                             }
-                            
+
                             if (cResults.Count > MAX_TO_SEARCH)
                                 break;
                         }
@@ -834,7 +861,7 @@ namespace Dalamud.FindAnything
                             // Record ready check, internal ones
                             if (mainCommand.Key is 79 or 38 or 39 or 40 or 43 or 26)
                                 continue;
-                            
+
                             var searchable = mainCommand.Value.Searchable;
                             if (searchable == "log out")
                                 searchable = "logout";
@@ -847,7 +874,7 @@ namespace Dalamud.FindAnything
                                     Name = mainCommand.Value.Display,
                                     Icon = TexCache.MainCommandIcons[mainCommand.Key]
                                 });
-                                
+
                                 if (cResults.Count > MAX_TO_SEARCH)
                                     break;
                             }
@@ -858,7 +885,7 @@ namespace Dalamud.FindAnything
                     {
                         var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
                         var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
-                        
+
                         foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
                         {
                             // Skip invalid entries, jump, etc
@@ -870,7 +897,7 @@ namespace Dalamud.FindAnything
                                 continue;
                             if (!hasAdvancedMelding && generalAction.Key is 13)
                                 continue;
-                            
+
                             if (generalAction.Value.Searchable.Contains(term))
                                 cResults.Add(new GeneralActionSearchResult
                                 {
@@ -908,7 +935,7 @@ namespace Dalamud.FindAnything
                                         Icon = TexCache.ExtraIcons[ipcBinding.IconId],
                                     });
                                 }
-                            
+
                                 // Limit IPC results to 25
                                 if (cResults.Count > 25)
                                     break;
@@ -946,9 +973,42 @@ namespace Dalamud.FindAnything
                                     SlashCommand = slashCmd.Command.RawString,
                                     Icon = TexCache.EmoteIcons[emoteRow.RowId]
                                 });
-                            
+
                                 if (cResults.Count > MAX_TO_SEARCH)
                                     break;
+                            }
+                        }
+                    }
+
+                    if (searchTerm.Any(x => x is >= '0' and <= '9'))
+                    {
+                        var expression = new Expression(searchTerm);
+
+                        expression.EvaluateParameter += (sender, args) =>
+                        {
+                            switch (sender)
+                            {
+                                case "ans":
+                                    args.Result = lastAcceptedExpressionResult ?? 0;
+                                    args.HasResult = true;
+                                    break;
+                                default:
+                                    args.Result = 0;
+                                    break;
+                            }
+
+                        };
+
+                        if (!expression.HasErrors())
+                        {
+                            var result = expression.Evaluate()!;
+
+                            if (!(result is Int32 i && i == 0))
+                            {
+                                cResults.Add(new ExpressionResult
+                                {
+                                    Result = result!,
+                                });
                             }
                         }
                     }
@@ -961,7 +1021,7 @@ namespace Dalamud.FindAnything
                     {
                         if (!UnlocksCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
                             continue;
-                        
+
                         if (cfc.Value.Searchable.Contains(term))
                             cResults.Add(new WikiSearchResult
                             {
@@ -975,7 +1035,7 @@ namespace Dalamud.FindAnything
                         if (cResults.Count > MAX_TO_SEARCH)
                             break;
                     }
-                    
+
                     foreach (var quest in SearchDatabase.GetAll<Quest>())
                     {
                         if (quest.Value.Searchable.Contains(term))
@@ -991,7 +1051,7 @@ namespace Dalamud.FindAnything
                         if (cResults.Count > MAX_TO_SEARCH)
                             break;
                     }
-                    
+
                     foreach (var item in SearchDatabase.GetAll<Item>())
                     {
                         if (item.Value.Searchable.Contains(term))
@@ -1038,7 +1098,7 @@ namespace Dalamud.FindAnything
                         {
                             if (kind == WikiSiteChoicerResult.SiteChoice.TeamCraft && wikiResult.DataCat == WikiSearchResult.DataCategory.Item)
                                 continue;
-                            
+
                             if (kind.ToString().ToLower().Contains(term))
                             {
                                 cResults.Add(new WikiSiteChoicerResult
@@ -1055,7 +1115,7 @@ namespace Dalamud.FindAnything
                         {
                             Site = WikiSiteChoicerResult.SiteChoice.GamerEscape
                         });
-                    
+
                         cResults.Add(new WikiSiteChoicerResult
                         {
                             Site = WikiSiteChoicerResult.SiteChoice.GarlandTools
@@ -1096,6 +1156,11 @@ namespace Dalamud.FindAnything
             }
 
             results = cResults.ToArray();
+
+#if DEBUG
+            sw.Stop();
+            PluginLog.Debug($"Took: {sw.ElapsedMilliseconds}ms");
+#endif
         }
 
         public void Dispose()
@@ -1129,7 +1194,7 @@ namespace Dalamud.FindAnything
 #endif
             if (this.finderOpen == true)
                 return;
-            
+
             if (Configuration.HintLevel != Configuration.HintKind.HintMacroLink + 1)
             {
                 var nextHint = Configuration.HintLevel++;
@@ -1143,7 +1208,7 @@ namespace Dalamud.FindAnything
                 };
                 Configuration.Save();
             }
-            
+
             UnlocksCache.Refresh();
             finderOpen = true;
         }
@@ -1172,7 +1237,7 @@ namespace Dalamud.FindAnything
 
             var size = new Vector2(500, 40);
             size *= ImGuiHelpers.GlobalScale;
-            
+
             var mainViewportSize = ImGuiHelpers.MainViewport.Size;
             var mainViewportMiddle = mainViewportSize / 2;
             var startPos = ImGuiHelpers.MainViewport.Pos + (mainViewportMiddle - (size / 2));
@@ -1202,7 +1267,7 @@ namespace Dalamud.FindAnything
             };
 
             var resetScroll = false;
-            
+
             if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchTerm, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
             {
@@ -1318,7 +1383,7 @@ namespace Dalamud.FindAnything
                             ImGui.Image(result.Icon.ImGuiHandle, new Vector2(17, 17) * ImGuiHelpers.GlobalScale);
                         }
                     }
-                    
+
                     if(isUp || isDown || isPgUp || isPgDn || resetScroll)
                     {
                         if (selectedIndex > 1)
@@ -1330,7 +1395,7 @@ namespace Dalamud.FindAnything
                             ImGui.SetScrollY(0);
                         }
                     }
-                    
+
                     if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || clickedIndex != -1)
                     {
                         var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
