@@ -21,7 +21,6 @@ namespace Dalamud.FindAnything
         public VirtualKey ShiftShiftKey { get; set; } = VirtualKey.OEM_MINUS;
 
         public bool WikiModeNoSpoilers { get; set; } = true;
-        public bool EnableSearchHistory { get; set; } = true;
 
         public enum OpenMode
         {
@@ -90,7 +89,6 @@ namespace Dalamud.FindAnything
             HintGameCmd,
             HintChatCmd,
             HintMacroLink,
-            HintSearchHistory,
         }
 
         public enum EmoteMotionMode
