@@ -79,7 +79,7 @@ public unsafe class GameStateCache
         var gsModule = RaptureGearsetModule.Instance();
         var cj = FindAnythingPlugin.Data.GetExcelSheet<ClassJob>()!;
         var gearsets = new List<Gearset>();
-        for (var i = 0; i <= 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             var gs = gsModule->Gearset[i];
 
