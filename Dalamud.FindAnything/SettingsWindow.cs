@@ -28,6 +28,7 @@ public class SettingsWindow : Window
     private bool wikiModeNoSpoilers;
     private Dictionary<string, float> constants = new();
     private Vector2 posOffset;
+    private bool onlyWiki;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -51,6 +52,7 @@ public class SettingsWindow : Window
         this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
         this.constants = FindAnythingPlugin.Configuration.MathConstants;
         this.posOffset = FindAnythingPlugin.Configuration.PositionOffset;
+        this.onlyWiki = FindAnythingPlugin.Configuration.OnlyWikiMode;
         base.OnOpen();
     }
 
@@ -140,6 +142,7 @@ public class SettingsWindow : Window
 
         ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
         ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
+        ImGui.Checkbox("Directly go to wiki mode when opening search", ref this.onlyWiki);
         ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800);
 
         ImGuiHelpers.ScaledDummy(5);
@@ -164,6 +167,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;
             FindAnythingPlugin.Configuration.PositionOffset = this.posOffset;
+            FindAnythingPlugin.Configuration.OnlyWikiMode = this.onlyWiki;
 
             FindAnythingPlugin.Configuration.Save();
 

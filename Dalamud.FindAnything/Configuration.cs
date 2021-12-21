@@ -119,6 +119,8 @@ namespace Dalamud.FindAnything
 
         public Vector2 PositionOffset { get; set; } = new(0, 0);
 
+        public bool OnlyWikiMode { get; set; } = false;
+
         public enum HintKind
         {
             HintTyping,

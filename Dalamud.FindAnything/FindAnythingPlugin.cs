@@ -1383,7 +1383,7 @@ namespace Dalamud.FindAnything
             if (this.finderOpen == true)
                 return;
 
-            if (Configuration.HintLevel != Configuration.HintKind.HintMacroLink + 1)
+            if (Configuration.HintLevel != Configuration.HintKind.HintMath + 1)
             {
                 var nextHint = Configuration.HintLevel++;
                 PluginLog.Information($"Hint: {nextHint}");
@@ -1395,6 +1395,11 @@ namespace Dalamud.FindAnything
                     }
                 };
                 Configuration.Save();
+            }
+
+            if (Configuration.OnlyWikiMode)
+            {
+                searchMode = SearchMode.Wiki;
             }
 
             GameStateCache.Refresh();
