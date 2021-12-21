@@ -84,6 +84,53 @@ namespace Dalamud.FindAnything
             EmoteModeChoicer,
         }
 
+        private static readonly IReadOnlyDictionary<uint, string> ClassJobRolesMap = new Dictionary<uint, string>
+        {
+            { 0, "adventurer" },
+            { 1, "tank" },
+            { 2, "melee dps" },
+            { 3, "tank" },
+            { 4, "melee dps" },
+            { 5, "ranged dps" },
+            { 6, "healer" },
+            { 7, "ranged dps" },
+
+            { 8, "doh" },
+            { 9, "doh" },
+            { 10, "doh" },
+            { 11, "doh" },
+            { 12, "doh" },
+            { 13, "doh" },
+            { 14, "doh" },
+            { 15, "doh" },
+            { 16, "dol" },
+            { 17, "dol" },
+            { 18, "dol" },
+
+            { 19, "tank" },
+            { 20, "melee dps" },
+            { 21, "tank" },
+            { 22, "melee dps" },
+            { 23, "ranged dps" },
+            { 24, "healer" },
+            { 25, "ranged dps" },
+            { 26, "ranged dps" },
+            { 27, "ranged dps" },
+            { 28, "healer" },
+            { 29, "melee dps" },
+            { 30, "melee dps" },
+            { 31, "ranged dps" },
+            { 32, "tank" },
+            { 33, "healer" },
+            { 34, "melee dps" },
+            { 35, "ranged dps" },
+            { 36, "duck" },
+            { 37, "tank" },
+            { 38, "ranged dps" },
+            { 39, "melee dps" },
+            { 40, "healer" },
+        };
+
         private static SearchMode searchMode = SearchMode.Top;
         private static ISearchResult? choicerTempResult;
 
@@ -824,7 +871,7 @@ namespace Dalamud.FindAnything
                         {
                             var cjRow = cj.GetRow(gearset.ClassJob)!;
 
-                            if (gearset.Name.ToLower().Contains(term) || cjRow.Name.RawString.ToLower().Contains(term) || cjRow.Abbreviation.RawString.ToLower().Contains(term))
+                            if (gearset.Name.ToLower().Contains(term) || cjRow.Name.RawString.ToLower().Contains(term) || cjRow.Abbreviation.RawString.ToLower().Contains(term) || ClassJobRolesMap[gearset.ClassJob].Contains(term))
                             {
                                 cResults.Add(new GearsetSearchResult
                                 {
