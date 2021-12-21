@@ -1153,6 +1153,25 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.Wiki:
                 {
+                    var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
+                        .FirstOrDefault(x => x.TerritoryType.Row == ClientState.TerritoryType);
+                    if ("here".Contains(term) && terriContent != null)
+                    {
+                        cResults.Add(new WikiSearchResult
+                        {
+                            Name = terriContent.Name,
+                            DataKey = terriContent.RowId,
+                            Icon = TexCache.WikiIcon,
+                            CatName = "Current Duty",
+                            DataCat = WikiSearchResult.DataCategory.Instance,
+                        });
+                    }
+
+                    cResults.Add(new SearchWikiSearchResult
+                    {
+                        Query = searchTerm
+                    });
+
                     foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                     {
                         if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
@@ -1203,25 +1222,6 @@ namespace Dalamud.FindAnything
                         if (cResults.Count > MAX_TO_SEARCH)
                             break;
                     }
-
-                    var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
-                        .FirstOrDefault(x => x.TerritoryType.Row == ClientState.TerritoryType);
-                    if ("here".Contains(term) && terriContent != null)
-                    {
-                        cResults.Add(new WikiSearchResult
-                        {
-                            Name = terriContent.Name,
-                            DataKey = terriContent.RowId,
-                            Icon = TexCache.WikiIcon,
-                            CatName = "Current Duty",
-                            DataCat = WikiSearchResult.DataCategory.Instance,
-                        });
-                    }
-
-                    cResults.Add(new SearchWikiSearchResult
-                    {
-                        Query = searchTerm
-                    });
                 }
                     break;
 
