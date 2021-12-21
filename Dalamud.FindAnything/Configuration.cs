@@ -12,7 +12,17 @@ namespace Dalamud.FindAnything
     {
         public int Version { get; set; } = 0;
 
-        public SearchSetting ToSearchV2 { get; set; } = SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction | SearchSetting.Emote | SearchSetting.PluginSettings;
+        public SearchSetting ToSearchV3 { get; set; } =
+            SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction |
+            SearchSetting.Emote | SearchSetting.PluginSettings
+            | SearchSetting.Gearsets | SearchSetting.Reserved1 | SearchSetting.Reserved2 | SearchSetting.Reserved3 |
+            SearchSetting.Reserved4 | SearchSetting.Reserved5 | SearchSetting.Reserved6 | SearchSetting.Reserved7 |
+            SearchSetting.Reserved8
+            | SearchSetting.Reserved9 | SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 |
+            SearchSetting.Reserved13 | SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16
+            | SearchSetting.Reserved17 | SearchSetting.Reserved18 | SearchSetting.Reserved19 |
+            SearchSetting.Reserved20 | SearchSetting.Reserved21 | SearchSetting.Reserved22 | SearchSetting.Reserved23 |
+            SearchSetting.Reserved24;
 
         public OpenMode Open { get; set; } = OpenMode.Combo;
 
@@ -39,6 +49,31 @@ namespace Dalamud.FindAnything
             GeneralAction = 1 << 3,
             Emote = 1 << 4,
             PluginSettings = 1 << 5,
+            Gearsets = 1 << 6,
+            Reserved1 = 1 << 7,
+            Reserved2 = 1 << 8,
+            Reserved3 = 1 << 9,
+            Reserved4 = 1 << 10,
+            Reserved5 = 1 << 11,
+            Reserved6 = 1 << 12,
+            Reserved7 = 1 << 13,
+            Reserved8 = 1 << 14,
+            Reserved9 = 1 << 15,
+            Reserved10 = 1 << 16,
+            Reserved11 = 1 << 17,
+            Reserved12 = 1 << 18,
+            Reserved13 = 1 << 19,
+            Reserved14 = 1 << 20,
+            Reserved15 = 1 << 21,
+            Reserved16 = 1 << 22,
+            Reserved17 = 1 << 23,
+            Reserved18 = 1 << 24,
+            Reserved19 = 1 << 25,
+            Reserved20 = 1 << 26,
+            Reserved21 = 1 << 27,
+            Reserved22 = 1 << 28,
+            Reserved23 = 1 << 29,
+            Reserved24 = 1 << 30,
         }
 
         public class MacroEntry
@@ -94,6 +129,8 @@ namespace Dalamud.FindAnything
             HintGameCmd,
             HintChatCmd,
             HintMacroLink,
+            HintGearset,
+            HintMath,
         }
 
         public enum EmoteMotionMode

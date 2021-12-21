@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dalamud.Data;
 using Dalamud.Interface;
+using Dalamud.Logging;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
 
@@ -19,6 +20,7 @@ namespace Dalamud.FindAnything
         public IReadOnlyDictionary<uint, TextureWrap> GeneralActionIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> ContentTypeIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> EmoteIcons { get; init; }
+        public IReadOnlyDictionary<uint, TextureWrap> ClassJobIcons { get; init; }
 
         public Dictionary<uint, TextureWrap> ExtraIcons { get; private set; }
 
@@ -70,6 +72,17 @@ namespace Dalamud.FindAnything
                 emotes.Add(emote.RowId, icon);
             }
             EmoteIcons = emotes;
+
+            var cjIcons = new Dictionary<uint, TextureWrap>();
+            foreach (var classJob in data.GetExcelSheet<ClassJob>()!)
+            {
+                var icon = classJob.JobIndex != 0 ? data.GetImGuiTextureHqIcon(062400 + (uint) classJob.JobIndex) : data.GetImGuiTextureHqIcon(062300 + classJob.RowId);
+
+                if (icon != null)
+                    cjIcons.Add(classJob.RowId, icon);
+            }
+            ClassJobIcons = cjIcons;
+            PluginLog.Information(ClassJobIcons.Count + " class jobs loaded.");
 
             AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;
@@ -129,6 +142,11 @@ namespace Dalamud.FindAnything
             }
 
             foreach (var icon in this.ExtraIcons)
+            {
+                icon.Value.Dispose();
+            }
+
+            foreach (var icon in this.ClassJobIcons)
             {
                 icon.Value.Dispose();
             }

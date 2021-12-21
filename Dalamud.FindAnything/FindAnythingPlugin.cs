@@ -56,7 +56,7 @@ namespace Dalamud.FindAnything
         private static SearchDatabase SearchDatabase { get; set; }
         private static AetheryteManager AetheryteManager { get; set; }
         private static DalamudReflector DalamudReflector { get; set; }
-        private static UnlocksCache UnlocksCache { get; set; }
+        private static GameStateCache GameStateCache { get; set; }
         private static Input? Input { get; set; }
         private static IpcSystem Ipc { get; set; }
 
@@ -543,6 +543,8 @@ namespace Dalamud.FindAnything
                 Configuration.HintKind.HintGameCmd => "Search for game commands, like timers!",
                 Configuration.HintKind.HintChatCmd => "Run chat commands by typing them here!",
                 Configuration.HintKind.HintMacroLink => "Link macros to search in \"wotsit settings\"!",
+                Configuration.HintKind.HintGearset => "Search for names of gearsets, jobs or roles!",
+                Configuration.HintKind.HintMath => "Type mathematical expressions into the search bar!",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -626,6 +628,21 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class GearsetSearchResult : ISearchResult
+        {
+            public string CatName => "Gearset";
+            public string Name => Gearset.Name;
+            public TextureWrap? Icon => TexCache.ClassJobIcons[Gearset.ClassJob];
+            public bool CloseFinder => true;
+
+            public GameStateCache.Gearset Gearset { get; set; }
+
+            public void Selected()
+            {
+                xivCommon.Functions.Chat.SendMessage("/gs change " + Gearset.Slot);
+            }
+        }
+
         private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
@@ -664,7 +681,7 @@ namespace Dalamud.FindAnything
 
             xivCommon = new XivCommonBase();
             DalamudReflector = DalamudReflector.Load();
-            UnlocksCache = UnlocksCache.Load();
+            GameStateCache = GameStateCache.Load();
             Input = new Input();
             Ipc = new IpcSystem(PluginInterface, Data, TexCache);
 
@@ -788,7 +805,24 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Gearsets) && !isInCombat)
+                    {
+                        var cj = Data.GetExcelSheet<ClassJob>()!;
+                        foreach (var gearset in GameStateCache.Gearsets)
+                        {
+                            var cjRow = cj.GetRow(gearset.ClassJob)!;
+
+                            if (gearset.Name.ToLower().Contains(term) || cjRow.Name.RawString.ToLower().Contains(term) || cjRow.Abbreviation.RawString.ToLower().Contains(term))
+                            {
+                                cResults.Add(new GearsetSearchResult
+                                {
+                                    Gearset = gearset,
+                                });
+                            }
+                        }
+                    }
+
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                     {
                         foreach (var aetheryte in Aetheryes)
                         {
@@ -808,11 +842,11 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Duty) && !isInDuty)
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Duty) && !isInDuty)
                     {
                         foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                         {
-                            if (!UnlocksCache.UnlockedDutyKeys.Contains(cfc.Key))
+                            if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
                                 continue;
 
                             var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(cfc.Key);
@@ -872,7 +906,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.MainCommand) && !isInEvent)
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.MainCommand) && !isInEvent)
                     {
                         foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
                         {
@@ -899,7 +933,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.GeneralAction) && !isInEvent)
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GeneralAction) && !isInEvent)
                     {
                         var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
                         var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
@@ -925,7 +959,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.PluginSettings))
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.PluginSettings))
                     {
                         foreach (var plugin in DalamudReflector.OtherPlugins)
                         {
@@ -972,9 +1006,9 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (Configuration.ToSearchV2.HasFlag(Configuration.SearchSetting.Emote) && !isInEvent)
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Emote) && !isInEvent)
                     {
-                        foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && UnlocksCache.UnlockedEmoteKeys.Contains(x.RowId)))
+                        foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && GameStateCache.UnlockedEmoteKeys.Contains(x.RowId)))
                         {
                             var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
                             var slashCmd = emoteRow.TextCommand.Value!;
@@ -1109,7 +1143,7 @@ namespace Dalamud.FindAnything
                 {
                     foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                     {
-                        if (!UnlocksCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
+                        if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
                             continue;
 
                         if (cfc.Value.Searchable.Contains(term))
@@ -1299,7 +1333,7 @@ namespace Dalamud.FindAnything
                 Configuration.Save();
             }
 
-            UnlocksCache.Refresh();
+            GameStateCache.Refresh();
             finderOpen = true;
         }
 
