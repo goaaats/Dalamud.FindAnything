@@ -76,7 +76,41 @@ namespace Dalamud.FindAnything
             var cjIcons = new Dictionary<uint, TextureWrap>();
             foreach (var classJob in data.GetExcelSheet<ClassJob>()!)
             {
-                var icon = classJob.JobIndex != 0 ? data.GetImGuiTextureHqIcon(062400 + (uint) classJob.JobIndex) : data.GetImGuiTextureHqIcon(062300 + classJob.RowId);
+                TextureWrap? icon = null;
+                if (classJob.JobIndex != 0)
+                {
+                    icon = data.GetImGuiTextureHqIcon(062400 + (uint)classJob.JobIndex);
+                }
+                else
+                {
+                    var offset = classJob.RowId switch
+                    {
+                        1 => 1,
+                        2 => 2,
+                        3 => 3,
+                        4 => 4,
+                        5 => 5,
+                        6 => 6,
+                        7 => 7,
+                        8 => 10,
+                        9 => 11,
+                        10 => 12,
+                        11 => 13,
+                        12 => 14,
+                        13 => 15,
+                        14 => 16,
+                        15 => 17,
+                        16 => 18,
+                        17 => 19,
+                        18 => 20,
+
+                        26 => 8,
+                        29 => 9,
+                        _ => 0,
+                    };
+
+                    icon = data.GetImGuiTextureHqIcon(062300 + (uint) offset);
+                }
 
                 if (icon != null)
                     cjIcons.Add(classJob.RowId, icon);
