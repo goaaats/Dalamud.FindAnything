@@ -132,6 +132,7 @@ namespace Dalamud.FindAnything
             {
                 GamerEscape,
                 GarlandTools,
+                ConsoleGamesWiki,
                 TeamCraft,
             }
 
@@ -139,11 +140,21 @@ namespace Dalamud.FindAnything
 
             public bool CloseFinder => true;
 
-            private static void OpenWikiPage(string input)
+            private static void OpenWikiPage(string input, SiteChoice choice)
             {
                 var name = input.Replace(' ', '_');
                 name = name.Replace('–', '-');
-                Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{HttpUtility.UrlEncode(name)}?useskin=Vector");
+
+                switch (choice)
+                {
+                    case SiteChoice.GamerEscape:
+                        Util.OpenLink($"https://ffxiv.gamerescape.com/wiki/{HttpUtility.UrlEncode(name)}?useskin=Vector");
+                        break;
+                    case SiteChoice.ConsoleGamesWiki:
+                        Util.OpenLink($"https://ffxiv.consolegameswiki.com/wiki/{HttpUtility.UrlEncode(name)}");
+                        break;
+                }
+
             }
 
             public void Selected()
@@ -155,9 +166,10 @@ namespace Dalamud.FindAnything
 
                 switch (Site)
                 {
+                    case SiteChoice.ConsoleGamesWiki:
                     case SiteChoice.GamerEscape:
                     {
-                        OpenWikiPage(choicerTempResult.Name);
+                        OpenWikiPage(choicerTempResult.Name, Site);
                     }
                         break;
                     case SiteChoice.GarlandTools:
@@ -1238,6 +1250,11 @@ namespace Dalamud.FindAnything
                         cResults.Add(new WikiSiteChoicerResult
                         {
                             Site = WikiSiteChoicerResult.SiteChoice.GamerEscape
+                        });
+
+                        cResults.Add(new WikiSiteChoicerResult
+                        {
+                            Site = WikiSiteChoicerResult.SiteChoice.ConsoleGamesWiki
                         });
 
                         cResults.Add(new WikiSiteChoicerResult
