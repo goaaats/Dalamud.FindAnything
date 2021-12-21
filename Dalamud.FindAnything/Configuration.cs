@@ -2,6 +2,7 @@
 using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Dalamud.Game.ClientState.Keys;
 
 namespace Dalamud.FindAnything
@@ -80,6 +81,8 @@ namespace Dalamud.FindAnything
         public HintKind HintLevel { get; set; } = HintKind.HintTyping;
 
         public Dictionary<string, float> MathConstants { get; set; } = new();
+
+        public Vector2 PositionOffset { get; set; } = new(0, 0);
 
         public enum HintKind
         {

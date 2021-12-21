@@ -1333,6 +1333,7 @@ namespace Dalamud.FindAnything
             var startPos = ImGuiHelpers.MainViewport.Pos + (mainViewportMiddle - (size / 2));
 
             startPos.Y -= 200;
+            startPos += Configuration.PositionOffset;
 
             var scaledFour = 4 * ImGuiHelpers.GlobalScale;
 
