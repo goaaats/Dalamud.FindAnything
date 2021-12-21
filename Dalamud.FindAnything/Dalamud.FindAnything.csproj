@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Authors>goat</Authors>
-    <Version>1.0.0.6</Version>
+    <Version>1.0.0.7</Version>
     <Description>Finder of anything</Description>
     <Copyright>(c) 2021 goaaats</Copyright>
     <PackageProjectUrl>https://github.com/goaaats/Dalamud.FindAnything</PackageProjectUrl>
