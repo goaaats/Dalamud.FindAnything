@@ -21,6 +21,7 @@ namespace Dalamud.FindAnything
         public IReadOnlyDictionary<uint, TextureWrap> ContentTypeIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> EmoteIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> ClassJobIcons { get; init; }
+        public IReadOnlyDictionary<uint, TextureWrap> MountIcons { get; init; }
 
         public Dictionary<uint, TextureWrap> ExtraIcons { get; private set; }
 
@@ -117,6 +118,17 @@ namespace Dalamud.FindAnything
             }
             ClassJobIcons = cjIcons;
             PluginLog.Information(ClassJobIcons.Count + " class jobs loaded.");
+
+            var mountIcons = new Dictionary<uint, TextureWrap>();
+            foreach (var mount in data.GetExcelSheet<Mount>()!)
+            {
+                var icon = data!.GetImGuiTextureHqIcon(mount.Icon);
+                if (icon == null)
+                    continue;
+
+                mountIcons.Add(mount.RowId, icon);    
+            }
+            MountIcons = mountIcons;
 
             AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;

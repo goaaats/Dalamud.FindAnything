@@ -27,6 +27,13 @@ public unsafe class GameStateCache
 
     private readonly IsEmoteUnlockedDelegate? isEmoteUnlocked;
 
+    [return:MarshalAs(UnmanagedType.U1)]
+    private delegate byte IsMountUnlockedDelegate(IntPtr mountBitmask, uint mountId);
+
+    private readonly IsMountUnlockedDelegate? isMountUnlocked;
+
+    private IntPtr mountBitmask;
+
     public struct Gearset
     {
         public int Slot { get; set; }
@@ -36,11 +43,20 @@ public unsafe class GameStateCache
 
     public IReadOnlyList<uint> UnlockedDutyKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; }
+    public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
     public IReadOnlyList<Gearset> Gearsets { get; private set; }
 
     internal bool IsDutyUnlocked(uint contentId) {
         var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.LookingForGroup);
         return this.isDutyUnlocked(contentId) > 0;
+    }
+
+    internal bool IsMountUnlocked(uint mountId) {
+        if (this.mountBitmask == IntPtr.Zero) {
+            return false;
+        }
+
+        return this.isMountUnlocked(this.mountBitmask, mountId) > 0;
     }
 
     private GameStateCache()
@@ -53,6 +69,14 @@ public unsafe class GameStateCache
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 A4", out var emoteUnlockedPtr)) {
             PluginLog.Information($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
             this.isEmoteUnlocked = Marshal.GetDelegateForFunctionPointer<IsEmoteUnlockedDelegate>(emoteUnlockedPtr);
+        }
+
+        FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB E8", out this.mountBitmask);
+        PluginLog.Information($"mountBitmask: {this.mountBitmask:X}");
+
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB", out var mountUnlockedPtr)) {
+            PluginLog.Information($"mountUnlockedPtr: {mountUnlockedPtr:X}");
+            this.isMountUnlocked = Marshal.GetDelegateForFunctionPointer<IsMountUnlockedDelegate>(mountUnlockedPtr);
         }
     }
 
@@ -74,6 +98,11 @@ public unsafe class GameStateCache
                 }
             }
             UnlockedEmoteKeys = emotes;
+        }
+        
+        if (this.isMountUnlocked != null)
+        {
+            UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         }
 
         var gsModule = RaptureGearsetModule.Instance();
