@@ -156,10 +156,10 @@ namespace Dalamud.FindAnything
             SearchSetting.MainCommand,
             SearchSetting.GeneralAction,
             SearchSetting.PluginSettings,
+            SearchSetting.Emote,
+            SearchSetting.Internal,
             SearchSetting.CraftingRecipes,
             SearchSetting.GatheringItems,
-            SearchSetting.Internal,
-            SearchSetting.Emote,
         };
 
         // the below exist just to make saving less cumbersome
