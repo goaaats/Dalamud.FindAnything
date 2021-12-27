@@ -15,7 +15,7 @@ namespace Dalamud.FindAnything
         public SearchSetting ToSearchV3 { get; set; } =
             SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction |
             SearchSetting.Emote | SearchSetting.PluginSettings
-            | SearchSetting.Gearsets | SearchSetting.CraftingRecipes | SearchSetting.GatheringItems | SearchSetting.Reserved3 |
+            | SearchSetting.Gearsets | SearchSetting.CraftingRecipes | SearchSetting.GatheringItems | SearchSetting.Mounts |
             SearchSetting.Reserved4 | SearchSetting.Reserved5 | SearchSetting.Reserved6 | SearchSetting.Reserved7 |
             SearchSetting.Reserved8
             | SearchSetting.Reserved9 | SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 |
@@ -52,7 +52,7 @@ namespace Dalamud.FindAnything
             Gearsets = 1 << 6,
             CraftingRecipes = 1 << 7,
             GatheringItems = 1 << 8,
-            Reserved3 = 1 << 9,
+            Mounts = 1 << 9,
             Reserved4 = 1 << 10,
             Reserved5 = 1 << 11,
             Reserved6 = 1 << 12,

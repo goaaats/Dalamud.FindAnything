@@ -27,12 +27,15 @@ public unsafe class GameStateCache
 
     private readonly IsEmoteUnlockedDelegate? isEmoteUnlocked;
 
+    [return:MarshalAs(UnmanagedType.U1)]
+    private delegate byte IsMountUnlockedDelegate(IntPtr mountBitmask, uint mountId);
+    private readonly IsMountUnlockedDelegate? isMountUnlocked;
+    private IntPtr mountBitmask;
+  
     private delegate void SearchForItemByCraftingMethodDelegate(AgentInterface* agent, ushort itemId);
-
     private readonly SearchForItemByCraftingMethodDelegate? searchForItemByCraftingMethod;
 
     private delegate void SearchForItemByGatheringMethodDelegate(AgentInterface* agent, ushort itemId);
-
     private readonly SearchForItemByGatheringMethodDelegate searchForItemByGatheringMethod;
 
     public struct Gearset
@@ -44,6 +47,7 @@ public unsafe class GameStateCache
 
     public IReadOnlyList<uint> UnlockedDutyKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; }
+    public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
     public IReadOnlyList<Gearset> Gearsets { get; private set; }
 
     internal bool IsDutyUnlocked(uint contentId) {
@@ -51,6 +55,14 @@ public unsafe class GameStateCache
         return this.isDutyUnlocked(contentId) > 0;
     }
 
+    internal bool IsMountUnlocked(uint mountId) {
+        if (this.mountBitmask == IntPtr.Zero) {
+            return false;
+        }
+
+        return this.isMountUnlocked(this.mountBitmask, mountId) > 0;
+    }
+  
     internal void SearchForItemByCraftingMethod(ushort itemId) {
         var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.RecipeNote);
         this.searchForItemByCraftingMethod(agent, itemId);
@@ -73,6 +85,14 @@ public unsafe class GameStateCache
             this.isEmoteUnlocked = Marshal.GetDelegateForFunctionPointer<IsEmoteUnlockedDelegate>(emoteUnlockedPtr);
         }
 
+        FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB E8", out this.mountBitmask);
+        PluginLog.Information($"mountBitmask: {this.mountBitmask:X}");
+
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB", out var mountUnlockedPtr)) {
+            PluginLog.Information($"mountUnlockedPtr: {mountUnlockedPtr:X}");
+            this.isMountUnlocked = Marshal.GetDelegateForFunctionPointer<IsMountUnlockedDelegate>(mountUnlockedPtr);
+        }
+      
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 7A 48 83 F8 06", out var searchCraftingPtr)) {
             PluginLog.Information($"searchCraftingPtr: {searchCraftingPtr:X}");
             this.searchForItemByCraftingMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByCraftingMethodDelegate>(searchCraftingPtr);
@@ -102,6 +122,11 @@ public unsafe class GameStateCache
                 }
             }
             UnlockedEmoteKeys = emotes;
+        }
+        
+        if (this.isMountUnlocked != null)
+        {
+            UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         }
 
         var gsModule = RaptureGearsetModule.Instance();

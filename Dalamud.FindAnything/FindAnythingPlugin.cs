@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using Dalamud.Game;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
@@ -702,6 +703,21 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class MountResult : ISearchResult
+        {
+            public string CatName => "Mount";
+            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular);
+            public TextureWrap? Icon => TexCache.MountIcons[Mount.RowId];
+            public bool CloseFinder => true;
+
+            public Mount Mount { get; set; }
+
+            public void Selected()
+            {
+                xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
+            }
+        }
+        
         private class CraftingRecipeResult : ISearchResult {
             public string CatName => "Crafting Recipe";
             public string Name { get; set; }
@@ -909,6 +925,26 @@ namespace Dalamud.FindAnything
                                     Gearset = gearset,
                                 });
                             }
+                        }
+                    }
+                    
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInDuty && !isInCombat)
+                    {
+                        foreach (var mount in Data.GetExcelSheet<Mount>()!)
+                        {
+                            if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
+                                continue;
+
+                            if (mount.Singular.RawString.ToLower().Contains(term))
+                            {
+                                cResults.Add(new MountResult
+                                {
+                                    Mount = mount,
+                                });
+                            }
+                            
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
                         }
                     }
 
