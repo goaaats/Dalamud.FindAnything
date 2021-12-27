@@ -35,7 +35,7 @@ public class SettingsWindow : Window
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
         this.SizeCondition = ImGuiCond.Always;
-        this.Size = new Vector2(850, 660);
+        this.Size = new Vector2(850, 660) * ImGuiHelpers.GlobalScale;
         this.plugin = plugin;
     }
 
