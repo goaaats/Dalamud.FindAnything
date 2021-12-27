@@ -66,7 +66,9 @@ namespace Dalamud.FindAnything
         private static int selectedIndex = 0;
 
         private int framesSinceLastKbChange = 0;
-        private int framesSinceButtonPress = 0;
+        private int lastButtonPressTicks = 0;
+        private bool isHeldTimeout = false;
+        private bool isHeld = false;
 
         private int timeSinceLastShift = 0;
         private bool shiftArmed = false;
@@ -1560,11 +1562,14 @@ namespace Dalamud.FindAnything
             selectedIndex = 0;
             searchMode = SearchMode.Top;
             choicerTempResult = null;
+            isHeld = false;
             UpdateSearchResults();
         }
 
         private const int MAX_ONE_PAGE = 10;
         private const int MAX_TO_SEARCH = 100;
+
+        private int GetTickCount() => Environment.TickCount & Int32.MaxValue;
 
         private void DrawUI()
         {
@@ -1658,7 +1663,7 @@ namespace Dalamud.FindAnything
                         numKeysDown[i] = ImGui.IsKeyDown((int) VirtualKey.KEY_1 + i);
                     }
 
-                    if (isDown && framesSinceButtonPress is 0 or > 20)
+                    void CursorDown()
                     {
                         if (selectedIndex != results.Length - 1)
                         {
@@ -1670,9 +1675,9 @@ namespace Dalamud.FindAnything
                         }
 
                         framesSinceLastKbChange = 0;
-                        framesSinceButtonPress++;
                     }
-                    else if (isUp && framesSinceButtonPress is 0 or > 20)
+
+                    void CursorUp()
                     {
                         if (selectedIndex != 0)
                         {
@@ -1684,16 +1689,65 @@ namespace Dalamud.FindAnything
                         }
 
                         framesSinceLastKbChange = 0;
-                        framesSinceButtonPress++;
                     }
-                    else if(isUp || isDown || isPgUp || isPgDn)
+
+                    var scrollSpeedTicks = Configuration.Speed switch {
+                        Configuration.ScrollSpeed.Slow => 120,
+                        Configuration.ScrollSpeed.Medium => 65,
+                        Configuration.ScrollSpeed.Fast => 30,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+
+                    const int holdTimeout = 120;
+                    var ticks = GetTickCount();
+                    var ticksSinceLast = ticks - lastButtonPressTicks;
+                    if (isDown && !isHeld)
                     {
-                        framesSinceButtonPress++;
+                        CursorDown();
+                        lastButtonPressTicks = ticks;
+                        isHeld = true;
+                        isHeldTimeout = true;
                     }
-                    else if (!isDown && !isUp && !isPgUp && !isPgDn)
+                    else if (isDown && isHeld)
                     {
-                        framesSinceButtonPress = 0;
+                        switch (isHeldTimeout)
+                        {
+                            case true when ticksSinceLast > holdTimeout:
+                                isHeldTimeout = false;
+                                break;
+                            case false when ticksSinceLast > scrollSpeedTicks:
+                                CursorDown();
+                                lastButtonPressTicks = ticks;
+                                break;
+                        }
                     }
+                    else if (isUp && !isHeld)
+                    {
+                        CursorUp();
+                        lastButtonPressTicks = ticks;
+                        isHeld = true;
+                        isHeldTimeout = true;
+                    }
+                    else if (isUp && isHeld)
+                    {
+                        switch (isHeldTimeout)
+                        {
+                            case true when ticksSinceLast > holdTimeout:
+                                isHeldTimeout = false;
+                                break;
+                            case false when ticksSinceLast > scrollSpeedTicks:
+                                CursorUp();
+                                lastButtonPressTicks = ticks;
+                                break;
+                        }
+                    }
+                    else if (!isDown && !isUp)
+                    {
+                        isHeld = false;
+                        isHeldTimeout = false;
+                    }
+
+                    PluginLog.Information($"ticks: {GetTickCount() - lastButtonPressTicks}");
 
                     if (isPgUp && framesSinceLastKbChange > 10)
                     {

@@ -146,6 +146,15 @@ namespace Dalamud.FindAnything
             AlwaysMotion,
         }
 
+        public enum ScrollSpeed
+        {
+            Slow,
+            Medium,
+            Fast,
+        }
+
+        public ScrollSpeed Speed { get; set; } = ScrollSpeed.Medium;
+
         private static readonly List<SearchSetting> DefaultOrder = new() {
             SearchSetting.MacroLinks,
             SearchSetting.Gearsets,

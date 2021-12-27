@@ -31,6 +31,7 @@ public class SettingsWindow : Window
     private bool onlyWiki;
     private VirtualKey quickSelectKey;
     private List<Configuration.SearchSetting> order = new();
+    private Configuration.ScrollSpeed speed;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -57,6 +58,7 @@ public class SettingsWindow : Window
         this.onlyWiki = FindAnythingPlugin.Configuration.OnlyWikiMode;
         this.quickSelectKey = FindAnythingPlugin.Configuration.QuickSelectKey;
         this.order = FindAnythingPlugin.Configuration.Order.ToList();
+        this.speed = FindAnythingPlugin.Configuration.Speed;
         base.OnOpen();
     }
 
@@ -196,6 +198,18 @@ public class SettingsWindow : Window
         ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
         ImGui.Checkbox("Directly go to wiki mode when opening search", ref this.onlyWiki);
         ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800);
+        if (ImGui.BeginCombo("Scroll Speed", this.speed.ToString()))
+        {
+            foreach (var key in Enum.GetValues<Configuration.ScrollSpeed>())
+            {
+                if (ImGui.Selectable(key.ToString(), key == this.speed))
+                {
+                    this.speed = key;
+                }
+            }
+
+            ImGui.EndCombo();
+        }
 
         ImGuiHelpers.ScaledDummy(5);
         ImGui.Separator();
@@ -222,6 +236,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.PositionOffset = this.posOffset;
             FindAnythingPlugin.Configuration.OnlyWikiMode = this.onlyWiki;
             FindAnythingPlugin.Configuration.QuickSelectKey = this.quickSelectKey;
+            FindAnythingPlugin.Configuration.Speed = this.speed;
 
             FindAnythingPlugin.Configuration.Save();
 
