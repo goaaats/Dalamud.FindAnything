@@ -717,6 +717,37 @@ namespace Dalamud.FindAnything
                 xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
             }
         }
+        
+        private class CraftingRecipeResult : ISearchResult {
+            public string CatName => "Crafting Recipe";
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public bool CloseFinder => true;
+            
+            public Recipe Recipe { get; set; }
+
+            public void Selected() {
+                var id = this.Recipe.ItemResult.Value?.RowId ?? 0;
+                if (id > 0) {
+                    GameStateCache.SearchForItemByCraftingMethod((ushort) (id % 500_000));
+                }
+            }
+        }
+
+        private class GatheringItemResult : ISearchResult {
+            public string CatName => "Gathering Item";
+            public string Name { get; set; }
+            public TextureWrap? Icon { get; set; }
+            public bool CloseFinder => true;
+            
+            public GatheringItem Item { get; set; }
+
+            public void Selected() {
+                if (this.Item.Item > 0) {
+                    GameStateCache.SearchForItemByGatheringMethod((ushort) (this.Item.Item % 500_000));
+                }
+            }
+        }
 
         private static ISearchResult[]? results;
 
@@ -912,6 +943,60 @@ namespace Dalamud.FindAnything
                                 });
                             }
                             
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
+                        }
+                    }
+
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.CraftingRecipes)) {
+                        foreach (var recipe in Data.GetExcelSheet<Recipe>()!) {
+                            var itemResult = recipe.ItemResult.Value;
+                            if (itemResult == null || itemResult.RowId == 0) {
+                                continue;
+                            }
+
+                            var name = itemResult.Name.RawString;
+
+                            if (name.ToLower().Contains(term)) {
+                                TexCache.EnsureExtraIcon(itemResult.Icon);
+                                TexCache.ExtraIcons.TryGetValue(itemResult.Icon, out var tex);
+
+                                cResults.Add(new CraftingRecipeResult
+                                {
+                                    Recipe = recipe,
+                                    Name = name,
+                                    Icon = tex,
+                                });
+                            }
+
+                            if (cResults.Count > MAX_TO_SEARCH)
+                                break;
+                        }
+                    }
+                    
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GatheringItems)) {
+                        var items = Data.GetExcelSheet<Item>()!;
+                        
+                        foreach (var gather in Data.GetExcelSheet<GatheringItem>()!) {
+                            var item = items.GetRow((uint) gather.Item);
+                            if (item == null || item.RowId == 0) {
+                                continue;
+                            }
+
+                            var name = item.Name.RawString;
+
+                            if (name.ToLower().Contains(term)) {
+                                TexCache.EnsureExtraIcon(item.Icon);
+                                TexCache.ExtraIcons.TryGetValue(item.Icon, out var tex);
+
+                                cResults.Add(new GatheringItemResult()
+                                {
+                                    Item = gather,
+                                    Name = name,
+                                    Icon = tex,
+                                });
+                            }
+
                             if (cResults.Count > MAX_TO_SEARCH)
                                 break;
                         }
