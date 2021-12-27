@@ -27,6 +27,14 @@ public unsafe class GameStateCache
 
     private readonly IsEmoteUnlockedDelegate? isEmoteUnlocked;
 
+    private delegate void SearchForItemByCraftingMethodDelegate(AgentInterface* agent, ushort itemId);
+
+    private readonly SearchForItemByCraftingMethodDelegate? searchForItemByCraftingMethod;
+
+    private delegate void SearchForItemByGatheringMethodDelegate(AgentInterface* agent, ushort itemId);
+
+    private readonly SearchForItemByGatheringMethodDelegate searchForItemByGatheringMethod;
+
     public struct Gearset
     {
         public int Slot { get; set; }
@@ -43,6 +51,16 @@ public unsafe class GameStateCache
         return this.isDutyUnlocked(contentId) > 0;
     }
 
+    internal void SearchForItemByCraftingMethod(ushort itemId) {
+        var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.RecipeNote);
+        this.searchForItemByCraftingMethod(agent, itemId);
+    }
+    
+    internal void SearchForItemByGatheringMethod(ushort itemId) {
+        var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.GatheringNote);
+        this.searchForItemByGatheringMethod(agent, itemId);
+    }
+
     private GameStateCache()
     {
         if (FindAnythingPlugin.TargetScanner.TryScanText("E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 57 3C 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75 D9", out var dutyUnlockedPtr)) {
@@ -53,6 +71,16 @@ public unsafe class GameStateCache
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 A4", out var emoteUnlockedPtr)) {
             PluginLog.Information($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
             this.isEmoteUnlocked = Marshal.GetDelegateForFunctionPointer<IsEmoteUnlockedDelegate>(emoteUnlockedPtr);
+        }
+
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 7A 48 83 F8 06", out var searchCraftingPtr)) {
+            PluginLog.Information($"searchCraftingPtr: {searchCraftingPtr:X}");
+            this.searchForItemByCraftingMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByCraftingMethodDelegate>(searchCraftingPtr);
+        }
+
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 38 48 83 F8 07", out var searchGatheringPtr)) {
+            PluginLog.Information($"searchGatheringPtr: {searchGatheringPtr:X}");
+            this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
         }
     }
 

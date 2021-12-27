@@ -65,6 +65,8 @@ public class SettingsWindow : Window
         ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
         ImGui.CheckboxFlags("Search in other plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
         ImGui.CheckboxFlags("Search in Gear Sets", ref this.flags, (uint) Configuration.SearchSetting.Gearsets);
+        ImGui.CheckboxFlags("Search in Crafting Recipes", ref this.flags, (uint) Configuration.SearchSetting.CraftingRecipes);
+        ImGui.CheckboxFlags("Search in Gathering Items", ref this.flags, (uint) Configuration.SearchSetting.GatheringItems);
 
         ImGuiHelpers.ScaledDummy(15);
         ImGui.Separator();
