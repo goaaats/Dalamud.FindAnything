@@ -717,13 +717,13 @@ namespace Dalamud.FindAnything
                 xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
             }
         }
-        
+
         private class CraftingRecipeResult : ISearchResult {
             public string CatName => "Crafting Recipe";
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public bool CloseFinder => true;
-            
+
             public Recipe Recipe { get; set; }
 
             public void Selected() {
@@ -739,7 +739,7 @@ namespace Dalamud.FindAnything
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
             public bool CloseFinder => true;
-            
+
             public GatheringItem Item { get; set; }
 
             public void Selected() {
@@ -927,7 +927,7 @@ namespace Dalamud.FindAnything
                             }
                         }
                     }
-                    
+
                     if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInDuty && !isInCombat)
                     {
                         foreach (var mount in Data.GetExcelSheet<Mount>()!)
@@ -942,7 +942,7 @@ namespace Dalamud.FindAnything
                                     Mount = mount,
                                 });
                             }
-                            
+
                             if (cResults.Count > MAX_TO_SEARCH)
                                 break;
                         }
@@ -973,10 +973,10 @@ namespace Dalamud.FindAnything
                                 break;
                         }
                     }
-                    
+
                     if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GatheringItems)) {
                         var items = Data.GetExcelSheet<Item>()!;
-                        
+
                         foreach (var gather in Data.GetExcelSheet<GatheringItem>()!) {
                             var item = items.GetRow((uint) gather.Item);
                             if (item == null || item.RowId == 0) {
@@ -1620,10 +1620,17 @@ namespace Dalamud.FindAnything
                 {
                     var childSize = ImGui.GetWindowSize();
 
+                    var isCtrl = ImGui.IsKeyDown((int)Configuration.ComboModifier);
                     var isDown = ImGui.IsKeyDown((int)VirtualKey.DOWN);
                     var isUp = ImGui.IsKeyDown((int)VirtualKey.UP);
                     var isPgUp = ImGui.IsKeyDown((int)VirtualKey.PRIOR);
                     var isPgDn = ImGui.IsKeyDown((int)VirtualKey.NEXT);
+
+                    var numKeysDown = new bool[10];
+                    for (var i = 0; i < 9; i++)
+                    {
+                        numKeysDown[i] = ImGui.IsKeyDown((int) VirtualKey.KEY_1 + i);
+                    }
 
                     if (isDown && framesSinceButtonPress is 0 or > 20)
                     {
@@ -1692,6 +1699,12 @@ namespace Dalamud.FindAnything
 
                         ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
 
+                        if (i < 9 && Configuration.QuickSelectKey != VirtualKey.NO_KEY)
+                        {
+                            ImGui.SameLine(size.X - (65 * ImGuiHelpers.GlobalScale));
+                            ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
+                        }
+
                         if (result.Icon != null)
                         {
                             ImGui.SameLine(size.X - (50 * ImGuiHelpers.GlobalScale));
@@ -1709,6 +1722,11 @@ namespace Dalamud.FindAnything
                         {
                             ImGui.SetScrollY(0);
                         }
+                    }
+
+                    if (isCtrl && numKeysDown.Any(x => x))
+                    {
+                        clickedIndex = Array.IndexOf(numKeysDown, true);
                     }
 
                     if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || clickedIndex != -1)

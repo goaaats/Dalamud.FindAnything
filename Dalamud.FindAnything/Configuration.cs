@@ -31,6 +31,8 @@ namespace Dalamud.FindAnything
         public VirtualKey ComboKey { get; set; } = VirtualKey.T;
         public VirtualKey ShiftShiftKey { get; set; } = VirtualKey.OEM_MINUS;
 
+        public VirtualKey QuickSelectKey { get; set; } = VirtualKey.CONTROL;
+
         public bool WikiModeNoSpoilers { get; set; } = true;
 
         public enum OpenMode

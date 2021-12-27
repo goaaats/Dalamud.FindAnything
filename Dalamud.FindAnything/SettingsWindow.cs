@@ -29,6 +29,7 @@ public class SettingsWindow : Window
     private Dictionary<string, float> constants = new();
     private Vector2 posOffset;
     private bool onlyWiki;
+    private VirtualKey quickSelectKey;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -53,6 +54,7 @@ public class SettingsWindow : Window
         this.constants = FindAnythingPlugin.Configuration.MathConstants;
         this.posOffset = FindAnythingPlugin.Configuration.PositionOffset;
         this.onlyWiki = FindAnythingPlugin.Configuration.OnlyWikiMode;
+        this.quickSelectKey = FindAnythingPlugin.Configuration.QuickSelectKey;
         base.OnOpen();
     }
 
@@ -102,6 +104,10 @@ public class SettingsWindow : Window
             default:
                 throw new ArgumentOutOfRangeException();
         }
+
+        ImGuiHelpers.ScaledDummy(5);
+
+        VirtualKeySelect("Quick Select Key", ref quickSelectKey);
 
         ImGuiHelpers.ScaledDummy(15);
         ImGui.Separator();
@@ -170,6 +176,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;
             FindAnythingPlugin.Configuration.PositionOffset = this.posOffset;
             FindAnythingPlugin.Configuration.OnlyWikiMode = this.onlyWiki;
+            FindAnythingPlugin.Configuration.QuickSelectKey = this.quickSelectKey;
 
             FindAnythingPlugin.Configuration.Save();
 
