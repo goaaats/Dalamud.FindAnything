@@ -20,6 +20,7 @@ public class SettingsWindow : Window
     private VirtualKey shiftShiftKey;
     private int shiftShiftDelay;
     private VirtualKey comboModifierKey;
+    private VirtualKey comboModifier2Key;
     private VirtualKey comboKey;
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
@@ -48,6 +49,7 @@ public class SettingsWindow : Window
         this.shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
         this.comboKey = FindAnythingPlugin.Configuration.ComboKey;
         this.comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
+        this.comboModifier2Key = FindAnythingPlugin.Configuration.ComboModifier2;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
@@ -144,7 +146,8 @@ public class SettingsWindow : Window
                 }
                 break;
             case Configuration.OpenMode.Combo:
-                VirtualKeySelect("Combo Modifier", ref comboModifierKey);
+                VirtualKeySelect("Combo Modifier 1", ref comboModifierKey);
+                VirtualKeySelect("Combo Modifier 2", ref comboModifier2Key);
                 VirtualKeySelect("Combo Key", ref comboKey);
                 break;
             default:
@@ -226,6 +229,7 @@ public class SettingsWindow : Window
 
             FindAnythingPlugin.Configuration.ComboKey = comboKey;
             FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;
+            FindAnythingPlugin.Configuration.ComboModifier2 = comboModifier2Key;
 
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
 

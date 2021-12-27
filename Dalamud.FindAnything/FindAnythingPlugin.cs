@@ -846,17 +846,29 @@ namespace Dalamud.FindAnything
                         break;
                     case Configuration.OpenMode.Combo:
                         var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier);
+                        var mod2 = Configuration.ComboModifier2 == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier2);
                         var key = Configuration.ComboKey == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboKey);
 
-                        if (mod && key)
+                        if (mod && mod2 && key)
                         {
                             OpenFinder();
+                            UnsetKey(Configuration.ComboModifier);
+                            UnsetKey(Configuration.ComboModifier2);
+                            UnsetKey(Configuration.ComboKey);
                         }
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
+        }
+
+        private static void UnsetKey(VirtualKey key)
+        {
+            if ((int)key <= 0 || (int)key >= 240)
+                return;
+
+            Keys[key] = false;
         }
 
         private static bool CheckInDuty()

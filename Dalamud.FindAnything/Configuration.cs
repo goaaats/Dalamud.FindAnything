@@ -28,6 +28,7 @@ namespace Dalamud.FindAnything
 
         public uint ShiftShiftDelay { get; set; } = 40;
         public VirtualKey ComboModifier { get; set; } = VirtualKey.CONTROL;
+        public VirtualKey ComboModifier2 { get; set; } = VirtualKey.NO_KEY;
         public VirtualKey ComboKey { get; set; } = VirtualKey.T;
         public VirtualKey ShiftShiftKey { get; set; } = VirtualKey.OEM_MINUS;
 
