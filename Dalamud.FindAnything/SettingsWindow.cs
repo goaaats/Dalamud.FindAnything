@@ -30,6 +30,7 @@ public class SettingsWindow : Window
     private Vector2 posOffset;
     private bool onlyWiki;
     private VirtualKey quickSelectKey;
+    private List<Configuration.SearchSetting> order = new();
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -55,20 +56,61 @@ public class SettingsWindow : Window
         this.posOffset = FindAnythingPlugin.Configuration.PositionOffset;
         this.onlyWiki = FindAnythingPlugin.Configuration.OnlyWikiMode;
         this.quickSelectKey = FindAnythingPlugin.Configuration.QuickSelectKey;
+        this.order = FindAnythingPlugin.Configuration.Order.ToList();
         base.OnOpen();
     }
 
     public override void Draw()
     {
         ImGui.TextColored(ImGuiColors.DalamudGrey, "What to search");
-        ImGui.CheckboxFlags("Search in Duties", ref this.flags, (uint) Configuration.SearchSetting.Duty);
-        ImGui.CheckboxFlags("Search in Commands", ref this.flags, (uint) Configuration.SearchSetting.MainCommand);
-        ImGui.CheckboxFlags("Search in Aetherytes", ref this.flags, (uint) Configuration.SearchSetting.Aetheryte);
-        ImGui.CheckboxFlags("Search in General Actions", ref this.flags, (uint) Configuration.SearchSetting.GeneralAction);
-        ImGui.CheckboxFlags("Search in other plugins", ref this.flags, (uint) Configuration.SearchSetting.PluginSettings);
-        ImGui.CheckboxFlags("Search in Gear Sets", ref this.flags, (uint) Configuration.SearchSetting.Gearsets);
-        ImGui.CheckboxFlags("Search in Crafting Recipes", ref this.flags, (uint) Configuration.SearchSetting.CraftingRecipes);
-        ImGui.CheckboxFlags("Search in Gathering Items", ref this.flags, (uint) Configuration.SearchSetting.GatheringItems);
+        for (var i = 0; i < this.order.Count; i++) {
+            var search = this.order[i];
+
+            var name = search switch {
+                Configuration.SearchSetting.Duty => "Duties",
+                Configuration.SearchSetting.Aetheryte => "Aetherytes",
+                Configuration.SearchSetting.MainCommand => "Commands",
+                Configuration.SearchSetting.GeneralAction => "General Actions",
+                Configuration.SearchSetting.Emote => "Emotes",
+                Configuration.SearchSetting.PluginSettings => "other plugins",
+                Configuration.SearchSetting.Gearsets => "Gear Sets",
+                Configuration.SearchSetting.CraftingRecipes => "Crafting Recipes",
+                Configuration.SearchSetting.GatheringItems => "Gathering Items",
+                Configuration.SearchSetting.Mounts => "Mounts",
+                //Configuration.SearchSetting.Minions => "Minions",
+                Configuration.SearchSetting.MacroLinks => "Macro Links",
+                Configuration.SearchSetting.Internal => "Wotsit",
+                _ => null,
+            };
+
+            if (name == null) {
+                continue;
+            }
+
+            var isRequired = search is Configuration.SearchSetting.Internal or Configuration.SearchSetting.MacroLinks;
+
+            ImGui.PushFont(UiBuilder.IconFont);
+
+            if (ImGui.Button($"{FontAwesomeIcon.ArrowUp.ToIconString()}##{search}") && i != 0) {
+                (this.order[i], this.order[i - 1]) = (this.order[i - 1], this.order[i]);
+            }
+
+            ImGui.SameLine();
+
+            if (ImGui.Button($"{FontAwesomeIcon.ArrowDown.ToIconString()}##{search}") && i != this.order.Count - 1) {
+                (this.order[i], this.order[i + 1]) = (this.order[i + 1], this.order[i]);
+            }
+
+            ImGui.PopFont();
+
+            ImGui.SameLine();
+
+            if (isRequired) {
+                ImGui.TextUnformatted($"Search in {name}");
+            } else {
+                ImGui.CheckboxFlags($"Search in {name}", ref this.flags, (uint) search);
+            }
+        }
 
         ImGuiHelpers.ScaledDummy(15);
         ImGui.Separator();
@@ -160,6 +202,7 @@ public class SettingsWindow : Window
         if (ImGui.Button("Save"))
         {
             FindAnythingPlugin.Configuration.ToSearchV3 = (Configuration.SearchSetting) this.flags;
+            FindAnythingPlugin.Configuration.Order = this.order;
 
             FindAnythingPlugin.Configuration.Open = openMode;
             FindAnythingPlugin.Configuration.ShiftShiftKey = shiftShiftKey;

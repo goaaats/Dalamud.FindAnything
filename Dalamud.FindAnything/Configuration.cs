@@ -16,7 +16,7 @@ namespace Dalamud.FindAnything
             SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction |
             SearchSetting.Emote | SearchSetting.PluginSettings
             | SearchSetting.Gearsets | SearchSetting.CraftingRecipes | SearchSetting.GatheringItems | SearchSetting.Mounts |
-            SearchSetting.Reserved4 | SearchSetting.Reserved5 | SearchSetting.Reserved6 | SearchSetting.Reserved7 |
+            SearchSetting.Reserved4 | SearchSetting.MacroLinks | SearchSetting.Internal | SearchSetting.Reserved7 |
             SearchSetting.Reserved8
             | SearchSetting.Reserved9 | SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 |
             SearchSetting.Reserved13 | SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16
@@ -55,9 +55,9 @@ namespace Dalamud.FindAnything
             CraftingRecipes = 1 << 7,
             GatheringItems = 1 << 8,
             Mounts = 1 << 9,
-            Reserved4 = 1 << 10,
-            Reserved5 = 1 << 11,
-            Reserved6 = 1 << 12,
+            Reserved4 = 1 << 10, // Minions in Anna's fork
+            MacroLinks = 1 << 11, // Cannot be toggled off
+            Internal = 1 << 12, // Cannot be toggled off
             Reserved7 = 1 << 13,
             Reserved8 = 1 << 14,
             Reserved9 = 1 << 15,
@@ -123,6 +123,8 @@ namespace Dalamud.FindAnything
 
         public bool OnlyWikiMode { get; set; } = false;
 
+        public List<SearchSetting> Order { get; set; } = new();
+
         public enum HintKind
         {
             HintTyping,
@@ -144,6 +146,22 @@ namespace Dalamud.FindAnything
             AlwaysMotion,
         }
 
+        private static readonly List<SearchSetting> DefaultOrder = new() {
+            SearchSetting.MacroLinks,
+            SearchSetting.Gearsets,
+            SearchSetting.Aetheryte,
+            SearchSetting.Duty,
+            SearchSetting.Mounts,
+            //SearchSetting.Minions,
+            SearchSetting.MainCommand,
+            SearchSetting.GeneralAction,
+            SearchSetting.PluginSettings,
+            SearchSetting.CraftingRecipes,
+            SearchSetting.GatheringItems,
+            SearchSetting.Internal,
+            SearchSetting.Emote,
+        };
+
         // the below exist just to make saving less cumbersome
 
         [NonSerialized]
@@ -152,6 +170,16 @@ namespace Dalamud.FindAnything
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
             this.pluginInterface = pluginInterface;
+
+            if (this.Order.Count != DefaultOrder.Count) {
+                foreach (var search in DefaultOrder) {
+                    if (this.Order.Contains(search)) {
+                        continue;
+                    }
+
+                    this.Order.Add(search);
+                }
+            }
         }
 
         public void Save()
