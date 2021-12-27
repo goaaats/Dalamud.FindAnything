@@ -1235,92 +1235,105 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    var expression = new Expression(searchTerm);
-
-                    expression.EvaluateFunction += delegate(string name, FunctionArgs args)
+                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Maths))
                     {
-                        switch (name)
+                        var expression = new Expression(searchTerm);
+
+                        expression.EvaluateFunction += delegate(string name, FunctionArgs args)
                         {
-                            case "lexp":
-                                if (args.Parameters.Length == 1)
-                                {
-                                    var num = (int)args.EvaluateParameters()[0];
-                                    args.Result = MathAux.GetNeededExpForLevel((uint)num);
-                                    args.HasResult = true;
-                                    PluginLog.Information($"exp called with {num} was {args.Result}",
-                                        Array.Empty<object>());
-                                }
-                                else if (args.Parameters.Length == 0)
-                                {
-                                    args.Result = MathAux.GetNeededExpForCurrentLevel();
-                                    args.HasResult = true;
-                                }
+                            switch (name)
+                            {
+                                case "lexp":
+                                    if (args.Parameters.Length == 1)
+                                    {
+                                        var num = (int)args.EvaluateParameters()[0];
+                                        args.Result = MathAux.GetNeededExpForLevel((uint)num);
+                                        args.HasResult = true;
+                                        PluginLog.Information($"exp called with {num} was {args.Result}",
+                                            Array.Empty<object>());
+                                    }
+                                    else if (args.Parameters.Length == 0)
+                                    {
+                                        args.Result = MathAux.GetNeededExpForCurrentLevel();
+                                        args.HasResult = true;
+                                    }
 
-                                break;
-                            case "cexp":
-                                if (args.Parameters.Length == 0)
-                                {
-                                    args.Result = MathAux.GetCurrentExp();
-                                    args.HasResult = true;
-                                }
+                                    break;
+                                case "cexp":
+                                    if (args.Parameters.Length == 0)
+                                    {
+                                        args.Result = MathAux.GetCurrentExp();
+                                        args.HasResult = true;
+                                    }
 
-                                break;
-                            case "expleft":
-                                if (args.Parameters.Length == 0)
-                                {
-                                    args.Result = MathAux.GetExpLeft();
-                                    args.HasResult = true;
-                                }
+                                    break;
+                                case "expleft":
+                                    if (args.Parameters.Length == 0)
+                                    {
+                                        args.Result = MathAux.GetExpLeft();
+                                        args.HasResult = true;
+                                    }
 
-                                break;
-                            case "lvl":
-                                if (args.Parameters.Length == 0)
-                                {
-                                    args.Result = MathAux.GetLevel();
-                                    args.HasResult = true;
-                                }
+                                    break;
+                                case "lvl":
+                                    if (args.Parameters.Length == 0)
+                                    {
+                                        args.Result = MathAux.GetLevel();
+                                        args.HasResult = true;
+                                    }
 
-                                break;
-                            default:
+                                    break;
+                                default:
+                                    args.Result = null;
+                                    args.HasResult = false;
+                                    break;
+                            }
+                        };
+
+                        expression.EvaluateParameter += delegate(string sender, ParameterArgs args)
+                        {
+                            if (sender == "ans")
+                            {
+                                args.Result = lastAcceptedExpressionResult ?? 0;
+                                args.HasResult = true;
+                            }
+                            else if (Configuration.MathConstants.ContainsKey(sender))
+                            {
+                                args.Result = Configuration.MathConstants[sender];
+                                args.HasResult = true;
+                            }
+                            else
+                            {
                                 args.Result = null;
                                 args.HasResult = false;
-                                break;
-                        }
-                    };
+                            }
+                        };
 
-                    expression.EvaluateParameter += delegate(string sender, ParameterArgs args)
-                    {
-                        if (sender == "ans")
+                        if (!expression.HasErrors())
                         {
-                            args.Result = lastAcceptedExpressionResult ?? 0;
-                            args.HasResult = true;
-                        }
-                        else if (Configuration.MathConstants.ContainsKey(sender))
-                        {
-                            args.Result = Configuration.MathConstants[sender];
-                            args.HasResult = true;
+                            try
+                            {
+                                var result = expression.Evaluate();
+                                if (result is not 0)
+                                    cResults.Add(new ExpressionResult
+                                    {
+                                        Result = result
+                                    });
+                            }
+                            catch (ArgumentException ex)
+                            {
+                                PluginLog.Verbose(ex, "Expression evaluate error", Array.Empty<object>());
+                                if (searchTerm.Any(x => x is >= '0' and <= '9'))
+                                    cResults.Add(new ExpressionResult
+                                    {
+                                        Result = null,
+                                        HasError = true
+                                    });
+                            }
                         }
                         else
                         {
-                            args.Result = null;
-                            args.HasResult = false;
-                        }
-                    };
-
-                    if (!expression.HasErrors())
-                    {
-                        try
-                        {
-                            var result = expression.Evaluate();
-                            if (result is not 0)
-                                cResults.Add(new ExpressionResult
-                                {
-                                    Result = result
-                                });
-                        }
-                        catch (ArgumentException ex)
-                        {
-                            PluginLog.Verbose(ex, "Expression evaluate error", Array.Empty<object>());
+                            PluginLog.Verbose("Expression parse error: " + expression.Error, Array.Empty<object>());
                             if (searchTerm.Any(x => x is >= '0' and <= '9'))
                                 cResults.Add(new ExpressionResult
                                 {
@@ -1328,16 +1341,6 @@ namespace Dalamud.FindAnything
                                     HasError = true
                                 });
                         }
-                    }
-                    else
-                    {
-                        PluginLog.Verbose("Expression parse error: " + expression.Error, Array.Empty<object>());
-                        if (searchTerm.Any(x => x is >= '0' and <= '9'))
-                            cResults.Add(new ExpressionResult
-                            {
-                                Result = null,
-                                HasError = true
-                            });
                     }
                 }
                     break;

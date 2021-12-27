@@ -112,6 +112,8 @@ public class SettingsWindow : Window
             }
         }
 
+        ImGui.CheckboxFlags("Mathematical Expressions", ref this.flags, (uint) Configuration.SearchSetting.Maths);
+
         ImGuiHelpers.ScaledDummy(15);
         ImGui.Separator();
         ImGuiHelpers.ScaledDummy(15);
