@@ -898,317 +898,340 @@ namespace Dalamud.FindAnything
             {
                 case SearchMode.Top:
                 {
-                    DalamudReflector.RefreshPlugins();
-
-                    foreach (var macroLink in Configuration.MacroLinks)
+                    foreach (var setting in Configuration.Order)
                     {
-                        if (macroLink.SearchName.ToLower().Contains(term))
+                        switch (setting)
                         {
-                            cResults.Add(new MacroLinkSearchResult
-                            {
-                                Entry = macroLink,
-                            });
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Gearsets) && !isInCombat)
-                    {
-                        var cj = Data.GetExcelSheet<ClassJob>()!;
-                        foreach (var gearset in GameStateCache.Gearsets)
-                        {
-                            var cjRow = cj.GetRow(gearset.ClassJob)!;
-
-                            if (gearset.Name.ToLower().Contains(term) || cjRow.Name.RawString.ToLower().Contains(term) || cjRow.Abbreviation.RawString.ToLower().Contains(term) || ClassJobRolesMap[gearset.ClassJob].Contains(term))
-                            {
-                                cResults.Add(new GearsetSearchResult
+                            case Configuration.SearchSetting.Duty:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Duty) && !isInDuty)
                                 {
-                                    Gearset = gearset,
-                                });
-                            }
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInDuty && !isInCombat)
-                    {
-                        foreach (var mount in Data.GetExcelSheet<Mount>()!)
-                        {
-                            if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
-                                continue;
-
-                            if (mount.Singular.RawString.ToLower().Contains(term))
-                            {
-                                cResults.Add(new MountResult
-                                {
-                                    Mount = mount,
-                                });
-                            }
-
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.CraftingRecipes)) {
-                        foreach (var recipe in Data.GetExcelSheet<Recipe>()!) {
-                            var itemResult = recipe.ItemResult.Value;
-                            if (itemResult == null || itemResult.RowId == 0) {
-                                continue;
-                            }
-
-                            var name = itemResult.Name.RawString;
-
-                            if (name.ToLower().Contains(term)) {
-                                TexCache.EnsureExtraIcon(itemResult.Icon);
-                                TexCache.ExtraIcons.TryGetValue(itemResult.Icon, out var tex);
-
-                                cResults.Add(new CraftingRecipeResult
-                                {
-                                    Recipe = recipe,
-                                    Name = name,
-                                    Icon = tex,
-                                });
-                            }
-
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GatheringItems)) {
-                        var items = Data.GetExcelSheet<Item>()!;
-
-                        foreach (var gather in Data.GetExcelSheet<GatheringItem>()!) {
-                            var item = items.GetRow((uint) gather.Item);
-                            if (item == null || item.RowId == 0) {
-                                continue;
-                            }
-
-                            var name = item.Name.RawString;
-
-                            if (name.ToLower().Contains(term)) {
-                                TexCache.EnsureExtraIcon(item.Icon);
-                                TexCache.ExtraIcons.TryGetValue(item.Icon, out var tex);
-
-                                cResults.Add(new GatheringItemResult()
-                                {
-                                    Item = gather,
-                                    Name = name,
-                                    Icon = tex,
-                                });
-                            }
-
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
-                    {
-                        foreach (var aetheryte in Aetheryes)
-                        {
-                            var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
-                            var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
-                            if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
-                                cResults.Add(new AetheryteSearchResult
-                                {
-                                    Name = aetheryteName,
-                                    Data = aetheryte,
-                                    Icon = TexCache.AetheryteIcon,
-                                    TerriName = terriName.Display
-                                });
-
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Duty) && !isInDuty)
-                    {
-                        foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
-                        {
-                            if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
-                                continue;
-
-                            var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(cfc.Key);
-
-                            if (row == null || row.ContentType == null)
-                                continue;
-
-                            /*
-                            switch (row.ContentType.Row)
-                            {
-                                case 0: // Invalid
-                                case 3: // Guildhests
-                                case 7: // Quest Battles
-                                case 8: // FATEs
-                                case 9: // Treasure Hunts
-                                case 20: // Novice Hall
-                                case 21: // DD
-                                case 26: // Eureka
-                                    continue;
-                            }
-                            */
-
-                            // Only include dungeon, trials, raids, ultimates
-                            if (row.ContentType.Row is not (2 or 4 or 5 or 28))
-                                continue;
-
-                            if (cfc.Value.Searchable.Contains(term))
-                            {
-                                cResults.Add(new DutySearchResult
-                                {
-                                    CatName = row.ContentType?.Value?.Name ?? "Duty",
-                                    DataKey = cfc.Key,
-                                    Name = cfc.Value.Display,
-                                    Icon = TexCache.ContentTypeIcons[row.ContentType.Row],
-                                });
-                            }
-
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
-
-                        foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder))
-                        {
-                            var text = SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
-
-                            if (text.Searchable.Contains(term))
-                            {
-                                cResults.Add(new ContentRouletteSearchResult()
-                                {
-                                    DataKey = (byte) contentRoulette.RowId,
-                                    Name = contentRoulette.Category.ToDalamudString().TextValue
-                                });
-                            }
-
-                            if (cResults.Count > MAX_TO_SEARCH)
-                                break;
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.MainCommand) && !isInEvent)
-                    {
-                        foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
-                        {
-                            // Record ready check, internal ones
-                            if (mainCommand.Key is 79 or 38 or 39 or 40 or 43 or 26)
-                                continue;
-
-                            var searchable = mainCommand.Value.Searchable;
-                            if (searchable == "log out")
-                                searchable = "logout";
-
-                            if (searchable.Contains(term))
-                            {
-                                cResults.Add(new MainCommandSearchResult
-                                {
-                                    CommandId = mainCommand.Key,
-                                    Name = mainCommand.Value.Display,
-                                    Icon = TexCache.MainCommandIcons[mainCommand.Key]
-                                });
-
-                                if (cResults.Count > MAX_TO_SEARCH)
-                                    break;
-                            }
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GeneralAction) && !isInEvent)
-                    {
-                        var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
-                        var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
-
-                        foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
-                        {
-                            // Skip invalid entries, jump, etc
-                            if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
-                                continue;
-
-                            // Skip Materia Melding/Advanced Material Melding, based on what is unlocked
-                            if ((!hasMelding || hasAdvancedMelding) && generalAction.Key is 12)
-                                continue;
-                            if (!hasAdvancedMelding && generalAction.Key is 13)
-                                continue;
-
-                            if (generalAction.Value.Searchable.Contains(term))
-                                cResults.Add(new GeneralActionSearchResult
-                                {
-                                    Name = generalAction.Value.Display,
-                                    Icon = TexCache.GeneralActionIcons[generalAction.Key]
-                                });
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.PluginSettings))
-                    {
-                        foreach (var plugin in DalamudReflector.OtherPlugins)
-                        {
-                            if (plugin.Name.ToLower().Contains(term))
-                            {
-                                cResults.Add(new PluginSettingsSearchResult
-                                {
-                                    Name = plugin.Name,
-                                    Plugin = plugin,
-                                });
-                            }
-                        }
-
-                        foreach (var plugin in Ipc.TrackedIpcs)
-                        {
-                            foreach (var ipcBinding in plugin.Value)
-                            {
-                                if (ipcBinding.Search.Contains(term))
-                                {
-                                    cResults.Add(new IpcSearchResult
+                                    foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                                     {
-                                        CatName = plugin.Key,
-                                        Name = ipcBinding.Display,
-                                        Guid = ipcBinding.Guid,
-                                        Icon = TexCache.ExtraIcons[ipcBinding.IconId],
-                                    });
+                                        if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
+                                            continue;
+
+                                        var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(cfc.Key);
+
+                                        if (row == null || row.ContentType == null)
+                                            continue;
+
+                                        /*
+                                        switch (row.ContentType.Row)
+                                        {
+                                            case 0: // Invalid
+                                            case 3: // Guildhests
+                                            case 7: // Quest Battles
+                                            case 8: // FATEs
+                                            case 9: // Treasure Hunts
+                                            case 20: // Novice Hall
+                                            case 21: // DD
+                                            case 26: // Eureka
+                                                continue;
+                                        }
+                                        */
+
+                                        // Only include dungeon, trials, raids, ultimates
+                                        if (row.ContentType.Row is not (2 or 4 or 5 or 28))
+                                            continue;
+
+                                        if (cfc.Value.Searchable.Contains(term))
+                                        {
+                                            cResults.Add(new DutySearchResult
+                                            {
+                                                CatName = row.ContentType?.Value?.Name ?? "Duty",
+                                                DataKey = cfc.Key,
+                                                Name = cfc.Value.Display,
+                                                Icon = TexCache.ContentTypeIcons[row.ContentType.Row],
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
+
+                                    foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder))
+                                    {
+                                        var text = SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
+
+                                        if (text.Searchable.Contains(term))
+                                        {
+                                            cResults.Add(new ContentRouletteSearchResult()
+                                            {
+                                                DataKey = (byte) contentRoulette.RowId,
+                                                Name = contentRoulette.Category.ToDalamudString().TextValue
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
                                 }
-
-                                // Limit IPC results to 25
-                                if (cResults.Count > 25)
-                                    break;
-                            }
-                        }
-                    }
-
-                    foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
-                    {
-                        if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))
-                        {
-                            cResults.Add(new InternalSearchResult
-                            {
-                                Kind = kind
-                            });
-                        }
-                    }
-
-                    if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Emote) && !isInEvent)
-                    {
-                        foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && GameStateCache.UnlockedEmoteKeys.Contains(x.RowId)))
-                        {
-                            var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
-                            var slashCmd = emoteRow.TextCommand.Value!;
-                            var slashCmdMatch = slashCmd.Command.RawString.Contains(term) ||
-                                                slashCmd.Alias.RawString.Contains(term) ||
-                                                slashCmd.ShortCommand.RawString.Contains(term) ||
-                                                slashCmd.ShortAlias.RawString.Contains(term);
-
-                            if (text.Searchable.Contains(term) || slashCmdMatch)
-                            {
-                                cResults.Add(new EmoteSearchResult
+                                break;
+                            case Configuration.SearchSetting.Aetheryte:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                                 {
-                                    Name = text.Display,
-                                    SlashCommand = slashCmd.Command.RawString,
-                                    Icon = TexCache.EmoteIcons[emoteRow.RowId]
-                                });
+                                    foreach (var aetheryte in Aetheryes)
+                                    {
+                                        var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
+                                        var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
+                                        if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
+                                            cResults.Add(new AetheryteSearchResult
+                                            {
+                                                Name = aetheryteName,
+                                                Data = aetheryte,
+                                                Icon = TexCache.AetheryteIcon,
+                                                TerriName = terriName.Display
+                                            });
 
-                                if (cResults.Count > MAX_TO_SEARCH)
-                                    break;
-                            }
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.MainCommand:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.MainCommand) && !isInEvent)
+                                {
+                                    foreach (var mainCommand in SearchDatabase.GetAll<MainCommand>())
+                                    {
+                                        // Record ready check, internal ones
+                                        if (mainCommand.Key is 79 or 38 or 39 or 40 or 43 or 26)
+                                            continue;
+
+                                        var searchable = mainCommand.Value.Searchable;
+                                        if (searchable == "log out")
+                                            searchable = "logout";
+
+                                        if (searchable.Contains(term))
+                                        {
+                                            cResults.Add(new MainCommandSearchResult
+                                            {
+                                                CommandId = mainCommand.Key,
+                                                Name = mainCommand.Value.Display,
+                                                Icon = TexCache.MainCommandIcons[mainCommand.Key]
+                                            });
+
+                                            if (cResults.Count > MAX_TO_SEARCH)
+                                                break;
+                                        }
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.GeneralAction:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GeneralAction) && !isInEvent)
+                                {
+                                    var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
+                                    var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
+
+                                    foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
+                                    {
+                                        // Skip invalid entries, jump, etc
+                                        if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
+                                            continue;
+
+                                        // Skip Materia Melding/Advanced Material Melding, based on what is unlocked
+                                        if ((!hasMelding || hasAdvancedMelding) && generalAction.Key is 12)
+                                            continue;
+                                        if (!hasAdvancedMelding && generalAction.Key is 13)
+                                            continue;
+
+                                        if (generalAction.Value.Searchable.Contains(term))
+                                            cResults.Add(new GeneralActionSearchResult
+                                            {
+                                                Name = generalAction.Value.Display,
+                                                Icon = TexCache.GeneralActionIcons[generalAction.Key]
+                                            });
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.Emote:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Emote) && !isInEvent)
+                                {
+                                    foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && GameStateCache.UnlockedEmoteKeys.Contains(x.RowId)))
+                                    {
+                                        var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
+                                        var slashCmd = emoteRow.TextCommand.Value!;
+                                        var slashCmdMatch = slashCmd.Command.RawString.Contains(term) ||
+                                                            slashCmd.Alias.RawString.Contains(term) ||
+                                                            slashCmd.ShortCommand.RawString.Contains(term) ||
+                                                            slashCmd.ShortAlias.RawString.Contains(term);
+
+                                        if (text.Searchable.Contains(term) || slashCmdMatch)
+                                        {
+                                            cResults.Add(new EmoteSearchResult
+                                            {
+                                                Name = text.Display,
+                                                SlashCommand = slashCmd.Command.RawString,
+                                                Icon = TexCache.EmoteIcons[emoteRow.RowId]
+                                            });
+
+                                            if (cResults.Count > MAX_TO_SEARCH)
+                                                break;
+                                        }
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.PluginSettings:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.PluginSettings))
+                                {
+                                    DalamudReflector.RefreshPlugins();
+
+                                    foreach (var plugin in DalamudReflector.OtherPlugins)
+                                    {
+                                        if (plugin.Name.ToLower().Contains(term))
+                                        {
+                                            cResults.Add(new PluginSettingsSearchResult
+                                            {
+                                                Name = plugin.Name,
+                                                Plugin = plugin,
+                                            });
+                                        }
+                                    }
+
+                                    foreach (var plugin in Ipc.TrackedIpcs)
+                                    {
+                                        foreach (var ipcBinding in plugin.Value)
+                                        {
+                                            if (ipcBinding.Search.Contains(term))
+                                            {
+                                                cResults.Add(new IpcSearchResult
+                                                {
+                                                    CatName = plugin.Key,
+                                                    Name = ipcBinding.Display,
+                                                    Guid = ipcBinding.Guid,
+                                                    Icon = TexCache.ExtraIcons[ipcBinding.IconId],
+                                                });
+                                            }
+
+                                            // Limit IPC results to 25
+                                            if (cResults.Count > 25)
+                                                break;
+                                        }
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.Gearsets:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Gearsets) && !isInCombat)
+                                {
+                                    var cj = Data.GetExcelSheet<ClassJob>()!;
+                                    foreach (var gearset in GameStateCache.Gearsets)
+                                    {
+                                        var cjRow = cj.GetRow(gearset.ClassJob)!;
+
+                                        if (gearset.Name.ToLower().Contains(term) || cjRow.Name.RawString.ToLower().Contains(term) || cjRow.Abbreviation.RawString.ToLower().Contains(term) || ClassJobRolesMap[gearset.ClassJob].Contains(term))
+                                        {
+                                            cResults.Add(new GearsetSearchResult
+                                            {
+                                                Gearset = gearset,
+                                            });
+                                        }
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.CraftingRecipes:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.CraftingRecipes)) {
+                                    foreach (var recipe in Data.GetExcelSheet<Recipe>()!) {
+                                        var itemResult = recipe.ItemResult.Value;
+                                        if (itemResult == null || itemResult.RowId == 0) {
+                                            continue;
+                                        }
+
+                                        var name = itemResult.Name.RawString;
+
+                                        if (name.ToLower().Contains(term)) {
+                                            TexCache.EnsureExtraIcon(itemResult.Icon);
+                                            TexCache.ExtraIcons.TryGetValue(itemResult.Icon, out var tex);
+
+                                            cResults.Add(new CraftingRecipeResult
+                                            {
+                                                Recipe = recipe,
+                                                Name = name,
+                                                Icon = tex,
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.GatheringItems:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GatheringItems)) {
+                                    var items = Data.GetExcelSheet<Item>()!;
+
+                                    foreach (var gather in Data.GetExcelSheet<GatheringItem>()!) {
+                                        var item = items.GetRow((uint) gather.Item);
+                                        if (item == null || item.RowId == 0) {
+                                            continue;
+                                        }
+
+                                        var name = item.Name.RawString;
+
+                                        if (name.ToLower().Contains(term)) {
+                                            TexCache.EnsureExtraIcon(item.Icon);
+                                            TexCache.ExtraIcons.TryGetValue(item.Icon, out var tex);
+
+                                            cResults.Add(new GatheringItemResult()
+                                            {
+                                                Item = gather,
+                                                Name = name,
+                                                Icon = tex,
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.Mounts:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInDuty && !isInCombat)
+                                {
+                                    foreach (var mount in Data.GetExcelSheet<Mount>()!)
+                                    {
+                                        if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
+                                            continue;
+
+                                        if (mount.Singular.RawString.ToLower().Contains(term))
+                                        {
+                                            cResults.Add(new MountResult
+                                            {
+                                                Mount = mount,
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.Reserved4:  // Minions
+                                break;
+                            case Configuration.SearchSetting.MacroLinks:
+                                foreach (var macroLink in Configuration.MacroLinks)
+                                {
+                                    if (macroLink.SearchName.ToLower().Contains(term))
+                                    {
+                                        cResults.Add(new MacroLinkSearchResult
+                                        {
+                                            Entry = macroLink,
+                                        });
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.Internal:
+                                foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
+                                {
+                                    if (InternalSearchResult.GetNameForKind(kind).ToLower().Contains(term))
+                                    {
+                                        cResults.Add(new InternalSearchResult
+                                        {
+                                            Kind = kind
+                                        });
+                                    }
+                                }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
                     }
 
