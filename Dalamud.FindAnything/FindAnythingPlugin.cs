@@ -967,16 +967,20 @@ namespace Dalamud.FindAnything
                                             break;
                                     }
 
-                                    foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder))
+                                    foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder)) // Also filter !row 7 + 10 here, but not in Lumina schemas yet
                                     {
                                         var text = SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
 
                                         if (text.Searchable.Contains(term))
                                         {
+                                            var name = contentRoulette.Category.ToDalamudString().TextValue;
+                                            if (name.IsNullOrWhitespace())
+                                                name = text.Display;
+
                                             cResults.Add(new ContentRouletteSearchResult()
                                             {
                                                 DataKey = (byte) contentRoulette.RowId,
-                                                Name = contentRoulette.Category.ToDalamudString().TextValue
+                                                Name = name,
                                             });
                                         }
 
