@@ -30,6 +30,8 @@ namespace Dalamud.FindAnything
         public VirtualKey ComboModifier { get; set; } = VirtualKey.CONTROL;
         public VirtualKey ComboModifier2 { get; set; } = VirtualKey.NO_KEY;
         public VirtualKey ComboKey { get; set; } = VirtualKey.T;
+        public bool PreventPassthrough { get; set; } = true;
+
         public VirtualKey ShiftShiftKey { get; set; } = VirtualKey.OEM_MINUS;
 
         public VirtualKey QuickSelectKey { get; set; } = VirtualKey.CONTROL;

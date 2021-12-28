@@ -852,9 +852,13 @@ namespace Dalamud.FindAnything
                         if (mod && mod2 && key)
                         {
                             OpenFinder();
-                            UnsetKey(Configuration.ComboModifier);
-                            UnsetKey(Configuration.ComboModifier2);
-                            UnsetKey(Configuration.ComboKey);
+
+                            if (Configuration.PreventPassthrough)
+                            {
+                                UnsetKey(Configuration.ComboModifier);
+                                UnsetKey(Configuration.ComboModifier2);
+                                UnsetKey(Configuration.ComboKey);
+                            }
                         }
                         break;
                     default:

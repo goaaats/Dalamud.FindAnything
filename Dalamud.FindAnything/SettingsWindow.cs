@@ -22,6 +22,7 @@ public class SettingsWindow : Window
     private VirtualKey comboModifierKey;
     private VirtualKey comboModifier2Key;
     private VirtualKey comboKey;
+    private bool preventPassthrough;
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
     private Configuration.EmoteMotionMode emoteMotionMode;
@@ -50,6 +51,7 @@ public class SettingsWindow : Window
         this.comboKey = FindAnythingPlugin.Configuration.ComboKey;
         this.comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.comboModifier2Key = FindAnythingPlugin.Configuration.ComboModifier2;
+        this.preventPassthrough = FindAnythingPlugin.Configuration.PreventPassthrough;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
@@ -149,6 +151,7 @@ public class SettingsWindow : Window
                 VirtualKeySelect("Combo Modifier 1", ref comboModifierKey);
                 VirtualKeySelect("Combo Modifier 2", ref comboModifier2Key);
                 VirtualKeySelect("Combo Key", ref comboKey);
+                ImGui.Checkbox("Prevent passthrough to game", ref preventPassthrough);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -230,6 +233,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.ComboKey = comboKey;
             FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;
             FindAnythingPlugin.Configuration.ComboModifier2 = comboModifier2Key;
+            FindAnythingPlugin.Configuration.PreventPassthrough = preventPassthrough;
 
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
 
