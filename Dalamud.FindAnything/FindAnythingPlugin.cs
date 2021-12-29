@@ -135,6 +135,7 @@ namespace Dalamud.FindAnything
         };
 
         private static SearchMode searchMode = SearchMode.Top;
+        private static bool wasTempSearchMode = false;
         private static ISearchResult? choicerTempResult;
 
         private interface ISearchResult
@@ -1369,6 +1370,9 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.Wiki:
                 {
+                    if (term.StartsWith("?"))
+                        term = term[1..];
+
                     var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
                         .FirstOrDefault(x => x.TerritoryType.Row == ClientState.TerritoryType);
                     if ("here".Contains(term) && terriContent != null)
@@ -1385,7 +1389,7 @@ namespace Dalamud.FindAnything
 
                     cResults.Add(new SearchWikiSearchResult
                     {
-                        Query = searchTerm
+                        Query = searchTerm.StartsWith("?") ? searchTerm[1..] : searchTerm,
                     });
 
                     foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
@@ -1583,6 +1587,7 @@ namespace Dalamud.FindAnything
             searchMode = SearchMode.Top;
             choicerTempResult = null;
             isHeld = false;
+            wasTempSearchMode = false;
             UpdateSearchResults();
         }
 
@@ -1622,6 +1627,30 @@ namespace Dalamud.FindAnything
             ImGui.Begin("###findeverything", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
             ImGui.PushItemWidth(size.X - (45 * ImGuiHelpers.GlobalScale));
+
+            if (!searchTerm.IsNullOrEmpty())
+            {
+                switch (searchTerm[0])
+                {
+                    case '?':
+                        if (searchMode == SearchMode.Top)
+                        {
+                            searchMode = SearchMode.Wiki;
+                            wasTempSearchMode = true;
+                            PluginLog.Information("AutoSearchMode: Wiki");
+                        }
+                        break;
+                    default:
+                        if (wasTempSearchMode)
+                        {
+                            searchMode = SearchMode.Top;
+                            wasTempSearchMode = false;
+                            UpdateSearchResults();
+                            PluginLog.Information("AutoSearchMode: Top");
+                        }
+                        break;
+                }
+            }
 
             var searchHint = searchMode switch
             {
@@ -1766,8 +1795,6 @@ namespace Dalamud.FindAnything
                         isHeld = false;
                         isHeldTimeout = false;
                     }
-
-                    PluginLog.Information($"ticks: {GetTickCount() - lastButtonPressTicks}");
 
                     if (isPgUp && framesSinceLastKbChange > 10)
                     {
