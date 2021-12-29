@@ -33,14 +33,14 @@ public class GameWindow : Window, IDisposable
 
     private readonly IReadOnlyDictionary<NoseKind, uint> noseCosts = new Dictionary<NoseKind, uint>
     {
-        { NoseKind.Normal, 1 },
+        { NoseKind.Normal, 15 },
         { NoseKind.Farmer, 500 },
         { NoseKind.Robo, 3000 },
-        { NoseKind.Weird, 10000 },
-        { NoseKind.Agent, 25000 },
-        { NoseKind.CEO, 50000 },
-        { NoseKind.Thancred, 100000 },
-        { NoseKind.Magical, 120000 },
+        { NoseKind.Weird, 13000 },
+        { NoseKind.Agent, 30000 },
+        { NoseKind.CEO, 70000 },
+        { NoseKind.Thancred, 120000 },
+        { NoseKind.Magical, 180000 },
         { NoseKind.Eternity, 1000000 },
         { NoseKind.End, 9999999 },
     };
@@ -68,7 +68,7 @@ public class GameWindow : Window, IDisposable
         { NoseKind.Agent, 10f },
         { NoseKind.CEO, 15f },
         { NoseKind.Thancred, 25f },
-        { NoseKind.Magical, 30f },
+        { NoseKind.Magical, 40f },
         { NoseKind.Eternity, 0f },
         { NoseKind.End, 999f },
     };
@@ -131,7 +131,7 @@ public class GameWindow : Window, IDisposable
 
     private SimulationState state;
 
-    public GameWindow() : base("DN Farm")
+    public GameWindow() : base("DN Farm###dnwindow")
     {
         var assetPath = FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName;
 
@@ -169,7 +169,7 @@ public class GameWindow : Window, IDisposable
         state.NumNoses = new Dictionary<NoseKind, ulong>();
         state.RewardsGained = new List<uint>();
         state.BonusesGained = new List<uint>();
-        state.CurrentDn = 1;
+        state.CurrentDn = 15;
 
         FindAnythingPlugin.Configuration.SimulationState = state;
         FindAnythingPlugin.Configuration.Save();
@@ -182,9 +182,9 @@ public class GameWindow : Window, IDisposable
         base.OnOpen();
     }
 
-    public override void OnClose()
+    public override void Update()
     {
-        base.OnClose();
+        Simulate();
     }
 
     private double GetDps()
@@ -211,7 +211,6 @@ public class GameWindow : Window, IDisposable
         var fps = ImGui.GetIO().Framerate;
         var earned = dps / fps;
 
-        var multiplier =
         earned *= GetMultiplier();
 
         this.state.CurrentDn += earned;
@@ -236,8 +235,6 @@ public class GameWindow : Window, IDisposable
 
     public override void Draw()
     {
-        Simulate();
-
         ImGui.TextUnformatted($"{state.CurrentDn:N2} DN");
         ImGui.SameLine();
         ImGui.Image(noseTextures[NoseKind.Normal].ImGuiHandle, new Vector2(16, 16));
@@ -258,6 +255,7 @@ public class GameWindow : Window, IDisposable
             ImGui.TextColored(ImGuiColors.DalamudGrey, $"({GetDps():N2}/s)");
         }
 
+        WindowName = $"DN Farm ({state.CurrentDn:N0} DN)###dnwindow";
 
         ImGuiHelpers.ScaledDummy(5);
 
@@ -425,7 +423,7 @@ public class GameWindow : Window, IDisposable
 
                 if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage"))
                 {
-                    ImGui.Text("\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\n\nIs this what you want?\"");
+                    ImGui.Text($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
 
                     if (ImGui.Button("Yes"))
                     {
