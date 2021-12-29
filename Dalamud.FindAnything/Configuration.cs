@@ -3,6 +3,7 @@ using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Dalamud.FindAnything.Game;
 using Dalamud.Game.ClientState.Keys;
 
 namespace Dalamud.FindAnything
@@ -198,6 +199,8 @@ namespace Dalamud.FindAnything
                 }
             }
         }
+
+        public GameWindow.SimulationState? SimulationState { get; set; } = null;
 
         public void Save()
         {

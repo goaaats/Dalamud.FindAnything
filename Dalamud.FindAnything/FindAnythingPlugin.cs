@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Web;
 using Dalamud.Data;
+using Dalamud.FindAnything.Game;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Game.ClientState.Conditions;
@@ -79,6 +80,7 @@ namespace Dalamud.FindAnything
 
         private WindowSystem windowSystem;
         private static SettingsWindow settingsWindow;
+        private static GameWindow gameWindow;
 
         private static XivCommonBase xivCommon;
 
@@ -784,6 +786,19 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class GameSearchResult : ISearchResult
+        {
+            public string CatName => string.Empty;
+            public string Name => "DN Farm";
+            public TextureWrap? Icon => TexCache.GameIcon;
+            public bool CloseFinder => true;
+
+            public void Selected()
+            {
+                gameWindow.IsOpen = true;
+            }
+        }
+
         private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
@@ -796,6 +811,12 @@ namespace Dalamud.FindAnything
             CommandManager.AddHandler(commandName, new CommandInfo(OnCommand)
             {
                 HelpMessage = "Open the Wotsit settings."
+            });
+
+            CommandManager.AddHandler("/bountifuldn", new CommandInfo((_, _) => gameWindow.Cheat())
+            {
+                HelpMessage = "Open the Wotsit settings.",
+                ShowInHelp = false
             });
 
             PluginInterface.UiBuilder.Draw += DrawUI;
@@ -817,7 +838,9 @@ namespace Dalamud.FindAnything
 
             windowSystem = new WindowSystem("wotsit");
             settingsWindow = new SettingsWindow(this) { IsOpen = false };
+            gameWindow = new GameWindow { IsOpen = false };
             windowSystem.AddWindow(settingsWindow);
+            windowSystem.AddWindow(gameWindow);
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
             xivCommon = new XivCommonBase();
@@ -1561,6 +1584,9 @@ namespace Dalamud.FindAnything
                 });
             }
 
+            if ("dn farm".Contains(term))
+                cResults.Add(new GameSearchResult());
+
             results = cResults.ToArray();
 
 #if DEBUG
@@ -1575,6 +1601,7 @@ namespace Dalamud.FindAnything
             PluginInterface.UiBuilder.Draw -= DrawUI;
             Framework.Update -= FrameworkOnUpdate;
             CommandManager.RemoveHandler(commandName);
+            CommandManager.RemoveHandler("/bountifuldn");
             xivCommon.Dispose();
 
             TexCache.Dispose();

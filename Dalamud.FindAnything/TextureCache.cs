@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using Dalamud.Data;
 using Dalamud.Interface;
 using Dalamud.Logging;
@@ -33,6 +31,8 @@ namespace Dalamud.FindAnything
         public TextureWrap HintIcon { get; set; }
         public TextureWrap ChatIcon { get; set; }
         public TextureWrap MathsIcon { get; set; }
+
+        public TextureWrap GameIcon { get; set; }
 
         private TextureCache(UiBuilder uiBuilder, DataManager data)
         {
@@ -126,7 +126,7 @@ namespace Dalamud.FindAnything
                 if (icon == null)
                     continue;
 
-                mountIcons.Add(mount.RowId, icon);    
+                mountIcons.Add(mount.RowId, icon);
             }
             MountIcons = mountIcons;
 
@@ -140,6 +140,9 @@ namespace Dalamud.FindAnything
             MathsIcon = data.GetImGuiTextureHqIcon(062409)!;
 
             this.ExtraIcons = new Dictionary<uint, TextureWrap>();
+
+            GameIcon = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(
+                FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "Normal.png"));
 
             ReloadMacroIcons();
         }
@@ -205,6 +208,7 @@ namespace Dalamud.FindAnything
             HintIcon.Dispose();
             ChatIcon.Dispose();
             MathsIcon.Dispose();
+            GameIcon.Dispose();
         }
     }
 }
