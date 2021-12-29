@@ -34,6 +34,7 @@ public class SettingsWindow : Window
     private VirtualKey quickSelectKey;
     private List<Configuration.SearchSetting> order = new();
     private Configuration.ScrollSpeed speed;
+    private bool notInCombat;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -63,6 +64,7 @@ public class SettingsWindow : Window
         this.quickSelectKey = FindAnythingPlugin.Configuration.QuickSelectKey;
         this.order = FindAnythingPlugin.Configuration.Order.ToList();
         this.speed = FindAnythingPlugin.Configuration.Speed;
+        this.notInCombat = FindAnythingPlugin.Configuration.NotInCombat;
         base.OnOpen();
     }
 
@@ -216,6 +218,7 @@ public class SettingsWindow : Window
 
             ImGui.EndCombo();
         }
+        ImGui.Checkbox("Don't open Wotsit in combat", ref this.notInCombat);
 
         ImGuiHelpers.ScaledDummy(5);
         ImGui.Separator();
@@ -245,6 +248,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.OnlyWikiMode = this.onlyWiki;
             FindAnythingPlugin.Configuration.QuickSelectKey = this.quickSelectKey;
             FindAnythingPlugin.Configuration.Speed = this.speed;
+            FindAnythingPlugin.Configuration.NotInCombat = this.notInCombat;
 
             FindAnythingPlugin.Configuration.Save();
 

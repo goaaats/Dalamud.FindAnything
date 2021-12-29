@@ -803,6 +803,9 @@ namespace Dalamud.FindAnything
             if (Input.Disabled || Input == null)
                 return;
 
+            if (Configuration.NotInCombat && CheckInCombat())
+                return;
+
             Input.Update();
 
             if (Input.IsDown(VirtualKey.ESCAPE))

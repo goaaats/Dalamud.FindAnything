@@ -128,6 +128,8 @@ namespace Dalamud.FindAnything
 
         public List<SearchSetting> Order { get; set; } = new();
 
+        public bool NotInCombat { get; set; } = false;
+
         public enum HintKind
         {
             HintTyping,
