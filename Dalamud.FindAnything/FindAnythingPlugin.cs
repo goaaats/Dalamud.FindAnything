@@ -754,6 +754,19 @@ namespace Dalamud.FindAnything
                 xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
             }
         }
+        
+        private class MinionResult : ISearchResult {
+            public string CatName => "Minion";
+            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular);
+            public TextureWrap? Icon => TexCache.MinionIcons[Minion.RowId];
+            public bool CloseFinder => true;
+
+            public Companion Minion { get; set; }
+
+            public void Selected() {
+                xivCommon.Functions.Chat.SendMessage($"/minion \"{Minion.Singular}\"");
+            }
+        }
 
         private class CraftingRecipeResult : ISearchResult {
             public string CatName => "Crafting Recipe";
@@ -1295,7 +1308,23 @@ namespace Dalamud.FindAnything
                                     }
                                 }
                                 break;
-                            case Configuration.SearchSetting.Reserved4:  // Minions
+                            case Configuration.SearchSetting.Minions:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Minions) && !isInDuty && !isInCombat)
+                                {
+                                    foreach (var minion in Data.GetExcelSheet<Companion>()!)
+                                    {
+                                        if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
+                                            continue;
+
+                                        if (minion.Singular.RawString.ToLower().Contains(term))
+                                        {
+                                            cResults.Add(new MinionResult
+                                            {
+                                                Minion = minion,
+                                            });
+                                        }
+                                    }
+                                }
                                 break;
                             case Configuration.SearchSetting.MacroLinks:
                                 foreach (var macroLink in Configuration.MacroLinks)

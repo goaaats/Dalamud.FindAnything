@@ -62,7 +62,7 @@ namespace Dalamud.FindAnything
             CraftingRecipes = 1 << 7,
             GatheringItems = 1 << 8,
             Mounts = 1 << 9,
-            Reserved4 = 1 << 10, // Minions in Anna's fork
+            Minions = 1 << 10,
             MacroLinks = 1 << 11, // Cannot be toggled off
             Internal = 1 << 12, // Cannot be toggled off
             Maths = 1 << 13,
@@ -170,7 +170,7 @@ namespace Dalamud.FindAnything
             SearchSetting.Aetheryte,
             SearchSetting.Duty,
             SearchSetting.Mounts,
-            //SearchSetting.Minions,
+            SearchSetting.Minions,
             SearchSetting.MainCommand,
             SearchSetting.GeneralAction,
             SearchSetting.PluginSettings,
