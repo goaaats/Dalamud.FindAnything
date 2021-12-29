@@ -36,6 +36,7 @@ public class SettingsWindow : Window
     private List<Configuration.SearchSetting> order = new();
     private Configuration.ScrollSpeed speed;
     private bool notInCombat;
+    private bool tcForceBrowser;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -67,6 +68,7 @@ public class SettingsWindow : Window
         this.order = FindAnythingPlugin.Configuration.Order.ToList();
         this.speed = FindAnythingPlugin.Configuration.Speed;
         this.notInCombat = FindAnythingPlugin.Configuration.NotInCombat;
+        this.tcForceBrowser = FindAnythingPlugin.Configuration.TeamCraftForceBrowser;
         base.OnOpen();
     }
 
@@ -192,7 +194,7 @@ public class SettingsWindow : Window
         ImGui.Separator();
         ImGuiHelpers.ScaledDummy(15);
 
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "Others");
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
 
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
 
@@ -226,6 +228,7 @@ public class SettingsWindow : Window
             ImGui.EndCombo();
         }
         ImGui.Checkbox("Don't open Wotsit in combat", ref this.notInCombat);
+        ImGui.Checkbox("Force TeamCraft links to open in your browser", ref this.tcForceBrowser);
 
         ImGuiHelpers.ScaledDummy(5);
         ImGui.Separator();
@@ -257,6 +260,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.QuickSelectKey = this.quickSelectKey;
             FindAnythingPlugin.Configuration.Speed = this.speed;
             FindAnythingPlugin.Configuration.NotInCombat = this.notInCombat;
+            FindAnythingPlugin.Configuration.TeamCraftForceBrowser = this.tcForceBrowser;
 
             FindAnythingPlugin.Configuration.Save();
 

@@ -39,6 +39,7 @@ namespace Dalamud.FindAnything
         public VirtualKey QuickSelectKey { get; set; } = VirtualKey.CONTROL;
 
         public bool WikiModeNoSpoilers { get; set; } = true;
+        public bool TeamCraftForceBrowser { get; set; } = false;
 
         public enum OpenMode
         {

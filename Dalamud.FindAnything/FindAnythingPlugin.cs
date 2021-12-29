@@ -7,8 +7,10 @@ using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using System.Linq;
+using System.Net;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Web;
 using Dalamud.Data;
 using Dalamud.Game.ClientState;
@@ -28,6 +30,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
 using ImGuiScene;
+using Lumina.Data.Parsing;
 using Lumina.Excel.GeneratedSheets;
 using NCalc;
 using XivCommon;
@@ -208,6 +211,35 @@ namespace Dalamud.FindAnything
 
             }
 
+            private static bool teamcraftLocalFailed = false;
+            private static void OpenTeamcraft(uint id) {
+                if (teamcraftLocalFailed || Configuration.TeamCraftForceBrowser) {
+                    Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{id}");
+                    return;
+                }
+
+                Task.Run(() => {
+                    try {
+                        var wr = WebRequest.CreateHttp($"http://localhost:14500/db/en/item/{id}");
+                        wr.Timeout = 500;
+                        wr.Method = "GET";
+                        wr.GetResponse().Close();
+                    } catch {
+                        try {
+                            if (System.IO.Directory.Exists(System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ffxiv-teamcraft"))) {
+                                Util.OpenLink($"teamcraft:///db/en/item/{id}");
+                            } else {
+                                teamcraftLocalFailed = true;
+                                Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{id}");
+                            }
+                        } catch {
+                            teamcraftLocalFailed = true;
+                            Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{id}");
+                        }
+                    }
+                });
+            }
+
             public void Selected()
             {
                 if (choicerTempResult == null)
@@ -243,7 +275,7 @@ namespace Dalamud.FindAnything
                         break;
                     case SiteChoice.TeamCraft:
                     {
-                        Util.OpenLink($"https://ffxivteamcraft.com/db/en/item/{wikiResult.DataKey}");
+                        OpenTeamcraft(wikiResult.DataKey);
                     }
                         break;
                 }
