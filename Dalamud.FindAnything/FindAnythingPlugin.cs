@@ -853,15 +853,25 @@ namespace Dalamud.FindAnything
                         var mod2 = Configuration.ComboModifier2 == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier2);
                         var key = Configuration.ComboKey == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboKey);
 
+                        var wiki = Configuration.WikiComboKey != VirtualKey.NO_KEY && Input.IsDown(Configuration.WikiComboKey);
+
                         if (mod && mod2 && key)
                         {
                             OpenFinder();
+
+                            if (wiki)
+                            {
+                                searchTerm = "?";
+                            }
 
                             if (Configuration.PreventPassthrough)
                             {
                                 UnsetKey(Configuration.ComboModifier);
                                 UnsetKey(Configuration.ComboModifier2);
                                 UnsetKey(Configuration.ComboKey);
+
+                                if (wiki)
+                                    UnsetKey(Configuration.WikiComboKey);
                             }
                         }
                         break;

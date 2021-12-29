@@ -22,6 +22,7 @@ public class SettingsWindow : Window
     private VirtualKey comboModifierKey;
     private VirtualKey comboModifier2Key;
     private VirtualKey comboKey;
+    private VirtualKey wikiComboKey;
     private bool preventPassthrough;
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
@@ -52,6 +53,7 @@ public class SettingsWindow : Window
         this.comboKey = FindAnythingPlugin.Configuration.ComboKey;
         this.comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.comboModifier2Key = FindAnythingPlugin.Configuration.ComboModifier2;
+        this.wikiComboKey = FindAnythingPlugin.Configuration.WikiComboKey;
         this.preventPassthrough = FindAnythingPlugin.Configuration.PreventPassthrough;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
@@ -153,6 +155,11 @@ public class SettingsWindow : Window
                 VirtualKeySelect("Combo Modifier 1", ref comboModifierKey);
                 VirtualKeySelect("Combo Modifier 2", ref comboModifier2Key);
                 VirtualKeySelect("Combo Key", ref comboKey);
+
+                ImGuiHelpers.ScaledDummy(2);
+                VirtualKeySelect("Wiki Modifier(go directly to wiki mode)", ref wikiComboKey);
+                ImGuiHelpers.ScaledDummy(2);
+
                 ImGui.Checkbox("Prevent passthrough to game", ref preventPassthrough);
                 break;
             default:
@@ -236,6 +243,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.ComboKey = comboKey;
             FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;
             FindAnythingPlugin.Configuration.ComboModifier2 = comboModifier2Key;
+            FindAnythingPlugin.Configuration.WikiComboKey = wikiComboKey;
             FindAnythingPlugin.Configuration.PreventPassthrough = preventPassthrough;
 
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
