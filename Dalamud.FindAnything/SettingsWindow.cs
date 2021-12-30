@@ -89,7 +89,7 @@ public class SettingsWindow : Window
                 Configuration.SearchSetting.CraftingRecipes => "Crafting Recipes",
                 Configuration.SearchSetting.GatheringItems => "Gathering Items",
                 Configuration.SearchSetting.Mounts => "Mounts",
-                //Configuration.SearchSetting.Minions => "Minions",
+                Configuration.SearchSetting.Minions => "Minions",
                 Configuration.SearchSetting.MacroLinks => "Macro Links",
                 Configuration.SearchSetting.Internal => "Wotsit",
                 _ => null,

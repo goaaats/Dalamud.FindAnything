@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Dalamud.Game;
 using Dalamud.Logging;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -31,6 +30,7 @@ public unsafe class GameStateCache
     private delegate byte IsMountUnlockedDelegate(IntPtr mountBitmask, uint mountId);
     private readonly IsMountUnlockedDelegate? isMountUnlocked;
     private IntPtr mountBitmask;
+    private byte* minionBitmask = null;
   
     private delegate void SearchForItemByCraftingMethodDelegate(AgentInterface* agent, ushort itemId);
     private readonly SearchForItemByCraftingMethodDelegate? searchForItemByCraftingMethod;
@@ -48,6 +48,7 @@ public unsafe class GameStateCache
     public IReadOnlyList<uint> UnlockedDutyKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
+    public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; }
     public IReadOnlyList<Gearset> Gearsets { get; private set; }
 
     internal bool IsDutyUnlocked(uint contentId) {
@@ -61,6 +62,14 @@ public unsafe class GameStateCache
         }
 
         return this.isMountUnlocked(this.mountBitmask, mountId) > 0;
+    }
+    
+    internal bool IsMinionUnlocked(uint minionId) {
+        if (this.minionBitmask == null) {
+            return false;
+        }
+
+        return ((1 << ((int) minionId & 7)) & this.minionBitmask[minionId >> 3]) > 0;
     }
   
     internal void SearchForItemByCraftingMethod(ushort itemId) {
@@ -102,6 +111,11 @@ public unsafe class GameStateCache
             PluginLog.Information($"searchGatheringPtr: {searchGatheringPtr:X}");
             this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
         }
+        
+        if (FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? 0F B6 04 08 84 D0 75 10 B8 ?? ?? ?? ?? 48 8B 5C 24", out var minionBitmaskPtr)) {
+            PluginLog.Information($"minionBitmaskPtr: {minionBitmaskPtr:X}");
+            this.minionBitmask = (byte*) minionBitmaskPtr;
+        }
     }
 
     public void Refresh()
@@ -127,6 +141,11 @@ public unsafe class GameStateCache
         if (this.isMountUnlocked != null)
         {
             UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        }
+        
+        if (this.minionBitmask != null)
+        {
+            UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         }
 
         var gsModule = RaptureGearsetModule.Instance();

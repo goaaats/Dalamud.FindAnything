@@ -20,6 +20,7 @@ namespace Dalamud.FindAnything
         public IReadOnlyDictionary<uint, TextureWrap> EmoteIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> ClassJobIcons { get; init; }
         public IReadOnlyDictionary<uint, TextureWrap> MountIcons { get; init; }
+        public IReadOnlyDictionary<uint, TextureWrap> MinionIcons { get; init; }
 
         public Dictionary<uint, TextureWrap> ExtraIcons { get; private set; }
 
@@ -129,6 +130,17 @@ namespace Dalamud.FindAnything
                 mountIcons.Add(mount.RowId, icon);
             }
             MountIcons = mountIcons;
+            
+            var minionIcons = new Dictionary<uint, TextureWrap>();
+            foreach (var minion in data.GetExcelSheet<Companion>()!)
+            {
+                var icon = data!.GetImGuiTextureHqIcon(minion.Icon);
+                if (icon == null)
+                    continue;
+
+                minionIcons.Add(minion.RowId, icon);
+            }
+            MinionIcons = minionIcons;
 
             AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
             WikiIcon = data.GetImGuiTextureHqIcon(066404)!;
@@ -196,6 +208,16 @@ namespace Dalamud.FindAnything
             }
 
             foreach (var icon in this.ClassJobIcons)
+            {
+                icon.Value.Dispose();
+            }
+            
+            foreach (var icon in this.MountIcons)
+            {
+                icon.Value.Dispose();
+            }
+
+            foreach (var icon in this.MinionIcons)
             {
                 icon.Value.Dispose();
             }
