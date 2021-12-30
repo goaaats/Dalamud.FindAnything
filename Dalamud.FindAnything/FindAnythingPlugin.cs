@@ -1807,10 +1807,10 @@ namespace Dalamud.FindAnything
                     var isPgUp = ImGui.IsKeyDown((int)VirtualKey.PRIOR);
                     var isPgDn = ImGui.IsKeyDown((int)VirtualKey.NEXT);
 
-                    var numKeysDown = new bool[10];
+                    var numKeysPressed = new bool[10];
                     for (var i = 0; i < 9; i++)
                     {
-                        numKeysDown[i] = ImGui.IsKeyDown((int) VirtualKey.KEY_1 + i);
+                        numKeysPressed[i] = ImGui.IsKeyPressed((int) VirtualKey.KEY_1 + i);
                     }
 
                     void CursorDown()
@@ -1952,9 +1952,9 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (isCtrl && numKeysDown.Any(x => x))
+                    if (isCtrl && numKeysPressed.Any(x => x))
                     {
-                        clickedIndex = Array.IndexOf(numKeysDown, true);
+                        clickedIndex = Array.IndexOf(numKeysPressed, true);
                     }
 
                     if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || clickedIndex != -1)
