@@ -754,7 +754,7 @@ namespace Dalamud.FindAnything
                 xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
             }
         }
-        
+
         private class MinionResult : ISearchResult {
             public string CatName => "Minion";
             public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular);
@@ -1461,6 +1461,9 @@ namespace Dalamud.FindAnything
                                     HasError = true
                                 });
                         }
+
+                        if ("dn farm".Contains(term))
+                            cResults.Add(new GameSearchResult());
                     }
                 }
                     break;
@@ -1612,9 +1615,6 @@ namespace Dalamud.FindAnything
                     Command = searchTerm,
                 });
             }
-
-            if ("dn farm".Contains(term))
-                cResults.Add(new GameSearchResult());
 
             results = cResults.ToArray();
 

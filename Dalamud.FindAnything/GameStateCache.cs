@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Dalamud.Game;
 using Dalamud.Logging;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -86,31 +85,36 @@ public unsafe class GameStateCache
     private GameStateCache()
     {
         if (FindAnythingPlugin.TargetScanner.TryScanText("E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 57 3C 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75 D9", out var dutyUnlockedPtr)) {
-            PluginLog.Information($"dutyUnlockedPtr: {dutyUnlockedPtr:X}");
+            PluginLog.Verbose($"dutyUnlockedPtr: {dutyUnlockedPtr:X}");
             this.isDutyUnlocked = Marshal.GetDelegateForFunctionPointer<IsDutyUnlockedDelegate>(dutyUnlockedPtr);
         }
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 A4", out var emoteUnlockedPtr)) {
-            PluginLog.Information($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
+            PluginLog.Verbose($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
             this.isEmoteUnlocked = Marshal.GetDelegateForFunctionPointer<IsEmoteUnlockedDelegate>(emoteUnlockedPtr);
         }
 
         FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB E8", out this.mountBitmask);
-        PluginLog.Information($"mountBitmask: {this.mountBitmask:X}");
+        PluginLog.Verbose($"mountBitmask: {this.mountBitmask:X}");
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB", out var mountUnlockedPtr)) {
-            PluginLog.Information($"mountUnlockedPtr: {mountUnlockedPtr:X}");
+            PluginLog.Verbose($"mountUnlockedPtr: {mountUnlockedPtr:X}");
             this.isMountUnlocked = Marshal.GetDelegateForFunctionPointer<IsMountUnlockedDelegate>(mountUnlockedPtr);
         }
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 7A 48 83 F8 06", out var searchCraftingPtr)) {
-            PluginLog.Information($"searchCraftingPtr: {searchCraftingPtr:X}");
+            PluginLog.Verbose($"searchCraftingPtr: {searchCraftingPtr:X}");
             this.searchForItemByCraftingMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByCraftingMethodDelegate>(searchCraftingPtr);
         }
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 38 48 83 F8 07", out var searchGatheringPtr)) {
-            PluginLog.Information($"searchGatheringPtr: {searchGatheringPtr:X}");
+            PluginLog.Verbose($"searchGatheringPtr: {searchGatheringPtr:X}");
             this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
+        }
+
+        if (FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? 0F B6 04 08 84 D0 75 10 B8 ?? ?? ?? ?? 48 8B 5C 24", out var minionBitmaskPtr)) {
+            PluginLog.Verbose($"minionBitmaskPtr: {minionBitmaskPtr:X}");
+            this.minionBitmask = (byte*) minionBitmaskPtr;
         }
     }
 
@@ -139,6 +143,11 @@ public unsafe class GameStateCache
             UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         }
 
+        if (this.minionBitmask != null)
+        {
+            UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        }
+
         var gsModule = RaptureGearsetModule.Instance();
         var cj = FindAnythingPlugin.Data.GetExcelSheet<ClassJob>()!;
         var gearsets = new List<Gearset>();
@@ -157,8 +166,6 @@ public unsafe class GameStateCache
                 ClassJob = gs->ClassJob,
                 Name = name,
             });
-
-            PluginLog.Information($"Gearset {i}({name}) at {new IntPtr(gs->ItemsData):X} for {cj.GetRow(gs->ClassJob)?.Name} with plate {gs->GlamourSetLink}");
         }
 
         Gearsets = gearsets;
