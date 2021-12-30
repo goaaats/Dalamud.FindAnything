@@ -248,7 +248,7 @@ public class GameWindow : Window, IDisposable
 
         if (this.state.TotalSteps % 1000 == 0)
         {
-            if (!thiefActive && this.random.Next(0, 300) < 5)
+            if (!this.thiefActive && this.random.Next(0, 300) < 5 && !this.state.GameComplete)
             {
                 this.thiefWillSteal = random.Next(1, 70) / 100f;
                 this.thiefActive = true;
