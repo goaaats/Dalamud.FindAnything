@@ -38,11 +38,11 @@ public class GameWindow : Window, IDisposable
         { NoseKind.Robo, 3000 },
         { NoseKind.Weird, 13000 },
         { NoseKind.Agent, 30000 },
-        { NoseKind.CEO, 70000 },
-        { NoseKind.Thancred, 120000 },
-        { NoseKind.Magical, 180000 },
+        { NoseKind.CEO, 150000 },
+        { NoseKind.Thancred, 450000 },
+        { NoseKind.Magical, 600000 },
         { NoseKind.Eternity, 1000000 },
-        { NoseKind.End, 9999999 },
+        { NoseKind.End, 2500000 },
     };
 
     private readonly IReadOnlyDictionary<NoseKind, string> noseDesc = new Dictionary<NoseKind, string>
@@ -56,7 +56,7 @@ public class GameWindow : Window, IDisposable
         { NoseKind.Thancred, "This is dognose." },
         { NoseKind.Magical, "Dog Nose Power, Make-Up!" },
         { NoseKind.Eternity, "bB0W B3F=RE Th§M (This dog transcended reality - it will generate DNs, even when DN Farm is closed)" },
-        { NoseKind.End, "..." },
+        { NoseKind.End, "From the deepest pits of the universe, they have come to bring you the final DN." },
     };
 
     private readonly IReadOnlyDictionary<NoseKind, float> nosePassiveEarningPerSecond = new Dictionary<NoseKind, float>
@@ -65,9 +65,9 @@ public class GameWindow : Window, IDisposable
         { NoseKind.Farmer, 1f },
         { NoseKind.Robo, 3f },
         { NoseKind.Weird, 7f },
-        { NoseKind.Agent, 10f },
-        { NoseKind.CEO, 15f },
-        { NoseKind.Thancred, 25f },
+        { NoseKind.Agent, 12f },
+        { NoseKind.CEO, 20f },
+        { NoseKind.Thancred, 28f },
         { NoseKind.Magical, 40f },
         { NoseKind.Eternity, 0f },
         { NoseKind.End, 999f },
@@ -115,6 +115,10 @@ public class GameWindow : Window, IDisposable
     };
 
     private Dictionary<NoseKind, TextureWrap> noseTextures;
+    private TextureWrap thiefTexture;
+    private TextureWrap clerkNeedsTexture;
+    private TextureWrap clerkBoutiqueTexture;
+    private TextureWrap sageTexture;
 
     public class SimulationState
     {
@@ -127,6 +131,8 @@ public class GameWindow : Window, IDisposable
         public Dictionary<NoseKind, ulong> NumNoses { get; set; }
         public List<uint> RewardsGained { get; set; }
         public List<uint> BonusesGained { get; set; }
+
+        public bool GameComplete => this.NumNoses.TryGetValue(NoseKind.End, out var cnt) && cnt > 0;
     }
 
     private SimulationState state;
@@ -142,10 +148,15 @@ public class GameWindow : Window, IDisposable
             noseTextures.Add(noseKind, FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(path));
         }
 
+        thiefTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "Thief.png"));
+        clerkNeedsTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkNeeds.png"));
+        clerkBoutiqueTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkBoutique.png"));
+        sageTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "Sage.png"));
+
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(200, 200),
-            MaximumSize = new Vector2(1000, 750),
+            MaximumSize = new Vector2(1000, 800),
         };
 
         Load();
@@ -171,6 +182,9 @@ public class GameWindow : Window, IDisposable
         state.BonusesGained = new List<uint>();
         state.CurrentDn = 15;
 
+        this.thiefActive = false;
+        this.thiefMessageDismissed = true;
+
         FindAnythingPlugin.Configuration.SimulationState = state;
         FindAnythingPlugin.Configuration.Save();
     }
@@ -185,6 +199,7 @@ public class GameWindow : Window, IDisposable
     public override void Update()
     {
         Simulate();
+        WindowName = $"DN Farm ({this.state.CurrentDn:N0} DN)###dnwindow";
     }
 
     private double GetDps()
@@ -203,6 +218,14 @@ public class GameWindow : Window, IDisposable
 
     private float GetMultiplier() => this.state.BonusesGained.Select(x => bonuses[x].Multiplier).Aggregate(1f, (x, y) => x + y);
 
+    private Random random = new();
+
+    private double thiefStolenDn = 0;
+    private bool thiefActive = false;
+    private bool thiefMessageDismissed = true;
+    private float thiefWillSteal;
+    private DateTimeOffset thiefWillStealAt;
+
     private void Simulate()
     {
         state.TotalSteps++;
@@ -216,18 +239,26 @@ public class GameWindow : Window, IDisposable
         this.state.CurrentDn += earned;
         this.state.TotalEarned += earned;
 
-        if (state.TotalSteps % 1000 == 0)
+        if (this.state.TotalSteps % 1000 == 0)
         {
+            if (!thiefActive && this.random.Next(0, 180) < 5)
+            {
+                this.thiefWillSteal = random.Next(1, 90) / 100f;
+                this.thiefActive = true;
+                this.thiefMessageDismissed = false;
+                this.thiefWillStealAt = DateTimeOffset.Now.AddSeconds(random.Next(8, 15));
+                PluginLog.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
+            }
+
             this.state.LastSaved = DateTimeOffset.Now;
             FindAnythingPlugin.Configuration.SimulationState = state;
             FindAnythingPlugin.Configuration.Save();
-            PluginLog.Information("[DN] State saved!");
         }
     }
 
     public void Cheat()
     {
-        this.state.CurrentDn = this.state.TotalEarned = 99999999999f;
+        this.state.CurrentDn = this.state.TotalEarned = 1000000f;
     }
 
     private int clicks = 0;
@@ -254,8 +285,6 @@ public class GameWindow : Window, IDisposable
         {
             ImGui.TextColored(ImGuiColors.DalamudGrey, $"({GetDps():N2}/s)");
         }
-
-        WindowName = $"DN Farm ({state.CurrentDn:N0} DN)###dnwindow";
 
         ImGuiHelpers.ScaledDummy(5);
 
@@ -358,18 +387,61 @@ public class GameWindow : Window, IDisposable
                 ImGui.Separator();
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (this.state.NumNoses.TryGetValue(NoseKind.End, out _))
+                if (this.state.GameComplete)
                 {
                     var name = "my love";
                     if (FindAnythingPlugin.ClientState.LocalPlayer != null)
                         name = FindAnythingPlugin.ClientState.LocalPlayer.Name.TextValue.Split()[0];
 
-                    ImGui.Image(this.noseTextures[NoseKind.Magical].ImGuiHandle, new Vector2(128, 128));
+                    ImGui.Image(this.noseTextures[NoseKind.Magical].ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"Peace has returned to the DN hills.\nEveryone is living happily.\nYou did it.\nThank you, {name}.\"");
                 }
+                else if (this.thiefActive)
+                {
+                    ImGui.Image(this.thiefTexture.ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                    ImGui.SameLine();
 
-                //
+                    var timeLeft = this.thiefWillStealAt - DateTimeOffset.Now;
+                    if (timeLeft.TotalSeconds > 0)
+                    {
+                        ImGui.SameLine();
+                        ImGui.TextWrapped($"Oh no! A thief is here to rob you!\nYou have to stop it!\n\nYou have {timeLeft.TotalSeconds:N0} seconds left until he'll get away!");
+                    }
+                    else
+                    {
+                        var steals = this.state.CurrentDn * this.thiefWillSteal;
+                        this.state.CurrentDn -= steals;
+                        this.thiefStolenDn = steals;
+                        this.thiefActive = false;
+                    }
+
+                    ImGuiHelpers.ScaledDummy(5);
+
+                    if (ImGui.Button("Call the cops"))
+                    {
+                        this.thiefActive = false;
+                        this.thiefMessageDismissed = true;
+                        this.thiefWillSteal = 0;
+                    }
+                }
+                else if (!this.thiefActive && !this.thiefMessageDismissed)
+                {
+                    ImGui.Image(this.thiefTexture.ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                    ImGui.SameLine();
+                    ImGui.TextWrapped($"Oh no! A thief has robbed your farm and you didn't catch it!\nYou lost {this.thiefStolenDn:N0} DN, that's a lot...");
+
+                    if (ImGui.Button("OK"))
+                    {
+                        this.thiefMessageDismissed = true;
+                    }
+                }
+                else
+                {
+                    ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
+                    ImGui.TextWrapped("Keep your eyes peeled! A thief may appear...");
+                    ImGui.PopStyleColor();
+                }
 
                 ImGui.EndTabItem();
             }
@@ -378,6 +450,12 @@ public class GameWindow : Window, IDisposable
             {
                 if (ImGui.CollapsingHeader("DN Needs & Utilities"))
                 {
+                    ImGui.Image(this.clerkNeedsTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.SameLine();
+                    ImGui.TextWrapped($"\"Hi, welcome to DN Needs & Utilities. Here you can buy stuff that your dogs will love.\nWhat can I get you?\"");
+
+                    ImGuiHelpers.ScaledDummy(5);
+
                     foreach (var bonus in bonuses)
                     {
                         var available = !this.state.BonusesGained.Contains(bonus.Key) && this.state.CurrentDn >= bonus.Value.Cost;
@@ -402,28 +480,44 @@ public class GameWindow : Window, IDisposable
 
                 if (ImGui.CollapsingHeader("DN Boutique"))
                 {
-                    foreach (var reward in GameRewards.Rewards)
+                    ImGui.Image(this.clerkBoutiqueTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.SameLine();
+
+                    if (!this.state.GameComplete)
                     {
-                        var btnText = $"Buy {reward.Value.Name} ({reward.Value.Cost:N0} DN)";
-                        if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key))
+                        ImGui.TextWrapped($"\"The DN boutique is still under renovation, we're very sorry!\nPlease come back when you cleared the game, we should be done by then!\"");
+                    }
+                    else
+                    {
+                        ImGui.TextWrapped($"\"Hello! Welcome to the DN Boutique!\nWe offer a wide variety of handcrafted DN accessories to improve your living space!\"");
+
+                        ImGuiHelpers.ScaledDummy(5);
+
+                        foreach (var reward in GameRewards.Rewards)
                         {
-                            if (ImGui.Button(btnText))
+                            var btnText = $"Buy {reward.Value.Name} ({reward.Value.Cost:N0} DN)";
+                            if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key))
                             {
-                                reward.Value.Bought();
-                                state.CurrentDn -= reward.Value.Cost;
-                                state.RewardsGained.Add(reward.Key);
+                                if (ImGui.Button(btnText))
+                                {
+                                    reward.Value.Bought();
+                                    state.CurrentDn -= reward.Value.Cost;
+                                    state.RewardsGained.Add(reward.Key);
+                                }
                             }
-                        }
-                        else
-                        {
-                            ImGuiComponents.DisabledButton(btnText);
+                            else
+                            {
+                                ImGuiComponents.DisabledButton(btnText);
+                            }
                         }
                     }
                 }
 
                 if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage"))
                 {
-                    ImGui.Text($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
+                    ImGui.Image(this.sageTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.SameLine();
+                    ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
 
                     if (ImGui.Button("Yes"))
                     {
@@ -470,5 +564,10 @@ public class GameWindow : Window, IDisposable
         {
             noseTexture.Value.Dispose();
         }
+
+        thiefTexture.Dispose();
+        clerkNeedsTexture.Dispose();
+        clerkBoutiqueTexture.Dispose();
+        sageTexture.Dispose();
     }
 }

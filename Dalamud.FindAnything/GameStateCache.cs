@@ -31,7 +31,7 @@ public unsafe class GameStateCache
     private delegate byte IsMountUnlockedDelegate(IntPtr mountBitmask, uint mountId);
     private readonly IsMountUnlockedDelegate? isMountUnlocked;
     private IntPtr mountBitmask;
-  
+
     private delegate void SearchForItemByCraftingMethodDelegate(AgentInterface* agent, ushort itemId);
     private readonly SearchForItemByCraftingMethodDelegate? searchForItemByCraftingMethod;
 
@@ -62,12 +62,12 @@ public unsafe class GameStateCache
 
         return this.isMountUnlocked(this.mountBitmask, mountId) > 0;
     }
-  
+
     internal void SearchForItemByCraftingMethod(ushort itemId) {
         var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.RecipeNote);
         this.searchForItemByCraftingMethod(agent, itemId);
     }
-    
+
     internal void SearchForItemByGatheringMethod(ushort itemId) {
         var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.GatheringNote);
         this.searchForItemByGatheringMethod(agent, itemId);
@@ -76,12 +76,12 @@ public unsafe class GameStateCache
     private GameStateCache()
     {
         if (FindAnythingPlugin.TargetScanner.TryScanText("E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 57 3C 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75 D9", out var dutyUnlockedPtr)) {
-            PluginLog.Information($"dutyUnlockedPtr: {dutyUnlockedPtr:X}");
+            PluginLog.Verbose($"dutyUnlockedPtr: {dutyUnlockedPtr:X}");
             this.isDutyUnlocked = Marshal.GetDelegateForFunctionPointer<IsDutyUnlockedDelegate>(dutyUnlockedPtr);
         }
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 A4", out var emoteUnlockedPtr)) {
-            PluginLog.Information($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
+            PluginLog.Verbose($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
             this.isEmoteUnlocked = Marshal.GetDelegateForFunctionPointer<IsEmoteUnlockedDelegate>(emoteUnlockedPtr);
         }
 
@@ -89,17 +89,17 @@ public unsafe class GameStateCache
         PluginLog.Information($"mountBitmask: {this.mountBitmask:X}");
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB", out var mountUnlockedPtr)) {
-            PluginLog.Information($"mountUnlockedPtr: {mountUnlockedPtr:X}");
+            PluginLog.Verbose($"mountUnlockedPtr: {mountUnlockedPtr:X}");
             this.isMountUnlocked = Marshal.GetDelegateForFunctionPointer<IsMountUnlockedDelegate>(mountUnlockedPtr);
         }
-      
+
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 7A 48 83 F8 06", out var searchCraftingPtr)) {
-            PluginLog.Information($"searchCraftingPtr: {searchCraftingPtr:X}");
+            PluginLog.Verbose($"searchCraftingPtr: {searchCraftingPtr:X}");
             this.searchForItemByCraftingMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByCraftingMethodDelegate>(searchCraftingPtr);
         }
 
         if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 38 48 83 F8 07", out var searchGatheringPtr)) {
-            PluginLog.Information($"searchGatheringPtr: {searchGatheringPtr:X}");
+            PluginLog.Verbose($"searchGatheringPtr: {searchGatheringPtr:X}");
             this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
         }
     }
@@ -123,7 +123,7 @@ public unsafe class GameStateCache
             }
             UnlockedEmoteKeys = emotes;
         }
-        
+
         if (this.isMountUnlocked != null)
         {
             UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
@@ -147,8 +147,6 @@ public unsafe class GameStateCache
                 ClassJob = gs->ClassJob,
                 Name = name,
             });
-
-            PluginLog.Information($"Gearset {i}({name}) at {new IntPtr(gs->ItemsData):X} for {cj.GetRow(gs->ClassJob)?.Name} with plate {gs->GlamourSetLink}");
         }
 
         Gearsets = gearsets;
