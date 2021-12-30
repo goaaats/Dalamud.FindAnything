@@ -17,7 +17,7 @@ namespace Dalamud.FindAnything
             SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction |
             SearchSetting.Emote | SearchSetting.PluginSettings
             | SearchSetting.Gearsets | SearchSetting.CraftingRecipes | SearchSetting.GatheringItems | SearchSetting.Mounts |
-            SearchSetting.Reserved4 | SearchSetting.MacroLinks | SearchSetting.Internal | SearchSetting.Maths |
+            SearchSetting.Minions | SearchSetting.MacroLinks | SearchSetting.Internal | SearchSetting.Maths |
             SearchSetting.Reserved8
             | SearchSetting.Reserved9 | SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 |
             SearchSetting.Reserved13 | SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16
@@ -62,7 +62,7 @@ namespace Dalamud.FindAnything
             CraftingRecipes = 1 << 7,
             GatheringItems = 1 << 8,
             Mounts = 1 << 9,
-            Reserved4 = 1 << 10, // Minions in Anna's fork
+            Minions = 1 << 10,
             MacroLinks = 1 << 11, // Cannot be toggled off
             Internal = 1 << 12, // Cannot be toggled off
             Maths = 1 << 13,
@@ -170,7 +170,7 @@ namespace Dalamud.FindAnything
             SearchSetting.Aetheryte,
             SearchSetting.Duty,
             SearchSetting.Mounts,
-            //SearchSetting.Minions,
+            SearchSetting.Minions,
             SearchSetting.MainCommand,
             SearchSetting.GeneralAction,
             SearchSetting.PluginSettings,
