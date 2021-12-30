@@ -69,7 +69,7 @@ public class GameWindow : Window, IDisposable
         { NoseKind.CEO, 20f },
         { NoseKind.Thancred, 28f },
         { NoseKind.Magical, 40f },
-        { NoseKind.Eternity, 0f },
+        { NoseKind.Eternity, 45f },
         { NoseKind.End, 999f },
     };
 
@@ -199,7 +199,14 @@ public class GameWindow : Window, IDisposable
     public override void Update()
     {
         Simulate();
-        WindowName = $"DN Farm ({this.state.CurrentDn:N0} DN)###dnwindow";
+        WindowName = $"DN Farm ({this.state.CurrentDn:N0} DN)";
+
+        if (thiefActive)
+        {
+            WindowName += " (Thief!!!!!)";
+        }
+
+        WindowName += "###dnwindow";
     }
 
     private double GetDps()
@@ -241,9 +248,9 @@ public class GameWindow : Window, IDisposable
 
         if (this.state.TotalSteps % 1000 == 0)
         {
-            if (!thiefActive && this.random.Next(0, 180) < 5)
+            if (!thiefActive && this.random.Next(0, 300) < 5)
             {
-                this.thiefWillSteal = random.Next(1, 90) / 100f;
+                this.thiefWillSteal = random.Next(1, 70) / 100f;
                 this.thiefActive = true;
                 this.thiefMessageDismissed = false;
                 this.thiefWillStealAt = DateTimeOffset.Now.AddSeconds(random.Next(8, 15));
