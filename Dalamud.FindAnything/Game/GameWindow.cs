@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
@@ -186,6 +188,11 @@ public class GameWindow : Window, IDisposable
 
     private SimulationState state;
 
+    private const string SomethingPlaySoundSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FE C2 ";
+    private delegate void PlaySoundDelegate(IntPtr path, byte shit);
+
+    private PlaySoundDelegate _playSoundFun;
+
     public GameWindow() : base("DN Farm###dnwindow")
     {
         var assetPath = FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName;
@@ -209,7 +216,29 @@ public class GameWindow : Window, IDisposable
             MaximumSize = new Vector2(1000, 800),
         };
 
+        try
+        {
+            var addr = FindAnythingPlugin.TargetScanner.ScanText(SomethingPlaySoundSig);
+            _playSoundFun = Marshal.GetDelegateForFunctionPointer<PlaySoundDelegate>(addr);
+        }
+        catch(Exception e)
+        {
+            PluginLog.Error(e, "Failed to find play sound function");
+        }
+
         Load();
+    }
+
+    public void PlayMyTurn()
+    {
+        if (_playSoundFun == null)
+            return;
+
+        var textBytes = Encoding.ASCII.GetBytes("sound/voice/Vo_Line/8202048_en.scd");
+        var ptr = Marshal.AllocHGlobal(textBytes.Length + 1);
+        Marshal.Copy(textBytes, 0, ptr, textBytes.Length);
+        Marshal.WriteByte(ptr + textBytes.Length, 0);
+        _playSoundFun(ptr, 1);
     }
 
     public void Load()
@@ -281,7 +310,7 @@ public class GameWindow : Window, IDisposable
             return baseCost;
 
         var multiplier = 1.0;
-        multiplier += num * 0.018;
+        multiplier += num * (kind == NoseKind.Normal ? 0.02 : 0.018);
 
         return baseCost * multiplier;
     }
@@ -415,6 +444,9 @@ public class GameWindow : Window, IDisposable
                                         clicks++;
                                         BuyDog(kind);
                                     }
+
+                                    if (kind == NoseKind.Thancred)
+                                        PlayMyTurn();
                                 }
                             }
                             else
@@ -453,6 +485,9 @@ public class GameWindow : Window, IDisposable
                                 if (ImGui.Button(btnText))
                                 {
                                     BuyDog(kind);
+
+                                    if (kind == NoseKind.Thancred)
+                                        PlayMyTurn();
                                 }
                             }
                             else
