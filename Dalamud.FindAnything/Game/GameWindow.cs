@@ -87,17 +87,21 @@ public class GameWindow : Window, IDisposable
         Restaurant,
         SpaceCentre,
         ThemePark,
+        SingularityReactor,
+        Cinema,
     }
 
     private static readonly IReadOnlyDictionary<FarmUpgrade, float> farmUpgradeCost = new Dictionary<FarmUpgrade, float>
     {
         { FarmUpgrade.Base, 0f },
-        { FarmUpgrade.FarmHouse, 6000f },
-        { FarmUpgrade.TempleOfDog, 15000f },
+        { FarmUpgrade.FarmHouse, 10000f },
+        { FarmUpgrade.TempleOfDog, 49000f },
         { FarmUpgrade.Casino, 100000f },
         { FarmUpgrade.Restaurant, 220000f },
         { FarmUpgrade.SpaceCentre, 500000f },
-        { FarmUpgrade.ThemePark, 500000f },
+        { FarmUpgrade.ThemePark, 1224500f },
+        { FarmUpgrade.SingularityReactor, 2000000f },
+        { FarmUpgrade.Cinema, 2500000f },
     };
 
     private static readonly IReadOnlyDictionary<FarmUpgrade, int> farmUpgradeCap = new Dictionary<FarmUpgrade, int>
@@ -108,6 +112,9 @@ public class GameWindow : Window, IDisposable
         { FarmUpgrade.Casino, 400 },
         { FarmUpgrade.Restaurant, 600 },
         { FarmUpgrade.SpaceCentre, 720 },
+        { FarmUpgrade.ThemePark, 1000 },
+        { FarmUpgrade.SingularityReactor, 2000 },
+        { FarmUpgrade.Cinema, 2500 },
     };
 
     private static readonly IReadOnlyDictionary<FarmUpgrade, string> farmUpgradeName = new Dictionary<FarmUpgrade, string>
@@ -118,6 +125,9 @@ public class GameWindow : Window, IDisposable
         { FarmUpgrade.Casino, "Dog City Casino" },
         { FarmUpgrade.Restaurant, "Doggy Dognose's Pizza" },
         { FarmUpgrade.SpaceCentre, "DN Space Agency" },
+        { FarmUpgrade.ThemePark, "Puppy Resort" },
+        { FarmUpgrade.SingularityReactor, "Singularity Reactor" },
+        { FarmUpgrade.Cinema, "Dog Nose Cinema" },
     };
 
     private struct Bonus
@@ -608,7 +618,7 @@ public class GameWindow : Window, IDisposable
                         ImGui.TextWrapped($"\"Working on it! We'll be done in {minutesLeft:N0} minutes.\"");
                         ImGui.SetNextItemWidth(10);
                     }
-                    else if (this.state.FarmUpgrade != FarmUpgrade.ThemePark)
+                    else if (this.state.FarmUpgrade != FarmUpgrade.Cinema)
                     {
                         ImGui.TextWrapped($"\"Hey, what's up. Need a bigger farm?\nYou'll be able to get more dogs if you upgrade it.\"");
 
