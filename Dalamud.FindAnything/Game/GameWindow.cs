@@ -89,6 +89,7 @@ public class GameWindow : Window, IDisposable
         ThemePark,
         SingularityReactor,
         Cinema,
+        DimensionalGate,
     }
 
     private static readonly IReadOnlyDictionary<FarmUpgrade, float> farmUpgradeCost = new Dictionary<FarmUpgrade, float>
@@ -102,6 +103,7 @@ public class GameWindow : Window, IDisposable
         { FarmUpgrade.ThemePark, 1224500f },
         { FarmUpgrade.SingularityReactor, 2000000f },
         { FarmUpgrade.Cinema, 2500000f },
+        { FarmUpgrade.DimensionalGate, 10000000f },
     };
 
     private static readonly IReadOnlyDictionary<FarmUpgrade, int> farmUpgradeCap = new Dictionary<FarmUpgrade, int>
@@ -115,6 +117,7 @@ public class GameWindow : Window, IDisposable
         { FarmUpgrade.ThemePark, 1000 },
         { FarmUpgrade.SingularityReactor, 2000 },
         { FarmUpgrade.Cinema, 2500 },
+        { FarmUpgrade.DimensionalGate, 999999 },
     };
 
     private static readonly IReadOnlyDictionary<FarmUpgrade, string> farmUpgradeName = new Dictionary<FarmUpgrade, string>
@@ -128,6 +131,7 @@ public class GameWindow : Window, IDisposable
         { FarmUpgrade.ThemePark, "Puppy Resort" },
         { FarmUpgrade.SingularityReactor, "Singularity Reactor" },
         { FarmUpgrade.Cinema, "Dog Nose Cinema" },
+        { FarmUpgrade.DimensionalGate, "Dogmensional Gate" },
     };
 
     private struct Bonus
@@ -618,7 +622,7 @@ public class GameWindow : Window, IDisposable
                         ImGui.TextWrapped($"\"Working on it! We'll be done in {minutesLeft:N0} minutes.\"");
                         ImGui.SetNextItemWidth(10);
                     }
-                    else if (this.state.FarmUpgrade != FarmUpgrade.Cinema)
+                    else if (this.state.FarmUpgrade != FarmUpgrade.DimensionalGate)
                     {
                         ImGui.TextWrapped($"\"Hey, what's up. Need a bigger farm?\nYou'll be able to get more dogs if you upgrade it.\"");
 
