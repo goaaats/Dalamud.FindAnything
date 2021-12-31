@@ -54,7 +54,7 @@ public class GameWindow : Window, IDisposable
         { NoseKind.Farmer, "These dogs like to get their paws dirty." },
         { NoseKind.Robo, "Automated DNs, delivered by drone strike." },
         { NoseKind.Weird, "???" },
-        { NoseKind.Agent, "Licensed to sniff." },
+        { NoseKind.Agent, "Licensed to sniff. (This dog will protect you from thieves - but there's a chance he won't survive it!)" },
         { NoseKind.CEO, "They know how to lead!" },
         { NoseKind.Thancred, "This is dognose." },
         { NoseKind.Magical, "Dog Nose Power, Make-Up!" },
@@ -334,6 +334,23 @@ public class GameWindow : Window, IDisposable
         return dps;
     }
 
+    private const int AGENT_THIEF_PROTECT_DEATH_CHANCE = 80;
+
+    private bool CheckAgentThiefProtect()
+    {
+        if (this.state.NumNoses.TryGetValue(NoseKind.Agent, out var num) && num > 1)
+        {
+            if (this.random.Next(1, 100) <= AGENT_THIEF_PROTECT_DEATH_CHANCE)
+            {
+                this.state.NumNoses[NoseKind.Agent] = num - 1;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     private double GetAdjustedCost(NoseKind kind)
     {
         var baseCost = noseCosts[kind];
@@ -573,10 +590,19 @@ public class GameWindow : Window, IDisposable
                     }
                     else
                     {
-                        var steals = this.state.CurrentDn * this.thiefWillSteal;
-                        this.state.CurrentDn -= steals;
-                        this.thiefStolenDn = steals;
-                        this.thiefActive = false;
+                        if (CheckAgentThiefProtect())
+                        {
+                            this.thiefActive = false;
+                            this.thiefMessageDismissed = true;
+                            this.thiefWillSteal = 0;
+                        }
+                        else
+                        {
+                            var steals = this.state.CurrentDn * this.thiefWillSteal;
+                            this.state.CurrentDn -= steals;
+                            this.thiefStolenDn = steals;
+                            this.thiefActive = false;
+                        }
                     }
 
                     ImGuiHelpers.ScaledDummy(5);
