@@ -10,6 +10,7 @@ using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
+using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using ImGuiNET;
@@ -74,6 +75,8 @@ public class GameWindow : Window, IDisposable
         { NoseKind.Eternity, 10f },
         { NoseKind.End, 999f },
     };
+
+    private const double ETERNITY_DN_PER_HOUR = 20;
 
     public enum FarmUpgrade
     {
@@ -269,10 +272,24 @@ public class GameWindow : Window, IDisposable
         FindAnythingPlugin.Configuration.Save();
     }
 
+    private void EarnRestedDn()
+    {
+        var timeSinceSave = DateTimeOffset.Now - state.LastSaved;
+        var numHoursSpent = Math.Floor(timeSinceSave.TotalHours);
+        PluginLog.Verbose($"{numHoursSpent} hours since last save");
+        if (numHoursSpent > 0 && this.state.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs))
+        {
+            var earnedRestedDn = (ETERNITY_DN_PER_HOUR * numHoursSpent) * numEternityDogs;
+            this.state.CurrentDn += earnedRestedDn;
+            FindAnythingPlugin.PluginInterface.UiBuilder.AddNotification($"You earned {earnedRestedDn:N0} DN from resting for {numHoursSpent} hours.", "DN Farm", NotificationType.Info, 10000);
+        }
+    }
+
     public override void OnOpen()
     {
         saidNoToSage = false;
         clicks = 0;
+        EarnRestedDn();
         base.OnOpen();
     }
 
