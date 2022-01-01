@@ -189,6 +189,8 @@ public class GameWindow : Window, IDisposable
         public ulong TotalSteps { get; set; }
         public double CurrentDn { get; set; }
         public double TotalEarned { get; set; }
+        
+        public int GottemCount { get; set; }
 
         public Dictionary<NoseKind, ulong> NumNoses { get; set; }
         public List<uint> RewardsGained { get; set; }
@@ -203,7 +205,7 @@ public class GameWindow : Window, IDisposable
         public bool GameComplete => this.NumNoses.TryGetValue(NoseKind.End, out var cnt) && cnt > 0;
     }
 
-    private SimulationState state;
+    public static SimulationState GameState;
 
     private const string SomethingPlaySoundSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FE C2 ";
     private delegate void PlaySoundDelegate(IntPtr path, byte shit);
@@ -266,35 +268,35 @@ public class GameWindow : Window, IDisposable
         }
         else
         {
-            state = FindAnythingPlugin.Configuration.SimulationState;
+            GameState = FindAnythingPlugin.Configuration.SimulationState;
         }
     }
 
     public void NewGame()
     {
-        state = new SimulationState();
-        state.NumNoses = new Dictionary<NoseKind, ulong>();
-        state.RewardsGained = new List<uint>();
-        state.BonusesGained = new List<uint>();
-        state.CurrentDn = 15;
-        state.FarmUpgrade = FarmUpgrade.Base;
+        GameState = new SimulationState();
+        GameState.NumNoses = new Dictionary<NoseKind, ulong>();
+        GameState.RewardsGained = new List<uint>();
+        GameState.BonusesGained = new List<uint>();
+        GameState.CurrentDn = 15;
+        GameState.FarmUpgrade = FarmUpgrade.Base;
 
         this.thiefActive = false;
         this.thiefMessageDismissed = true;
 
-        FindAnythingPlugin.Configuration.SimulationState = state;
+        FindAnythingPlugin.Configuration.SimulationState = GameState;
         FindAnythingPlugin.Configuration.Save();
     }
 
     private void EarnRestedDn()
     {
-        var timeSinceSave = DateTimeOffset.Now - state.LastSaved;
+        var timeSinceSave = DateTimeOffset.Now - GameState.LastSaved;
         var numHoursSpent = Math.Floor(timeSinceSave.TotalHours);
         PluginLog.Verbose($"{numHoursSpent} hours since last save");
-        if (numHoursSpent > 0 && this.state.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs))
+        if (numHoursSpent > 0 && GameState.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs))
         {
             var earnedRestedDn = (ETERNITY_DN_PER_HOUR * numHoursSpent) * numEternityDogs;
-            this.state.CurrentDn += earnedRestedDn;
+            GameState.CurrentDn += earnedRestedDn;
             FindAnythingPlugin.PluginInterface.UiBuilder.AddNotification($"You earned {earnedRestedDn:N0} DN from resting for {numHoursSpent} hours.", "DN Farm", NotificationType.Info, 10000);
         }
     }
@@ -310,7 +312,7 @@ public class GameWindow : Window, IDisposable
     public override void Update()
     {
         Simulate();
-        WindowName = $"DN Farm ({this.state.CurrentDn:N0} DN)";
+        WindowName = $"DN Farm ({GameState.CurrentDn:N0} DN)";
 
         if (thiefActive)
         {
@@ -325,7 +327,7 @@ public class GameWindow : Window, IDisposable
         double dps = 0;
         foreach (var kind in Enum.GetValues<NoseKind>())
         {
-            if (state.NumNoses.TryGetValue(kind, out var num))
+            if (GameState.NumNoses.TryGetValue(kind, out var num))
             {
                 dps += nosePassiveEarningPerSecond[kind] * num;
             }
@@ -338,11 +340,11 @@ public class GameWindow : Window, IDisposable
 
     private bool CheckAgentThiefProtect()
     {
-        if (this.state.NumNoses.TryGetValue(NoseKind.Agent, out var num) && num > 1)
+        if (GameState.NumNoses.TryGetValue(NoseKind.Agent, out var num) && num > 1)
         {
             if (this.random.Next(1, 100) <= AGENT_THIEF_PROTECT_DEATH_CHANCE)
             {
-                this.state.NumNoses[NoseKind.Agent] = num - 1;
+                GameState.NumNoses[NoseKind.Agent] = num - 1;
             }
 
             return true;
@@ -354,7 +356,7 @@ public class GameWindow : Window, IDisposable
     private double GetAdjustedCost(NoseKind kind)
     {
         var baseCost = noseCosts[kind];
-        if (!this.state.NumNoses.TryGetValue(kind, out var num))
+        if (!GameState.NumNoses.TryGetValue(kind, out var num))
             return baseCost;
 
         var multiplier = 1.0;
@@ -365,7 +367,7 @@ public class GameWindow : Window, IDisposable
 
     private string GetDogName(NoseKind kind) => kind != NoseKind.Thancred ? kind.ToString() + " Dog" : "Dogcred";
 
-    private float GetMultiplier() => this.state.BonusesGained.Select(x => bonuses[x].Multiplier).Aggregate(1f, (x, y) => x + y);
+    private float GetMultiplier() => GameState.BonusesGained.Select(x => bonuses[x].Multiplier).Aggregate(1f, (x, y) => x + y);
 
     private Random random = new();
 
@@ -377,7 +379,7 @@ public class GameWindow : Window, IDisposable
 
     private void Simulate()
     {
-        state.TotalSteps++;
+        GameState.TotalSteps++;
 
         var dps = GetDps();
         var fps = ImGui.GetIO().Framerate;
@@ -385,18 +387,18 @@ public class GameWindow : Window, IDisposable
 
         earned *= GetMultiplier();
 
-        this.state.CurrentDn += earned;
-        this.state.TotalEarned += earned;
+        GameState.CurrentDn += earned;
+        GameState.TotalEarned += earned;
 
-        if (this.state.UpgradePurchased && DateTimeOffset.Now > this.state.UpgradeFinishesAt)
+        if (GameState.UpgradePurchased && DateTimeOffset.Now > GameState.UpgradeFinishesAt)
         {
-            this.state.UpgradePurchased = false;
-            this.state.FarmUpgrade++;
+            GameState.UpgradePurchased = false;
+            GameState.FarmUpgrade++;
         }
 
-        if (this.state.TotalSteps % 1000 == 0)
+        if (GameState.TotalSteps % 1000 == 0)
         {
-            if (!this.thiefActive && this.random.Next(0, 300) < 5 && !this.state.GameComplete)
+            if (!this.thiefActive && this.random.Next(0, 300) < 5 && !GameState.GameComplete)
             {
                 this.thiefWillSteal = random.Next(1, 70) / 100f;
                 this.thiefActive = true;
@@ -405,15 +407,15 @@ public class GameWindow : Window, IDisposable
                 PluginLog.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
             }
 
-            this.state.LastSaved = DateTimeOffset.Now;
-            FindAnythingPlugin.Configuration.SimulationState = state;
+            GameState.LastSaved = DateTimeOffset.Now;
+            FindAnythingPlugin.Configuration.SimulationState = GameState;
             FindAnythingPlugin.Configuration.Save();
         }
     }
 
     public void Cheat()
     {
-        this.state.CurrentDn = this.state.TotalEarned = 1000000f;
+        GameState.CurrentDn = GameState.TotalEarned = 1000000f;
     }
 
     private int clicks = 0;
@@ -421,18 +423,18 @@ public class GameWindow : Window, IDisposable
 
     public override void Draw()
     {
-        ImGui.TextUnformatted($"{state.CurrentDn:N2} DN");
+        ImGui.TextUnformatted($"{GameState.CurrentDn:N2} DN");
         ImGui.SameLine();
         ImGui.Image(noseTextures[NoseKind.Normal].ImGuiHandle, new Vector2(16, 16));
         if (ImGui.IsItemClicked())
         {
-            state.CurrentDn += 0.1;
-            state.TotalEarned += 0.1;
+            GameState.CurrentDn += 0.1;
+            GameState.TotalEarned += 0.1;
         }
         ImGui.SameLine();
         ImGuiHelpers.ScaledDummy(0, 5);
         ImGui.SameLine();
-        if (this.state.BonusesGained.Count > 0)
+        if (GameState.BonusesGained.Count > 0)
         {
             ImGui.TextColored(ImGuiColors.DalamudGrey, $"({GetDps():N2}/s x {GetMultiplier():N2})");
         }
@@ -441,9 +443,14 @@ public class GameWindow : Window, IDisposable
             ImGui.TextColored(ImGuiColors.DalamudGrey, $"({GetDps():N2}/s)");
         }
 
-        var numDogs = this.state.DogCount;
-        var dogCap = (ulong)this.state.FarmCap;
+        var numDogs = GameState.DogCount;
+        var dogCap = (ulong)GameState.FarmCap;
         ImGui.TextColored(ImGuiColors.DalamudGrey, $"Your farm has space for {numDogs}/{dogCap} dogs.");
+
+        if (GameState.GottemCount > 0)
+        {
+            ImGui.TextColored(new Vector4((float) random.NextDouble(), (float) random.NextDouble(), (float) random.NextDouble(), 1), "Gottem! - " + GameState.GottemCount + " times");
+        }
 
         ImGuiHelpers.ScaledDummy(5);
 
@@ -461,7 +468,7 @@ public class GameWindow : Window, IDisposable
                     {
                         var cost = GetAdjustedCost(kind);
                         var name = GetDogName(kind);
-                        if (state.NumNoses.TryGetValue(kind, out var num))
+                        if (GameState.NumNoses.TryGetValue(kind, out var num))
                         {
                             didAny = true;
                             var desc = noseDesc[kind];
@@ -476,7 +483,7 @@ public class GameWindow : Window, IDisposable
                             ImGui.TextColored(ImGuiColors.DalamudGrey, desc);
 
                             var buyText = $"Buy {name} ({cost:N0} DN)";
-                            if (state.CurrentDn >= cost && numDogs < dogCap)
+                            if (GameState.CurrentDn >= cost && numDogs < dogCap)
                             {
                                 if (ImGui.Button(buyText))
                                 {
@@ -509,7 +516,7 @@ public class GameWindow : Window, IDisposable
                             {
                                 if (ImGui.Button(btnReleaseText))
                                 {
-                                    state.NumNoses[kind]--;
+                                    GameState.NumNoses[kind]--;
                                 }
                             }
                             else
@@ -528,7 +535,7 @@ public class GameWindow : Window, IDisposable
                         else if (lastHadDn == kind - 1 && kind != NoseKind.Normal && didAny)
                         {
                             var btnText = $"Buy your first {GetDogName(kind)} ({noseCosts[kind]} DN)";
-                            if (this.state.CurrentDn >= cost && numDogs < dogCap)
+                            if (GameState.CurrentDn >= cost && numDogs < dogCap)
                             {
                                 if (ImGui.Button(btnText))
                                 {
@@ -567,7 +574,7 @@ public class GameWindow : Window, IDisposable
                 ImGui.Separator();
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (this.state.GameComplete)
+                if (GameState.GameComplete)
                 {
                     var name = "my love";
                     if (FindAnythingPlugin.ClientState.LocalPlayer != null)
@@ -598,8 +605,8 @@ public class GameWindow : Window, IDisposable
                         }
                         else
                         {
-                            var steals = this.state.CurrentDn * this.thiefWillSteal;
-                            this.state.CurrentDn -= steals;
+                            var steals = GameState.CurrentDn * this.thiefWillSteal;
+                            GameState.CurrentDn -= steals;
                             this.thiefStolenDn = steals;
                             this.thiefActive = false;
                         }
@@ -642,29 +649,29 @@ public class GameWindow : Window, IDisposable
                     ImGui.Image(this.clerkBuilderTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
-                    if (this.state.UpgradePurchased)
+                    if (GameState.UpgradePurchased)
                     {
-                        var minutesLeft = (this.state.UpgradeFinishesAt - DateTimeOffset.Now).TotalMinutes;
+                        var minutesLeft = (GameState.UpgradeFinishesAt - DateTimeOffset.Now).TotalMinutes;
                         ImGui.TextWrapped($"\"Working on it! We'll be done in {minutesLeft:N0} minutes.\"");
                         ImGui.SetNextItemWidth(10);
                     }
-                    else if (this.state.FarmUpgrade != FarmUpgrade.DimensionalGate)
+                    else if (GameState.FarmUpgrade != FarmUpgrade.DimensionalGate)
                     {
                         ImGui.TextWrapped($"\"Hey, what's up. Need a bigger farm?\nYou'll be able to get more dogs if you upgrade it.\"");
 
                         ImGuiHelpers.ScaledDummy(5);
 
-                        var nextUpgrade = this.state.FarmUpgrade + 1;
+                        var nextUpgrade = GameState.FarmUpgrade + 1;
                         var nextUpgradeName = farmUpgradeName[nextUpgrade];
                         var nextUpgradeCost = farmUpgradeCost[nextUpgrade];
                         var btnText = $"Buy Farm Upgrade: {nextUpgradeName} ({nextUpgradeCost:N0} DN)";
-                        if (this.state.CurrentDn >= nextUpgradeCost)
+                        if (GameState.CurrentDn >= nextUpgradeCost)
                         {
                             if (ImGui.Button(btnText))
                             {
-                                this.state.CurrentDn -= nextUpgradeCost;
-                                this.state.UpgradePurchased = true;
-                                this.state.UpgradeFinishesAt = DateTimeOffset.Now + TimeSpan.FromMinutes(random.Next(3, 14));
+                                GameState.CurrentDn -= nextUpgradeCost;
+                                GameState.UpgradePurchased = true;
+                                GameState.UpgradeFinishesAt = DateTimeOffset.Now + TimeSpan.FromMinutes(random.Next(3, 14));
                             }
                         }
                         else
@@ -690,14 +697,14 @@ public class GameWindow : Window, IDisposable
 
                     foreach (var bonus in bonuses)
                     {
-                        var available = !this.state.BonusesGained.Contains(bonus.Key) && this.state.CurrentDn >= bonus.Value.Cost;
+                        var available = !GameState.BonusesGained.Contains(bonus.Key) && GameState.CurrentDn >= bonus.Value.Cost;
                         var btnText = $"Buy {bonus.Value.Name} ({bonus.Value.Cost:N0} DN)";
                         if (available)
                         {
                             if (ImGui.Button(btnText))
                             {
-                                state.CurrentDn -= bonus.Value.Cost;
-                                state.BonusesGained.Add(bonus.Key);
+                                GameState.CurrentDn -= bonus.Value.Cost;
+                                GameState.BonusesGained.Add(bonus.Key);
                             }
                         }
                         else
@@ -717,7 +724,7 @@ public class GameWindow : Window, IDisposable
                     ImGui.Image(this.clerkBoutiqueTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
-                    if (!this.state.GameComplete)
+                    if (!GameState.GameComplete)
                     {
                         ImGui.TextWrapped($"\"The DN boutique is still under renovation, we're very sorry!\nPlease come back when you cleared the game, we should be done by then!\"");
                     }
@@ -730,13 +737,17 @@ public class GameWindow : Window, IDisposable
                         foreach (var reward in GameRewards.Rewards)
                         {
                             var btnText = $"Buy {reward.Value.Name} ({reward.Value.Cost:N0} DN)";
-                            if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key))
+                            if (GameState.CurrentDn >= reward.Value.Cost && !GameState.RewardsGained.Contains(reward.Key))
                             {
                                 if (ImGui.Button(btnText))
                                 {
                                     reward.Value.Bought();
-                                    state.CurrentDn -= reward.Value.Cost;
-                                    state.RewardsGained.Add(reward.Key);
+                                    GameState.CurrentDn -= reward.Value.Cost;
+
+                                    if (reward.Key != 0x02)
+                                    {
+                                        GameState.RewardsGained.Add(reward.Key);
+                                    }
                                 }
                             }
                             else
@@ -753,7 +764,7 @@ public class GameWindow : Window, IDisposable
                 {
                     ImGui.Image(this.sageTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
-                    ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
+                    ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {GameState.TotalEarned:N0} DN.\n\nIs this what you want?\"");
 
                     if (ImGui.Button("Yes"))
                     {
@@ -779,17 +790,17 @@ public class GameWindow : Window, IDisposable
     private void BuyDog(NoseKind kind)
     {
         var cost = GetAdjustedCost(kind);
-        if (this.state.CurrentDn >= cost && this.state.DogCount < (uint)this.state.FarmCap)
+        if (GameState.CurrentDn >= cost && GameState.DogCount < (uint)GameState.FarmCap)
         {
-            this.state.CurrentDn -= cost;
+            GameState.CurrentDn -= cost;
 
-            if (!this.state.NumNoses.ContainsKey(kind))
+            if (!GameState.NumNoses.ContainsKey(kind))
             {
-                this.state.NumNoses.Add(kind, 1);
+                GameState.NumNoses.Add(kind, 1);
             }
             else
             {
-                this.state.NumNoses[kind]++;
+                GameState.NumNoses[kind]++;
             }
         }
     }

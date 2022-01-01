@@ -122,9 +122,38 @@ public static class GameRewards
         }
     }
 
+    public class GottemReward : IRewardItem
+    {
+        public string Name => "Gottem!";
+
+        public float Cost => CurrentCost;
+
+        private GameWindow window;
+
+        private static float CurrentCost = GetRandomCost();
+        
+        public void Bought()
+        {
+            PluginLog.Log("GOTTEM");
+            GameWindow.GameState.GottemCount++;
+            FindAnythingPlugin.PluginInterface.UiBuilder.AddNotification("DN", "Gottem! HAHAHA\nYou GOTTEM " + GameWindow.GameState.GottemCount + " time(s)!", NotificationType.Success);
+            CurrentCost = GetRandomCost();
+            
+            var si = new ProcessStartInfo("https://www.youtube.com/watch?v=8tOsQv-rrEE");
+            si.UseShellExecute = true;
+            Process.Start(si);
+        }
+
+        private static float GetRandomCost()
+        {
+            return new Random().Next((int) GameWindow.GameState.CurrentDn / 3) + 5000000f;
+        }
+    }
+
     public static readonly IReadOnlyDictionary<uint, IRewardItem> Rewards = new Dictionary<uint, IRewardItem>
     {
         { 0x00, new WallpaperReward() },
-        { 0x01, new EmoteSetReward() }
+        { 0x01, new EmoteSetReward() },
+        { 0x02, new GottemReward() }
     };
 }
