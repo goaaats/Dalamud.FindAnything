@@ -44,7 +44,7 @@ namespace Dalamud.FindAnything {
         }
 
         public bool IsMarketBoardAetheryte(uint id)
-		{
+        {
             return m_MarketBoardIds.Contains(id);
         }
 
