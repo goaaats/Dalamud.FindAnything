@@ -26,6 +26,7 @@ public class SettingsWindow : Window
     private bool preventPassthrough;
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
+    private bool marketBoardShortcut;
     private Configuration.EmoteMotionMode emoteMotionMode;
     private bool showEmoteCommand;
     private bool wikiModeNoSpoilers;
@@ -58,6 +59,7 @@ public class SettingsWindow : Window
         this.preventPassthrough = FindAnythingPlugin.Configuration.PreventPassthrough;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
+        this.marketBoardShortcut = FindAnythingPlugin.Configuration.DoMarketBoardShortcut;
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
         this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
@@ -197,6 +199,7 @@ public class SettingsWindow : Window
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
 
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
+        ImGui.Checkbox("Show \"Market Board\" shortcut to teleport to the closest market board city", ref this.marketBoardShortcut);
 
         if (ImGui.BeginCombo("Emote Motion-Only?", this.emoteMotionMode.ToString()))
         {
@@ -252,6 +255,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
+            FindAnythingPlugin.Configuration.DoMarketBoardShortcut = this.marketBoardShortcut;
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;

@@ -17,6 +17,15 @@ namespace Dalamud.FindAnything {
         private string? m_AppartmentName;
 
         private uint[] m_EstateIds = { 0 };
+        private readonly uint[] m_MarketBoardIds = {
+            2, // New Gridania
+            8, // Limsa Lominsa Lower Decks
+            9, // Ul'Dah - Steps of Nald
+            70, // Foundation
+            111, // Kugane
+            133, // Crystarium
+            182, // Old Sharlayan
+        };
 
         private AetheryteManager()
         {
@@ -32,6 +41,11 @@ namespace Dalamud.FindAnything {
             if (plot != 0 || ward != 0 || subId != 0)
                 return true;
             return m_EstateIds.Contains(id);
+        }
+
+        public bool IsMarketBoardAetheryte(uint id)
+		{
+            return m_MarketBoardIds.Contains(id);
         }
 
         public string GetAetheryteName(AetheryteEntry info) {
