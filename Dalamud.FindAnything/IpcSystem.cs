@@ -14,6 +14,7 @@ public class IpcSystem : IDisposable
     private readonly DataManager data;
     private readonly TextureCache texCache;
     private readonly ICallGateProvider<string, string, uint, string> cgRegister;
+    private readonly ICallGateProvider<string, string, string, uint, string> cgRegisterWithSearch;
     private readonly ICallGateProvider<string, bool> cgUnregisterAll;
     private readonly ICallGateProvider<string, bool> cgInvoke;
 
@@ -32,13 +33,19 @@ public class IpcSystem : IDisposable
         this.data = data;
         this.texCache = texCache;
         this.cgRegister = pluginInterface.GetIpcProvider<string, string, uint, string>("FA.Register");
+        this.cgRegisterWithSearch = pluginInterface.GetIpcProvider<string, string, string, uint, string>("FA.RegisterWithSearch");
         this.cgUnregisterAll = pluginInterface.GetIpcProvider<string, bool>("FA.UnregisterAll");
         this.cgInvoke = pluginInterface.GetIpcProvider<string, bool>("FA.Invoke");
         
         this.cgRegister.RegisterFunc(Register);
+        this.cgRegisterWithSearch.RegisterFunc(Register);
         this.cgUnregisterAll.RegisterFunc(Unregister);
 
         this.TrackedIpcs = new Dictionary<string, List<IpcBinding>>();
+
+        PluginLog.Verbose("[IPC] Firing FA.Available.");
+        var cgAvailable = pluginInterface.GetIpcProvider<bool>("FA.Available");
+        cgAvailable.SendMessage();
     }
 
     public void Invoke(string guid)
@@ -58,8 +65,13 @@ public class IpcSystem : IDisposable
 
         return false;
     }
-
+    
     private string Register(string pluginInternalName, string searchDisplayName, uint iconId)
+    {
+        return Register(pluginInternalName, searchDisplayName, searchDisplayName, iconId);
+    }
+
+    private string Register(string pluginInternalName, string searchDisplayName, string searchValue, uint iconId)
     {
         if (!this.TrackedIpcs.TryGetValue(pluginInternalName, out var ipcList))
         {
@@ -76,7 +88,7 @@ public class IpcSystem : IDisposable
             Display = searchDisplayName,
             Guid = guid,
             IconId = iconId,
-            Search = searchDisplayName.ToLower(),
+            Search = searchValue.ToLower()
         });
         
         PluginLog.Verbose($"[IPC] Registered: {pluginInternalName} - {searchDisplayName} - {guid}");
