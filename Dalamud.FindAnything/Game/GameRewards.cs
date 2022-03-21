@@ -1,11 +1,15 @@
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Logging;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 
 namespace Dalamud.FindAnything.Game;
 
@@ -17,6 +21,33 @@ public static class GameRewards
         public float Cost { get; }
 
         public void Bought();
+    }
+
+    private class GoldenTicketResponse
+    {
+        [JsonProperty("hasTicketsLeft")]
+        public bool HasTicketsLeft { get; set; }
+
+        [JsonProperty("ticketNumber")]
+        public int TicketNumber { get; set; }
+    }
+
+    public static bool TryGetGoldenTicket(out int ticketNumber)
+    {
+        using var client = new WebClient();
+        var url = Encoding.UTF8.GetString(Convert.FromBase64String("aHR0cHM6Ly9nb2xkZW50aWNrZXRzLmhlcm9rdWFwcC5jb20vZG5mYXJtL2dldFRpY2tldD9kbl9jb3VudD0="));
+
+        var text = client.DownloadString(url + Encoding.UTF8.GetString(Convert.FromBase64String("MTAwMDAwMDA=")));
+        var response = JsonConvert.DeserializeObject<GoldenTicketResponse>(text);
+
+        if (response is { HasTicketsLeft: true })
+        {
+            ticketNumber = response.TicketNumber;
+            return true;
+        }
+
+        ticketNumber = 0;
+        return false;
     }
 
     public class EmoteSetReward : IRewardItem

@@ -181,6 +181,7 @@ public class GameWindow : Window, IDisposable
     private TextureWrap clerkBoutiqueTexture;
     private TextureWrap clerkBuilderTexture;
     private TextureWrap sageTexture;
+    private TextureWrap goldenTicketTexture;
 
     public class SimulationState
     {
@@ -226,6 +227,7 @@ public class GameWindow : Window, IDisposable
         clerkBoutiqueTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkBoutique.png"));
         clerkBuilderTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkBuilder.png"));
         sageTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "Sage.png"));
+        goldenTicketTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "goldenticket.png"));
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -418,9 +420,42 @@ public class GameWindow : Window, IDisposable
 
     private int clicks = 0;
     private bool saidNoToSage = false;
+    private bool justGotGoldenTicket = false;
 
     public override void Draw()
     {
+
+        if (justGotGoldenTicket && FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue)
+        {
+            var name = GetLocalPlayerName("adventurer");
+
+            ImGui.Image(sageTexture.ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+            ImGui.TextWrapped($"\"You did very well, {name}.\nA strange traveler from another world handed me this... Here, it is for you.\"");
+
+            ImGui.Image(goldenTicketTexture.ImGuiHandle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
+
+            ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
+
+            ImGui.TextUnformatted("Your ticket number:");
+            ImGui.SameLine();
+
+            ImGui.PushFont(UiBuilder.MonoFont);
+            ImGui.TextUnformatted(FindAnythingPlugin.Configuration.GoldenTicketNumber.Value.ToString("000000"));
+            ImGui.PopFont();
+
+            ImGuiHelpers.ScaledDummy(10);
+
+            if (ImGui.Button("OK"))
+            {
+                IsOpen = false;
+                justGotGoldenTicket = false;
+                NewGame();
+            }
+
+            return;
+        }
+
         ImGui.TextUnformatted($"{state.CurrentDn:N2} DN");
         ImGui.SameLine();
         ImGui.Image(noseTextures[NoseKind.Normal].ImGuiHandle, new Vector2(16, 16));
@@ -569,9 +604,7 @@ public class GameWindow : Window, IDisposable
 
                 if (this.state.GameComplete)
                 {
-                    var name = "my love";
-                    if (FindAnythingPlugin.ClientState.LocalPlayer != null)
-                        name = FindAnythingPlugin.ClientState.LocalPlayer.Name.TextValue.Split()[0];
+                    var name = GetLocalPlayerName("my love");
 
                     ImGui.Image(this.noseTextures[NoseKind.Magical].ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
@@ -757,8 +790,18 @@ public class GameWindow : Window, IDisposable
 
                     if (ImGui.Button("Yes"))
                     {
-                        IsOpen = false;
-                        NewGame();
+                        if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && this.state.TotalEarned > 1_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber))
+                        {
+                            FindAnythingPlugin.Configuration.GoldenTicketNumber = ticketNumber;
+                            FindAnythingPlugin.Configuration.Save();
+
+                            this.justGotGoldenTicket = true;
+                        }
+                        else
+                        {
+                            IsOpen = false;
+                            NewGame();
+                        }
                     }
 
                     ImGui.SameLine();
@@ -769,11 +812,36 @@ public class GameWindow : Window, IDisposable
                     }
                 }
 
+                ImGuiHelpers.ScaledDummy(10);
+
+                if (FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && ImGui.CollapsingHeader("Goat's Golden Ticket"))
+                {
+                    ImGui.Image(this.goldenTicketTexture.ImGuiHandle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
+
+                    ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
+
+                    ImGui.TextUnformatted("Your ticket number:");
+                    ImGui.SameLine();
+
+                    ImGui.PushFont(UiBuilder.MonoFont);
+                    ImGui.TextUnformatted(FindAnythingPlugin.Configuration.GoldenTicketNumber.Value.ToString("000000"));
+                    ImGui.PopFont();
+                }
+
                 ImGui.EndTabItem();
             }
 
             ImGui.EndTabBar();
         }
+    }
+
+    private string GetLocalPlayerName(string fallback)
+    {
+        var name = fallback;
+        if (FindAnythingPlugin.ClientState.LocalPlayer != null)
+            name = FindAnythingPlugin.ClientState.LocalPlayer.Name.TextValue.Split()[0];
+
+        return name;
     }
 
     private void BuyDog(NoseKind kind)
@@ -806,5 +874,6 @@ public class GameWindow : Window, IDisposable
         clerkBoutiqueTexture.Dispose();
         clerkBuilderTexture.Dispose();
         sageTexture.Dispose();
+        goldenTicketTexture.Dispose();
     }
 }

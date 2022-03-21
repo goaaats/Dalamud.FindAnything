@@ -202,6 +202,7 @@ namespace Dalamud.FindAnything
         }
 
         public GameWindow.SimulationState? SimulationState { get; set; } = null;
+        public int? GoldenTicketNumber { get; set; } = null;
 
         public void Save()
         {
