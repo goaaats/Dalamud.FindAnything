@@ -990,7 +990,7 @@ namespace Dalamud.FindAnything
             var sw = Stopwatch.StartNew();
 #endif
 
-            var term = searchTerm.ToLower();
+            var term = searchTerm.ToLower().Replace("'", string.Empty);
             var isInDuty = CheckInDuty();
             var isInEvent = CheckInEvent();
             var isInCombat = CheckInCombat();
@@ -1082,7 +1082,7 @@ namespace Dalamud.FindAnything
                                     {
                                         var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
                                         var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
-                                        if (aetheryteName.ToLower().Contains(term) || terriName.Searchable.Contains(term))
+                                        if (aetheryteName.ToLower().Replace("'", string.Empty).Contains(term) || terriName.Searchable.Contains(term))
                                             cResults.Add(new AetheryteSearchResult
                                             {
                                                 Name = aetheryteName,
@@ -1099,7 +1099,6 @@ namespace Dalamud.FindAnything
                                     if (marketBoardResults.Count > 0)
                                     {
                                         var closestMarketBoard = marketBoardResults.OrderBy(a1 => a1.GilCost).First();
-                                        var aetheryteName = AetheryteManager.GetAetheryteName(closestMarketBoard);
                                         var terriName = SearchDatabase.GetString<TerritoryType>(closestMarketBoard.TerritoryId);
                                         cResults.Add(new AetheryteSearchResult
                                         {

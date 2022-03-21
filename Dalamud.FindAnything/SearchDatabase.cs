@@ -48,7 +48,7 @@ namespace Dalamud.FindAnything
                     data.Add(excelRow.RowId, new SearchEntry
                     {
                         Display = textVal,
-                        Searchable = textVal.ToLowerInvariant(),
+                        Searchable = textVal.ToLowerInvariant().Replace("'", string.Empty),
                     });
                 }
 
