@@ -119,6 +119,7 @@ namespace Dalamud.FindAnything
         public List<MacroEntry> MacroLinks { get; set; } = new();
 
         public bool DoAetheryteGilCost { get; set; } = false;
+        public bool DoMarketBoardShortcut { get; set; } = false;
         public EmoteMotionMode EmoteMode { get; set; } = EmoteMotionMode.Default;
         public bool ShowEmoteCommand { get; set; } = false;
 

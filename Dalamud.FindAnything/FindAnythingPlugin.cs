@@ -54,7 +54,7 @@ namespace Dalamud.FindAnything
         [PluginService] public static ChatGui ChatGui { get; private set; }
         [PluginService] public static ToastGui ToastGui { get; private set; }
         [PluginService] public static Dalamud.Game.ClientState.Conditions.Condition Condition { get; private set; }
-        [PluginService] public static AetheryteList Aetheryes { get; private set; }
+        [PluginService] public static AetheryteList Aetherytes { get; private set; }
         [PluginService] public static SigScanner TargetScanner { get; private set; }
 
         public static TextureCache TexCache { get; private set; }
@@ -1077,7 +1077,8 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.Aetheryte:
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                                 {
-                                    foreach (var aetheryte in Aetheryes)
+                                    var marketBoardResults = new List<AetheryteEntry>();
+                                    foreach (var aetheryte in Aetherytes)
                                     {
                                         var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
                                         var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
@@ -1089,9 +1090,24 @@ namespace Dalamud.FindAnything
                                                 Icon = TexCache.AetheryteIcon,
                                                 TerriName = terriName.Display
                                             });
+                                            if (Configuration.DoMarketBoardShortcut && "Closest Market Board".ToLower().Contains(term) && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
+                                                marketBoardResults.Add(aetheryte);
 
                                         if (cResults.Count > MAX_TO_SEARCH)
                                             break;
+                                    }
+                                    if (marketBoardResults.Count > 0)
+                                    {
+                                        var closestMarketBoard = marketBoardResults.OrderBy(a1 => a1.GilCost).First();
+                                        var aetheryteName = AetheryteManager.GetAetheryteName(closestMarketBoard);
+                                        var terriName = SearchDatabase.GetString<TerritoryType>(closestMarketBoard.TerritoryId);
+                                        cResults.Add(new AetheryteSearchResult
+                                        {
+                                            Name = "Closest Market Board",
+                                            Data = closestMarketBoard,
+                                            Icon = TexCache.AetheryteIcon,
+                                            TerriName = terriName.Display
+                                        });
                                     }
                                 }
                                 break;
