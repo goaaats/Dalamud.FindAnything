@@ -790,7 +790,7 @@ public class GameWindow : Window, IDisposable
 
                     if (ImGui.Button("Yes"))
                     {
-                        if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && this.state.TotalEarned > 1_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber))
+                        if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && this.state.TotalEarned > 100_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber))
                         {
                             FindAnythingPlugin.Configuration.GoldenTicketNumber = ticketNumber;
                             FindAnythingPlugin.Configuration.Save();
