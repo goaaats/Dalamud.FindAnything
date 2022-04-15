@@ -9,7 +9,6 @@ using Dalamud.Plugin;
 using System.Linq;
 using System.Net;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Web;
 using Dalamud.Data;
@@ -31,7 +30,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
 using ImGuiScene;
-using Lumina.Data.Parsing;
 using Lumina.Excel.GeneratedSheets;
 using NCalc;
 using XivCommon;
@@ -143,6 +141,15 @@ namespace Dalamud.FindAnything
         private static bool wasTempSearchMode = false;
         private static ISearchResult? choicerTempResult;
 
+        private struct HistoryEntry
+        {
+            public ISearchResult Result;
+            public string SearchTerm;
+        }
+
+        private static List<HistoryEntry> history = new();
+        private const int HistoryMax = 5;
+
         private interface ISearchResult
         {
             public string CatName { get; }
@@ -153,7 +160,7 @@ namespace Dalamud.FindAnything
             public void Selected();
         }
 
-        private class WikiSearchResult : ISearchResult
+        private class WikiSearchResult : ISearchResult, IEquatable<WikiSearchResult>
         {
             public string CatName { get; set; }
             public string Name { get; set; }
@@ -175,6 +182,24 @@ namespace Dalamud.FindAnything
             {
                 choicerTempResult = this;
                 SwitchSearchMode(SearchMode.WikiSiteChoicer);
+            }
+
+            public bool Equals(WikiSearchResult other)
+            {
+                return this.DataKey == other.DataKey && this.DataCat == other.DataCat;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((WikiSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(this.DataKey, (int)this.DataCat);
             }
         }
 
@@ -285,9 +310,27 @@ namespace Dalamud.FindAnything
                         break;
                 }
             }
+
+            public bool Equals(WikiSiteChoicerResult other)
+            {
+                return this.Site == other.Site;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((WikiSiteChoicerResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (int)this.Site;
+            }
         }
 
-        private class SearchWikiSearchResult : ISearchResult
+        private class SearchWikiSearchResult : ISearchResult, IEquatable<SearchWikiSearchResult>
         {
             public string CatName => string.Empty;
             public string Name => $"Search for \"{Query}\" in wikis...";
@@ -301,9 +344,29 @@ namespace Dalamud.FindAnything
             {
                 Util.OpenLink($"https://ffxiv.gamerescape.com/w/index.php?search={HttpUtility.UrlEncode(Query)}&title=Special%3ASearch&fulltext=1&useskin=Vector");
             }
+
+            public bool Equals(SearchWikiSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Query == other.Query;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((SearchWikiSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Query.GetHashCode();
+            }
         }
 
-        private class AetheryteSearchResult : ISearchResult
+        private class AetheryteSearchResult : ISearchResult, IEquatable<AetheryteSearchResult>
         {
             public string CatName
             {
@@ -352,6 +415,26 @@ namespace Dalamud.FindAnything
                     UserError("To use Aetherytes within Wotsit, you must install the \"Teleporter\" plugin.");
                 }
             }
+
+            public bool Equals(AetheryteSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Data.AetheryteId.Equals(other.Data.AetheryteId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((AetheryteSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Data.GetHashCode();
+            }
         }
 
         private static void UserError(string error)
@@ -360,7 +443,7 @@ namespace Dalamud.FindAnything
             ToastGui.ShowError(error);
         }
 
-        private class MainCommandSearchResult : ISearchResult
+        private class MainCommandSearchResult : ISearchResult, IEquatable<MainCommandSearchResult>
         {
             public string CatName => "Commands";
             public string Name { get; set; }
@@ -373,9 +456,29 @@ namespace Dalamud.FindAnything
             {
                 FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->ExecuteMainCommand(CommandId);
             }
+
+            public bool Equals(MainCommandSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.CommandId == other.CommandId;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((MainCommandSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (int)this.CommandId;
+            }
         }
 
-        private class InternalSearchResult : ISearchResult
+        private class InternalSearchResult : ISearchResult, IEquatable<InternalSearchResult>
         {
             public string CatName => Kind switch
             {
@@ -434,6 +537,26 @@ namespace Dalamud.FindAnything
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
+            public bool Equals(InternalSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Kind == other.Kind;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((InternalSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (int)this.Kind;
+            }
         }
 
         private static void SwitchSearchMode(SearchMode newMode)
@@ -441,11 +564,11 @@ namespace Dalamud.FindAnything
             searchMode = newMode;
             searchTerm = string.Empty;
             selectedIndex = 0;
-            UpdateSearchResults();
+            results = UpdateSearchResults(searchTerm);
             PluginLog.Information($"Now in mode: {newMode}");
         }
 
-        public class GeneralActionSearchResult : ISearchResult
+        public class GeneralActionSearchResult : ISearchResult, IEquatable<GeneralActionSearchResult>
         {
             public string CatName => "General Actions";
             public string Name { get; set;  }
@@ -458,9 +581,29 @@ namespace Dalamud.FindAnything
                 var message = $"/gaction \"{Name}\"";
                 xivCommon.Functions.Chat.SendMessage(message);
             }
+
+            public bool Equals(GeneralActionSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Name == other.Name;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((GeneralActionSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Name.GetHashCode();
+            }
         }
 
-        private class PluginSettingsSearchResult : ISearchResult
+        private class PluginSettingsSearchResult : ISearchResult, IEquatable<PluginSettingsSearchResult>
         {
             public string CatName => "Other Plugins";
             public string Name { get; set; }
@@ -472,9 +615,29 @@ namespace Dalamud.FindAnything
             {
                 Plugin.OpenConfigUi();
             }
+
+            public bool Equals(PluginSettingsSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Plugin.Name.Equals(other.Plugin.Name);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((PluginSettingsSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Plugin.GetHashCode();
+            }
         }
 
-        private class MacroLinkSearchResult : ISearchResult
+        private class MacroLinkSearchResult : ISearchResult, IEquatable<MacroLinkSearchResult>
         {
             public string CatName => "Macros";
             public string Name => Entry.SearchName.Split(';', StringSplitOptions.TrimEntries).First();
@@ -513,9 +676,29 @@ namespace Dalamud.FindAnything
                         throw new ArgumentOutOfRangeException();
                 }
             }
+
+            public bool Equals(MacroLinkSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Entry.Equals(other.Entry);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((MacroLinkSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Entry.GetHashCode();
+            }
         }
 
-        private class DutySearchResult : ISearchResult
+        private class DutySearchResult : ISearchResult, IEquatable<DutySearchResult>
         {
             public string CatName { get; set; }
             public string Name { get; set; }
@@ -528,9 +711,29 @@ namespace Dalamud.FindAnything
             {
                 xivCommon.Functions.DutyFinder.OpenDuty(DataKey);
             }
+
+            public bool Equals(DutySearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.DataKey == other.DataKey;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((DutySearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (int)this.DataKey;
+            }
         }
 
-        private class ContentRouletteSearchResult : ISearchResult
+        private class ContentRouletteSearchResult : ISearchResult, IEquatable<ContentRouletteSearchResult>
         {
             public string CatName => "Duty Roulette";
             public string Name { get; set; }
@@ -543,9 +746,29 @@ namespace Dalamud.FindAnything
             {
                 xivCommon.Functions.DutyFinder.OpenRoulette(DataKey);
             }
+
+            public bool Equals(ContentRouletteSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.DataKey == other.DataKey;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((ContentRouletteSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.DataKey.GetHashCode();
+            }
         }
 
-        private class EmoteSearchResult : ISearchResult
+        private class EmoteSearchResult : ISearchResult, IEquatable<EmoteSearchResult>
         {
             public string CatName
             {
@@ -584,6 +807,26 @@ namespace Dalamud.FindAnything
                     cmd += " motion";
 
                 xivCommon.Functions.Chat.SendMessage(cmd);
+            }
+
+            public bool Equals(EmoteSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.SlashCommand == other.SlashCommand;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((EmoteSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.SlashCommand.GetHashCode();
             }
         }
 
@@ -659,7 +902,7 @@ namespace Dalamud.FindAnything
             }
         }
 
-        private class ChatCommandSearchResult : ISearchResult
+        private class ChatCommandSearchResult : ISearchResult, IEquatable<ChatCommandSearchResult>
         {
             public string CatName => string.Empty;
             public string Name => $"Run chat command \"{Command}\"";
@@ -675,9 +918,29 @@ namespace Dalamud.FindAnything
 
                 xivCommon.Functions.Chat.SendMessage(Command);
             }
+
+            public bool Equals(ChatCommandSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Command == other.Command;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((ChatCommandSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Command.GetHashCode();
+            }
         }
 
-        private class IpcSearchResult : ISearchResult
+        private class IpcSearchResult : ISearchResult, IEquatable<IpcSearchResult>
         {
             public string CatName { get; set; }
             public string Name { get; set; }
@@ -689,6 +952,26 @@ namespace Dalamud.FindAnything
             public void Selected()
             {
                 Ipc.Invoke(Guid);
+            }
+
+            public bool Equals(IpcSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Guid == other.Guid;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((IpcSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Guid.GetHashCode();
             }
         }
 
@@ -728,7 +1011,7 @@ namespace Dalamud.FindAnything
             }
         }
 
-        private class GearsetSearchResult : ISearchResult
+        private class GearsetSearchResult : ISearchResult, IEquatable<GearsetSearchResult>
         {
             public string CatName => "Gearset";
             public string Name => Gearset.Name;
@@ -741,9 +1024,29 @@ namespace Dalamud.FindAnything
             {
                 xivCommon.Functions.Chat.SendMessage("/gs change " + Gearset.Slot);
             }
+
+            public bool Equals(GearsetSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Gearset.Slot.Equals(other.Gearset.Slot);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((GearsetSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Gearset.GetHashCode();
+            }
         }
 
-        private class MountResult : ISearchResult
+        private class MountResult : ISearchResult, IEquatable<MountResult>
         {
             public string CatName => "Mount";
             public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular);
@@ -756,9 +1059,30 @@ namespace Dalamud.FindAnything
             {
                 xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
             }
+
+            public bool Equals(MountResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Mount.RowId.Equals(other.Mount.RowId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((MountResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Mount.GetHashCode();
+            }
         }
 
-        private class MinionResult : ISearchResult {
+        private class MinionResult : ISearchResult, IEquatable<MinionResult>
+        {
             public string CatName => "Minion";
             public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular);
             public TextureWrap? Icon => TexCache.MinionIcons[Minion.RowId];
@@ -769,9 +1093,29 @@ namespace Dalamud.FindAnything
             public void Selected() {
                 xivCommon.Functions.Chat.SendMessage($"/minion \"{Minion.Singular}\"");
             }
+
+            public bool Equals(MinionResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Minion.RowId.Equals(other.Minion.RowId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((MinionResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Minion.GetHashCode();
+            }
         }
 
-        private class CraftingRecipeResult : ISearchResult {
+        private class CraftingRecipeResult : ISearchResult, IEquatable<CraftingRecipeResult> {
             public string CatName => "Crafting Recipe";
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
@@ -785,9 +1129,29 @@ namespace Dalamud.FindAnything
                     GameStateCache.SearchForItemByCraftingMethod((ushort) (id % 500_000));
                 }
             }
+
+            public bool Equals(CraftingRecipeResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Recipe.RowId.Equals(other.Recipe.RowId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((CraftingRecipeResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Recipe.GetHashCode();
+            }
         }
 
-        private class GatheringItemResult : ISearchResult {
+        private class GatheringItemResult : ISearchResult, IEquatable<GatheringItemResult> {
             public string CatName => "Gathering Item";
             public string Name { get; set; }
             public TextureWrap? Icon { get; set; }
@@ -799,6 +1163,26 @@ namespace Dalamud.FindAnything
                 if (this.Item.Item > 0) {
                     GameStateCache.SearchForItemByGatheringMethod((ushort) (this.Item.Item % 500_000));
                 }
+            }
+
+            public bool Equals(GatheringItemResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Item.RowId.Equals(other.Item.RowId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((GatheringItemResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Item.GetHashCode();
             }
         }
 
@@ -977,20 +1361,18 @@ namespace Dalamud.FindAnything
             return Condition[ConditionFlag.InCombat];
         }
 
-        private static void UpdateSearchResults()
+        private static ISearchResult[]? UpdateSearchResults(string toSearch)
         {
-            if (searchTerm.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
+            if (toSearch.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
             {
-                results = null;
-
-                return;
+                return null;
             }
 
 #if DEBUG
             var sw = Stopwatch.StartNew();
 #endif
 
-            var term = searchTerm.ToLower().Replace("'", string.Empty);
+            var term = toSearch.ToLower().Replace("'", string.Empty);
             var isInDuty = CheckInDuty();
             var isInEvent = CheckInEvent();
             var isInCombat = CheckInCombat();
@@ -1374,7 +1756,7 @@ namespace Dalamud.FindAnything
 
                     if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Maths))
                     {
-                        var expression = new Expression(searchTerm);
+                        var expression = new Expression(toSearch);
 
                         expression.EvaluateFunction += delegate(string name, FunctionArgs args)
                         {
@@ -1460,7 +1842,7 @@ namespace Dalamud.FindAnything
                             catch (ArgumentException ex)
                             {
                                 PluginLog.Verbose(ex, "Expression evaluate error", Array.Empty<object>());
-                                if (searchTerm.Any(x => x is >= '0' and <= '9'))
+                                if (toSearch.Any(x => x is >= '0' and <= '9'))
                                     cResults.Add(new ExpressionResult
                                     {
                                         Result = null,
@@ -1471,7 +1853,7 @@ namespace Dalamud.FindAnything
                         else
                         {
                             PluginLog.Verbose("Expression parse error: " + expression.Error, Array.Empty<object>());
-                            if (searchTerm.Any(x => x is >= '0' and <= '9'))
+                            if (toSearch.Any(x => x is >= '0' and <= '9'))
                                 cResults.Add(new ExpressionResult
                                 {
                                     Result = null,
@@ -1506,7 +1888,7 @@ namespace Dalamud.FindAnything
 
                     cResults.Add(new SearchWikiSearchResult
                     {
-                        Query = searchTerm.StartsWith("?") ? searchTerm[1..] : searchTerm,
+                        Query = toSearch.StartsWith("?") ? toSearch[1..] : toSearch,
                     });
 
                     foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
@@ -1625,20 +2007,20 @@ namespace Dalamud.FindAnything
                     throw new ArgumentOutOfRangeException();
             }
 
-            if (!isInDuty && searchTerm.StartsWith("/"))
+            if (!isInDuty && toSearch.StartsWith("/"))
             {
                 cResults.Add(new ChatCommandSearchResult
                 {
-                    Command = searchTerm,
+                    Command = toSearch,
                 });
             }
-
-            results = cResults.ToArray();
 
 #if DEBUG
             sw.Stop();
             PluginLog.Debug($"Took: {sw.ElapsedMilliseconds}ms");
 #endif
+
+            return cResults.ToArray();
         }
 
         public void Dispose()
@@ -1687,6 +2069,23 @@ namespace Dalamud.FindAnything
                 };
                 Configuration.Save();
             }
+            else if (Configuration.HistoryEnabled && history.Count > 0)
+            {
+                var newHistory = new List<ISearchResult>();
+
+                foreach (var historyEntry in history)
+                {
+                    var searched = UpdateSearchResults(historyEntry.SearchTerm);
+
+                    var first = searched?.FirstOrDefault(x => x.Equals(historyEntry.Result));
+                    if (first == null)
+                        continue;
+
+                    newHistory.Add(first);
+                }
+
+                results = newHistory.ToArray();
+            }
 
             if (Configuration.OnlyWikiMode)
             {
@@ -1706,7 +2105,7 @@ namespace Dalamud.FindAnything
             choicerTempResult = null;
             isHeld = false;
             wasTempSearchMode = false;
-            UpdateSearchResults();
+            results = UpdateSearchResults(searchTerm);
         }
 
         private const int MAX_ONE_PAGE = 10;
@@ -1763,7 +2162,7 @@ namespace Dalamud.FindAnything
                         {
                             searchMode = SearchMode.Top;
                             wasTempSearchMode = false;
-                            UpdateSearchResults();
+                            results = UpdateSearchResults(searchTerm);
                             PluginLog.Information("AutoSearchMode: Top");
                         }
                         break;
@@ -1784,7 +2183,7 @@ namespace Dalamud.FindAnything
             if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchTerm, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
             {
-                UpdateSearchResults();
+                results = UpdateSearchResults(searchTerm);
                 selectedIndex = 0;
                 framesSinceLastKbChange = 0;
                 resetScroll = true;
@@ -1979,6 +2378,17 @@ namespace Dalamud.FindAnything
                         var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
                         closeFinder = results[index].CloseFinder;
                         results[index].Selected();
+
+                        history.Insert(0, new HistoryEntry
+                        {
+                            Result = results[index],
+                            SearchTerm = searchTerm,
+                        });
+
+                        if (history.Count > HistoryMax)
+                        {
+                            history.RemoveAt(history.Count - 1);
+                        }
                     }
                 }
 

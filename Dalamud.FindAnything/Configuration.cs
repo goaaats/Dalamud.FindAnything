@@ -135,6 +135,8 @@ namespace Dalamud.FindAnything
 
         public bool NotInCombat { get; set; } = false;
 
+        public bool HistoryEnabled { get; set; } = true;
+
         public enum HintKind
         {
             HintTyping,

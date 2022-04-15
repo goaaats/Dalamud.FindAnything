@@ -38,6 +38,7 @@ public class SettingsWindow : Window
     private Configuration.ScrollSpeed speed;
     private bool notInCombat;
     private bool tcForceBrowser;
+    private bool historyEnabled;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -71,6 +72,7 @@ public class SettingsWindow : Window
         this.speed = FindAnythingPlugin.Configuration.Speed;
         this.notInCombat = FindAnythingPlugin.Configuration.NotInCombat;
         this.tcForceBrowser = FindAnythingPlugin.Configuration.TeamCraftForceBrowser;
+        this.historyEnabled = FindAnythingPlugin.Configuration.HistoryEnabled;
         base.OnOpen();
     }
 
@@ -198,6 +200,7 @@ public class SettingsWindow : Window
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
 
+        ImGui.Checkbox("Enable Search History", ref this.historyEnabled);
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
         ImGui.Checkbox("Show \"Market Board\" shortcut to teleport to the closest market board city", ref this.marketBoardShortcut);
 
@@ -265,6 +268,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.Speed = this.speed;
             FindAnythingPlugin.Configuration.NotInCombat = this.notInCombat;
             FindAnythingPlugin.Configuration.TeamCraftForceBrowser = this.tcForceBrowser;
+            FindAnythingPlugin.Configuration.HistoryEnabled = this.historyEnabled;
 
             FindAnythingPlugin.Configuration.Save();
 
