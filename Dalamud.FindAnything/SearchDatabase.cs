@@ -32,6 +32,29 @@ namespace Dalamud.FindAnything
             InitData<Emote>(ref data, (r) => r.Name);
             InitData<Quest>(ref data, (r) => r.Name);
             InitData<Item>(ref data, (r) => r.Name);
+            InitData<Recipe>(ref data, r =>
+            {
+                var itemResult = r.ItemResult.Value;
+
+                if (itemResult == null || itemResult.RowId == 0) {
+                    return null;
+                }
+
+                return itemResult.Name;
+            });
+
+            var item = FindAnythingPlugin.Data.GetExcelSheet<Item>()!;
+
+            InitData<GatheringItem>(ref data, r =>
+            {
+                var itemResult = item.GetRow((uint)r.Item);
+
+                if (itemResult == null || itemResult.RowId == 0) {
+                    return null;
+                }
+
+                return itemResult.Name;
+            });
 
             SearchData = data;
         }
@@ -48,7 +71,7 @@ namespace Dalamud.FindAnything
                     data.Add(excelRow.RowId, new SearchEntry
                     {
                         Display = textVal,
-                        Searchable = textVal.ToLowerInvariant().Replace("'", string.Empty),
+                        Searchable = GetSearchableText(textVal)
                     });
                 }
 
@@ -56,6 +79,8 @@ namespace Dalamud.FindAnything
 
             searchDb.Add(typeof(T), data);
         }
+
+        public static string GetSearchableText(string input) => input.ToLowerInvariant().Replace("'", string.Empty);
 
         public SearchEntry GetString<T>(uint row) where T : ExcelRow => SearchData[typeof(T)][row];
 

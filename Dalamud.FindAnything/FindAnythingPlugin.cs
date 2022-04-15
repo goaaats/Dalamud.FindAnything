@@ -1251,22 +1251,19 @@ namespace Dalamud.FindAnything
                                 break;
                             case Configuration.SearchSetting.CraftingRecipes:
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.CraftingRecipes)) {
-                                    foreach (var recipe in Data.GetExcelSheet<Recipe>()!) {
-                                        var itemResult = recipe.ItemResult.Value;
-                                        if (itemResult == null || itemResult.RowId == 0) {
-                                            continue;
-                                        }
+                                    foreach (var recipeSearch in SearchDatabase.GetAll<Recipe>()) {
+                                        if (recipeSearch.Value.Searchable.Contains(term))
+                                        {
+                                            var recipe = Data.GetExcelSheet<Recipe>()!.GetRow(recipeSearch.Key)!;
+                                            var itemResult = recipe.ItemResult.Value!;
 
-                                        var name = itemResult.Name.RawString;
-
-                                        if (name.ToLower().Contains(term)) {
                                             TexCache.EnsureExtraIcon(itemResult.Icon);
                                             TexCache.ExtraIcons.TryGetValue(itemResult.Icon, out var tex);
 
                                             cResults.Add(new CraftingRecipeResult
                                             {
                                                 Recipe = recipe,
-                                                Name = name,
+                                                Name = recipeSearch.Value.Display,
                                                 Icon = tex,
                                             });
                                         }
@@ -1279,23 +1276,25 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.GatheringItems:
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GatheringItems)) {
                                     var items = Data.GetExcelSheet<Item>()!;
+                                    var gatheringItem = Data.GetExcelSheet<GatheringItem>()!;
 
-                                    foreach (var gather in Data.GetExcelSheet<GatheringItem>()!) {
+                                    foreach (var gatherSearch in SearchDatabase.GetAll<GatheringItem>())
+                                    {
+                                        var gather = gatheringItem.GetRow(gatherSearch.Key)!;
                                         var item = items.GetRow((uint) gather.Item);
+
                                         if (item == null || item.RowId == 0) {
                                             continue;
                                         }
 
-                                        var name = item.Name.RawString;
-
-                                        if (name.ToLower().Contains(term)) {
+                                        if (gatherSearch.Value.Searchable.Contains(term)) {
                                             TexCache.EnsureExtraIcon(item.Icon);
                                             TexCache.ExtraIcons.TryGetValue(item.Icon, out var tex);
 
                                             cResults.Add(new GatheringItemResult()
                                             {
                                                 Item = gather,
-                                                Name = name,
+                                                Name = gatherSearch.Value.Display,
                                                 Icon = tex,
                                             });
                                         }
