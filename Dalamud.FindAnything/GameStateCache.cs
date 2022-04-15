@@ -15,7 +15,7 @@ namespace Dalamud.FindAnything;
 
 public unsafe class GameStateCache
 {
-    // E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 57 3C 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75 D9
+    // E8 ?? ?? ?? ?? 3C 01 74 1C
     [return:MarshalAs(UnmanagedType.U1)]
     private delegate byte IsDutyUnlockedDelegate(uint contentId);
 
@@ -84,7 +84,7 @@ public unsafe class GameStateCache
 
     private GameStateCache()
     {
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 0F B7 57 3C 48 8B C8 E8 ?? ?? ?? ?? 84 C0 75 D9", out var dutyUnlockedPtr)) {
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 3C 01 74 1C", out var dutyUnlockedPtr)) {
             PluginLog.Verbose($"dutyUnlockedPtr: {dutyUnlockedPtr:X}");
             this.isDutyUnlocked = Marshal.GetDelegateForFunctionPointer<IsDutyUnlockedDelegate>(dutyUnlockedPtr);
         }
