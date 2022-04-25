@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Logging;

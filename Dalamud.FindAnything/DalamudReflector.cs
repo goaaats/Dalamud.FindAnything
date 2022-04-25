@@ -1,9 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Reflection;
 using Dalamud.Interface;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 
 namespace Dalamud.FindAnything;

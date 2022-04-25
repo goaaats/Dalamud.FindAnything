@@ -2379,16 +2379,20 @@ namespace Dalamud.FindAnything
                         closeFinder = results[index].CloseFinder;
                         results[index].Selected();
 
-                        history.Insert(0, new HistoryEntry
+                        // results can be null here, as the wiki mode choicer nulls it when selected
+                        if (results != null && searchMode == SearchMode.Top)
                         {
-                            Result = results[index],
-                            SearchTerm = searchTerm,
-                        });
+                            history.Insert(0, new HistoryEntry
+                            {
+                                Result = results[index],
+                                SearchTerm = searchTerm,
+                            });
 
-                        if (history.Count > HistoryMax)
-                        {
-                            history.RemoveAt(history.Count - 1);
-                        }
+                            if (history.Count > HistoryMax)
+                            {
+                                history.RemoveAt(history.Count - 1);
+                            }
+                        } 
                     }
                 }
 
