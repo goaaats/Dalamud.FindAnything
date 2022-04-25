@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dalamud.Data;
 using Dalamud.Logging;
 using Dalamud.Plugin;
@@ -13,6 +14,7 @@ public class IpcSystem : IDisposable
     private readonly TextureCache texCache;
     private readonly ICallGateProvider<string, string, uint, string> cgRegister;
     private readonly ICallGateProvider<string, string, string, uint, string> cgRegisterWithSearch;
+    private readonly ICallGateProvider<string, string, bool> cgUnregisterOne;
     private readonly ICallGateProvider<string, bool> cgUnregisterAll;
     private readonly ICallGateProvider<string, bool> cgInvoke;
 
@@ -32,12 +34,14 @@ public class IpcSystem : IDisposable
         this.texCache = texCache;
         this.cgRegister = pluginInterface.GetIpcProvider<string, string, uint, string>("FA.Register");
         this.cgRegisterWithSearch = pluginInterface.GetIpcProvider<string, string, string, uint, string>("FA.RegisterWithSearch");
+        this.cgUnregisterOne = pluginInterface.GetIpcProvider<string, string, bool>("FA.UnregisterOne");
         this.cgUnregisterAll = pluginInterface.GetIpcProvider<string, bool>("FA.UnregisterAll");
         this.cgInvoke = pluginInterface.GetIpcProvider<string, bool>("FA.Invoke");
         
         this.cgRegister.RegisterFunc(Register);
         this.cgRegisterWithSearch.RegisterFunc(Register);
-        this.cgUnregisterAll.RegisterFunc(Unregister);
+        this.cgUnregisterOne.RegisterFunc(UnregisterOne);
+        this.cgUnregisterAll.RegisterFunc(UnregisterAll);
 
         this.TrackedIpcs = new Dictionary<string, List<IpcBinding>>();
 
@@ -50,8 +54,22 @@ public class IpcSystem : IDisposable
     {
         this.cgInvoke.SendMessage(guid);
     }
+    
+    private bool UnregisterOne(string pluginInternalName, string guid)
+    {
+        if (this.TrackedIpcs.TryGetValue(pluginInternalName, out var ipcsList))
+        {
+            var toDelete = ipcsList.FirstOrDefault(x => x.Guid == guid);
+            if (toDelete == null)
+                return false;
 
-    private bool Unregister(string pluginInternalName)
+            ipcsList.Remove(toDelete);
+        }
+
+        return false;
+    }
+
+    private bool UnregisterAll(string pluginInternalName)
     {
         if (this.TrackedIpcs.ContainsKey(pluginInternalName))
         {
@@ -97,11 +115,13 @@ public class IpcSystem : IDisposable
     public void Dispose()
     {
         this.cgRegister.UnregisterFunc();
+        this.cgRegisterWithSearch.UnregisterFunc();
+        this.cgUnregisterOne.UnregisterFunc();
         this.cgUnregisterAll.UnregisterFunc();
 
         foreach (var trackedIpc in this.TrackedIpcs)
         {
-            Unregister(trackedIpc.Key);
+            UnregisterAll(trackedIpc.Key);
         }
     }
 }
