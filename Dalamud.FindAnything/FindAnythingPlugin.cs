@@ -2376,23 +2376,27 @@ namespace Dalamud.FindAnything
                     if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || clickedIndex != -1)
                     {
                         var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
-                        closeFinder = results[index].CloseFinder;
-                        results[index].Selected();
-
-                        // results can be null here, as the wiki mode choicer nulls it when selected
-                        if (results != null && searchMode == SearchMode.Top)
+                        
+                        if (index < results.Length)
                         {
-                            history.Insert(0, new HistoryEntry
-                            {
-                                Result = results[index],
-                                SearchTerm = searchTerm,
-                            });
+                            closeFinder = results[index].CloseFinder;
+                            results[index].Selected();
 
-                            if (history.Count > HistoryMax)
+                            // results can be null here, as the wiki mode choicer nulls it when selected
+                            if (results != null && searchMode == SearchMode.Top)
                             {
-                                history.RemoveAt(history.Count - 1);
-                            }
-                        } 
+                                history.Insert(0, new HistoryEntry
+                                {
+                                    Result = results[index],
+                                    SearchTerm = searchTerm,
+                                });
+
+                                if (history.Count > HistoryMax)
+                                {
+                                    history.RemoveAt(history.Count - 1);
+                                }
+                            } 
+                        }
                     }
                 }
 
