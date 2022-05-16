@@ -399,12 +399,13 @@ namespace Dalamud.FindAnything
                 try
                 {
                     var didTeleport = TeleportIpc.InvokeFunc(Data.AetheryteId, Data.SubIndex);
+                    var showTeleportChatMessage = ShowTeleportChatMessageIpc.InvokeFunc();
 
                     if (!didTeleport)
                     {
                         UserError("Cannot teleport in this situation.");
                     }
-                    else
+                    else if (showTeleportChatMessage)
                     {
                         ChatGui.Print($"Teleporting to {Name}...");
                     }
@@ -1202,6 +1203,7 @@ namespace Dalamud.FindAnything
         private static ISearchResult[]? results;
 
         public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
+        public static ICallGateSubscriber<bool> ShowTeleportChatMessageIpc {get; private set; }
 
         public FindAnythingPlugin()
         {
@@ -1231,6 +1233,7 @@ namespace Dalamud.FindAnything
             };
 
             TeleportIpc = PluginInterface.GetIpcSubscriber<uint, byte, bool>("Teleport");
+            ShowTeleportChatMessageIpc = PluginInterface.GetIpcSubscriber<bool>("Teleport.ChatMessage");
 
             TexCache = TextureCache.Load(null, Data);
             SearchDatabase = SearchDatabase.Load();
