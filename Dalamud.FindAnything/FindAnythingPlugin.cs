@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -2195,7 +2195,7 @@ namespace Dalamud.FindAnything
             ImGui.PopItemWidth();
 
             if (ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && !ImGui.IsAnyItemActive() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left))
-                ImGui.SetKeyboardFocusHere(0);
+                ImGui.SetKeyboardFocusHere(-1);
 
             ImGui.SameLine();
 
