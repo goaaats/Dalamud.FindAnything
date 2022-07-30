@@ -2203,7 +2203,7 @@ namespace Dalamud.FindAnything
             ImGui.Text(FontAwesomeIcon.Search.ToIconString());
             ImGui.PopFont();
 
-            if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown((int) VirtualKey.ESCAPE))
+            if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.ESCAPE)))
             {
                 PluginLog.Verbose("Focus loss or escape");
                 closeFinder = true;
@@ -2220,16 +2220,16 @@ namespace Dalamud.FindAnything
                 {
                     var childSize = ImGui.GetWindowSize();
 
-                    var isCtrl = ImGui.IsKeyDown((int)Configuration.ComboModifier);
-                    var isDown = ImGui.IsKeyDown((int)VirtualKey.DOWN);
-                    var isUp = ImGui.IsKeyDown((int)VirtualKey.UP);
-                    var isPgUp = ImGui.IsKeyDown((int)VirtualKey.PRIOR);
-                    var isPgDn = ImGui.IsKeyDown((int)VirtualKey.NEXT);
+                    var isCtrl = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.ComboModifier));
+                    var isDown = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN));
+                    var isUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP));
+                    var isPgUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR));
+                    var isPgDn = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.NEXT));
 
                     var numKeysPressed = new bool[10];
                     for (var i = 0; i < 9; i++)
                     {
-                        numKeysPressed[i] = ImGui.IsKeyPressed((int) VirtualKey.KEY_1 + i);
+                        numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey((VirtualKey) ((int)VirtualKey.KEY_1 + i)));
                     }
 
                     void CursorDown()
@@ -2376,7 +2376,7 @@ namespace Dalamud.FindAnything
                         clickedIndex = Array.IndexOf(numKeysPressed, true);
                     }
 
-                    if (ImGui.IsKeyPressed((int) VirtualKey.RETURN) || clickedIndex != -1)
+                    if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || clickedIndex != -1)
                     {
                         var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
                         
