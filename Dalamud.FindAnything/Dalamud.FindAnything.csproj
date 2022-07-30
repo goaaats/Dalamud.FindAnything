@@ -6,6 +6,7 @@
     <Description>Finder of anything</Description>
     <Copyright>(c) 2021 goaaats</Copyright>
     <PackageProjectUrl>https://github.com/goaaats/Dalamud.FindAnything</PackageProjectUrl>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <PropertyGroup>
