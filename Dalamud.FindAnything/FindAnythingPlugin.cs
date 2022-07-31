@@ -1475,8 +1475,9 @@ namespace Dalamud.FindAnything
                                                 Icon = TexCache.AetheryteIcon,
                                                 TerriName = terriName.Display
                                             });
-                                            if (Configuration.DoMarketBoardShortcut && "Closest Market Board".ToLower().Contains(term) && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
-                                                marketBoardResults.Add(aetheryte);
+
+                                        if (Configuration.DoMarketBoardShortcut && "Closest Market Board".ToLower().Contains(term) && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
+                                            marketBoardResults.Add(aetheryte);
 
                                         if (cResults.Count > MAX_TO_SEARCH)
                                             break;
@@ -2074,20 +2075,30 @@ namespace Dalamud.FindAnything
             }
             else if (Configuration.HistoryEnabled && history.Count > 0)
             {
-                var newHistory = new List<ISearchResult>();
+                var historyResults = new List<ISearchResult>();
+                var newHistory = new List<HistoryEntry>();
+                
+                PluginLog.Verbose("{Num} histories:", history.Count);
 
                 foreach (var historyEntry in history)
                 {
                     var searched = UpdateSearchResults(historyEntry.SearchTerm);
-
+                    PluginLog.Verbose(" => {Name}, {Type}, {ResultsNow}, {Term}", historyEntry.Result?.CatName, historyEntry.Result?.GetType()?.FullName, searched?.Length, historyEntry.SearchTerm);
+                    
+                    
                     var first = searched?.FirstOrDefault(x => x.Equals(historyEntry.Result));
                     if (first == null)
+                    {
+                        PluginLog.Verbose("Couldn't find {Term} anymore, removing from history", historyEntry.SearchTerm);
                         continue;
+                    }
 
-                    newHistory.Add(first);
+                    newHistory.Add(historyEntry);
+                    historyResults.Add(first);
                 }
 
-                results = newHistory.ToArray();
+                results = historyResults.ToArray();
+                history = newHistory;
             }
 
             if (Configuration.OnlyWikiMode)
@@ -2219,8 +2230,14 @@ namespace Dalamud.FindAnything
                 if (ImGui.BeginChild("###findAnythingScroller"))
                 {
                     var childSize = ImGui.GetWindowSize();
-
-                    var isCtrl = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.ComboModifier));
+                    
+                    //var isCtrl = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.ComboModifier));
+                    var modifierImGuiKey = ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.ComboModifier);
+                    if (Configuration.ComboModifier == VirtualKey.CONTROL) modifierImGuiKey = ImGuiKey.ModCtrl;
+                    if (Configuration.ComboModifier == VirtualKey.MENU) modifierImGuiKey = ImGuiKey.ModAlt;
+                    if (Configuration.ComboModifier == VirtualKey.SHIFT) modifierImGuiKey = ImGuiKey.ModShift;
+                    
+                    var isCtrl = ImGui.IsKeyDown(modifierImGuiKey);
                     var isDown = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN));
                     var isUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP));
                     var isPgUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR));
@@ -2229,7 +2246,7 @@ namespace Dalamud.FindAnything
                     var numKeysPressed = new bool[10];
                     for (var i = 0; i < 9; i++)
                     {
-                        numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey((VirtualKey) ((int)VirtualKey.KEY_1 + i)));
+                        numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiKey._1 + i);
                     }
 
                     void CursorDown()
@@ -2388,17 +2405,20 @@ namespace Dalamud.FindAnything
                             // results can be null here, as the wiki mode choicer nulls it when selected
                             if (results != null && searchMode == SearchMode.Top)
                             {
-                                history.Insert(0, new HistoryEntry
+                                if (!history.Any(x => x.Result == results[index]))
                                 {
-                                    Result = results[index],
-                                    SearchTerm = searchTerm,
-                                });
+                                    history.Insert(0, new HistoryEntry
+                                    {
+                                        Result = results[index],
+                                        SearchTerm = searchTerm,
+                                    });
+                                }
 
                                 if (history.Count > HistoryMax)
                                 {
                                     history.RemoveAt(history.Count - 1);
                                 }
-                            } 
+                            }
                         }
                     }
                 }
