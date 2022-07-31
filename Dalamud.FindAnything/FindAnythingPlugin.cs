@@ -1691,7 +1691,19 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.Mounts:
-                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInDuty && !isInCombat)
+                                // This is nasty, should just use TerritoryIntendedUse...
+                                var isInNoMountDuty = isInDuty;
+                                var currentTerri = Data.GetExcelSheet<TerritoryType>()?
+                                    .GetRow(ClientState.TerritoryType);
+
+                                if (currentTerri != null && currentTerri.ContentFinderCondition.Row != 0)
+                                {
+                                    var type = currentTerri.ContentFinderCondition.Value.ContentType.Row;
+                                    if (type == 26 || type == 29)
+                                        isInNoMountDuty = false;
+                                }
+
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInNoMountDuty && !isInCombat)
                                 {
                                     foreach (var mount in Data.GetExcelSheet<Mount>()!)
                                     {
