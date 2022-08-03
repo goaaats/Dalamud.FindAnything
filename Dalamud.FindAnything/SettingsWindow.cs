@@ -27,6 +27,7 @@ public class SettingsWindow : Window
     private List<Configuration.MacroEntry> macros = new();
     private bool aetheryteGilCost;
     private bool marketBoardShortcut;
+    private bool strikingDummyShortcut;
     private Configuration.EmoteMotionMode emoteMotionMode;
     private bool showEmoteCommand;
     private bool wikiModeNoSpoilers;
@@ -61,6 +62,7 @@ public class SettingsWindow : Window
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         this.marketBoardShortcut = FindAnythingPlugin.Configuration.DoMarketBoardShortcut;
+        this.strikingDummyShortcut = FindAnythingPlugin.Configuration.DoStrikingDummyShortcut;
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
         this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
@@ -203,6 +205,7 @@ public class SettingsWindow : Window
         ImGui.Checkbox("Enable Search History", ref this.historyEnabled);
         ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
         ImGui.Checkbox("Show \"Market Board\" shortcut to teleport to the closest market board city", ref this.marketBoardShortcut);
+        ImGui.Checkbox("Show \"Striking Dummy\" shortcut to teleport to the closest striking dummy location", ref this.strikingDummyShortcut);
 
         if (ImGui.BeginCombo("Emote Motion-Only?", this.emoteMotionMode.ToString()))
         {
@@ -259,6 +262,7 @@ public class SettingsWindow : Window
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
             FindAnythingPlugin.Configuration.DoMarketBoardShortcut = this.marketBoardShortcut;
+            FindAnythingPlugin.Configuration.DoStrikingDummyShortcut = this.strikingDummyShortcut;
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;

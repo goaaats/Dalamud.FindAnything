@@ -1480,7 +1480,7 @@ namespace Dalamud.FindAnything
                                         if (Configuration.DoMarketBoardShortcut && "Closest Market Board".ToLower().Contains(term) && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
                                             marketBoardResults.Add(aetheryte);
 
-                                        if ("Closest Striking Dummy".ToLower().Contains(term) && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
+                                        if (Configuration.DoStrikingDummyShortcut && "Closest Striking Dummy".ToLower().Contains(term) && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
                                             strikingDummyResults.Add(aetheryte);
 
                                         if (cResults.Count > MAX_TO_SEARCH)
