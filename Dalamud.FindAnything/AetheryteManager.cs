@@ -23,6 +23,23 @@ namespace Dalamud.FindAnything {
             133, // Crystarium
             182, // Old Sharlayan
         };
+        private readonly uint[] m_StrikingDummyIds = {
+            3,
+            17,
+            23,
+            52,
+            71,
+            76,
+            98,
+            102,
+            107,
+            137,
+            140,
+            147,
+            166,
+            169,
+            181
+        };
 
         private AetheryteManager()
         {
@@ -43,6 +60,11 @@ namespace Dalamud.FindAnything {
         public bool IsMarketBoardAetheryte(uint id)
         {
             return m_MarketBoardIds.Contains(id);
+        }
+        
+        public bool IsStrikingDummyAetheryte(uint id)
+        {
+            return m_StrikingDummyIds.Contains(id);
         }
 
         public string GetAetheryteName(AetheryteEntry info) {
