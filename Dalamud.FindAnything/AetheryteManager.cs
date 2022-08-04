@@ -24,21 +24,21 @@ namespace Dalamud.FindAnything {
             182, // Old Sharlayan
         };
         private readonly uint[] m_StrikingDummyIds = {
-            3,
-            17,
-            23,
-            52,
-            71,
-            76,
-            98,
-            102,
-            107,
-            137,
-            140,
-            147,
-            166,
-            169,
-            181
+            3, // New Gridania
+            17, // Horizon
+            23, // Camp Dragonhead
+            52, // Summerford Farms
+            71, // Falcon's Nest
+            76, // Tailfeather
+            98, // Castrum Oriens
+            102, // Porta Praetoria
+            107, // Namai
+            137, // Stilltide
+            140, // Mord Souq
+            147, // The Ondo Cups
+            166, // The Archeion
+            169, // Yedlihmad
+            181 // Base Omicron
         };
 
         private AetheryteManager()
