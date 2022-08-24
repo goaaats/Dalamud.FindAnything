@@ -205,7 +205,7 @@ public class GameWindow : Window, IDisposable
 
     private SimulationState state;
 
-    private const string SomethingPlaySoundSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FE C2 ";
+    private const string SomethingPlaySoundSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FE C2";
     private delegate void PlaySoundDelegate(IntPtr path, byte shit);
 
     private PlaySoundDelegate _playSoundFun;

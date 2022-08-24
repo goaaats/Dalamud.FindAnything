@@ -102,12 +102,12 @@ public unsafe class GameStateCache
             this.isMountUnlocked = Marshal.GetDelegateForFunctionPointer<IsMountUnlockedDelegate>(mountUnlockedPtr);
         }
 
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 7A 48 83 F8 06", out var searchCraftingPtr)) {
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 83 F8 06", out var searchCraftingPtr)) {
             PluginLog.Verbose($"searchCraftingPtr: {searchCraftingPtr:X}");
             this.searchForItemByCraftingMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByCraftingMethodDelegate>(searchCraftingPtr);
         }
 
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 38 48 83 F8 07", out var searchGatheringPtr)) {
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 63 48 83 F8 07", out var searchGatheringPtr)) {
             PluginLog.Verbose($"searchGatheringPtr: {searchGatheringPtr:X}");
             this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
         }
