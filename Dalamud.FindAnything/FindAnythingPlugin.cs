@@ -1349,6 +1349,9 @@ namespace Dalamud.FindAnything
 
         private static bool CheckInDuty()
         {
+            // Island Sanctuary
+            if (ClientState.TerritoryType == 1055) return false;
+
             return Condition[ConditionFlag.BoundByDuty] || Condition[ConditionFlag.BoundByDuty56] ||
                    Condition[ConditionFlag.BoundByDuty95];
         }
