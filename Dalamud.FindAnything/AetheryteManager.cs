@@ -23,6 +23,23 @@ namespace Dalamud.FindAnything {
             133, // Crystarium
             182, // Old Sharlayan
         };
+        private readonly uint[] m_StrikingDummyIds = {
+            3, // New Gridania
+            17, // Horizon
+            23, // Camp Dragonhead
+            52, // Summerford Farms
+            71, // Falcon's Nest
+            76, // Tailfeather
+            98, // Castrum Oriens
+            102, // Porta Praetoria
+            107, // Namai
+            137, // Stilltide
+            140, // Mord Souq
+            147, // The Ondo Cups
+            166, // The Archeion
+            169, // Yedlihmad
+            181 // Base Omicron
+        };
 
         private AetheryteManager()
         {
@@ -43,6 +60,11 @@ namespace Dalamud.FindAnything {
         public bool IsMarketBoardAetheryte(uint id)
         {
             return m_MarketBoardIds.Contains(id);
+        }
+        
+        public bool IsStrikingDummyAetheryte(uint id)
+        {
+            return m_StrikingDummyIds.Contains(id);
         }
 
         public string GetAetheryteName(AetheryteEntry info) {

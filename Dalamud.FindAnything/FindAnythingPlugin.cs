@@ -1466,6 +1466,7 @@ namespace Dalamud.FindAnything
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                                 {
                                     var marketBoardResults = new List<AetheryteEntry>();
+                                    var strikingDummyResults = new List<AetheryteEntry>();
                                     foreach (var aetheryte in Aetherytes)
                                     {
                                         var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
@@ -1482,6 +1483,9 @@ namespace Dalamud.FindAnything
                                         if (Configuration.DoMarketBoardShortcut && "Closest Market Board".ToLower().Contains(term) && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
                                             marketBoardResults.Add(aetheryte);
 
+                                        if (Configuration.DoStrikingDummyShortcut && "Closest Striking Dummy".ToLower().Contains(term) && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
+                                            strikingDummyResults.Add(aetheryte);
+
                                         if (cResults.Count > MAX_TO_SEARCH)
                                             break;
                                     }
@@ -1493,6 +1497,18 @@ namespace Dalamud.FindAnything
                                         {
                                             Name = "Closest Market Board",
                                             Data = closestMarketBoard,
+                                            Icon = TexCache.AetheryteIcon,
+                                            TerriName = terriName.Display
+                                        });
+                                    }
+                                    if (strikingDummyResults.Count > 0)
+                                    {
+                                        var closestStrikingDummy = strikingDummyResults.OrderBy(a1 => a1.GilCost).First();
+                                        var terriName = SearchDatabase.GetString<TerritoryType>(closestStrikingDummy.TerritoryId);
+                                        cResults.Add(new AetheryteSearchResult
+                                        {
+                                            Name = "Closest Striking Dummy",
+                                            Data = closestStrikingDummy,
                                             Icon = TexCache.AetheryteIcon,
                                             TerriName = terriName.Display
                                         });
