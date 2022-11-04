@@ -2426,7 +2426,7 @@ namespace Dalamud.FindAnything
 
                     if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || clickedIndex != -1)
                     {
-                        var index = clickedIndex == -1 ? selectedIndex : clickedIndex;;
+                        var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
                         
                         if (index < results.Length)
                         {
