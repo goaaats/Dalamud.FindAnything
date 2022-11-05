@@ -2424,7 +2424,7 @@ namespace Dalamud.FindAnything
                         clickedIndex = Array.IndexOf(numKeysPressed, true);
                     }
 
-                    if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || clickedIndex != -1)
+                    if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || clickedIndex != -1)
                     {
                         var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
                         

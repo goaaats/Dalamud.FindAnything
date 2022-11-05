@@ -29,9 +29,9 @@
       },
       "XivCommon": {
         "type": "Direct",
-        "requested": "[4.0.0-alpha.2, )",
-        "resolved": "4.0.0-alpha.2",
-        "contentHash": "ugdPMg3LKEWDY3DvdcfctjDW8QTaRnXfKJ9gFlY8036LVQ6guOG3grG65EIkIKIhbyg3b2E2ZWOhgeLYEcS00w=="
+        "requested": "[6.0.2, )",
+        "resolved": "6.0.2",
+        "contentHash": "C/GnQ61iO0yEpf8LPixU3tCThar1MWUiBkO8gdZHNtVskg8AvFeuIxk7Zmkf2yeAJ0drR/KOTdSS7GpbsgmoaQ=="
       },
       "Antlr3.Runtime": {
         "type": "Transitive",
