@@ -333,7 +333,7 @@ namespace Dalamud.FindAnything
         private class SearchWikiSearchResult : ISearchResult, IEquatable<SearchWikiSearchResult>
         {
             public string CatName => string.Empty;
-            public string Name => $"Search for \"{Query}\" in wikis...";
+            public string Name => $"Search for \"{Query.Trim()}\" in wikis...";
             public TextureWrap? Icon => TexCache.WikiIcon;
 
             public string Query { get; set; }
@@ -342,14 +342,14 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                Util.OpenLink($"https://ffxiv.gamerescape.com/w/index.php?search={HttpUtility.UrlEncode(Query)}&title=Special%3ASearch&fulltext=1&useskin=Vector");
+                Util.OpenLink($"https://ffxiv.gamerescape.com/w/index.php?search={HttpUtility.UrlEncode(Query.Trim())}&title=Special%3ASearch&fulltext=1&useskin=Vector");
             }
 
             public bool Equals(SearchWikiSearchResult? other)
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return this.Query == other.Query;
+                return this.Query.Trim() == other.Query.Trim();
             }
 
             public override bool Equals(object? obj)
@@ -1378,7 +1378,7 @@ namespace Dalamud.FindAnything
             var sw = Stopwatch.StartNew();
 #endif
 
-            var term = toSearch.ToLower().Replace("'", string.Empty);
+            var term = toSearch.ToLower().Replace("'", string.Empty).Trim();
             var isInDuty = CheckInDuty();
             var isInEvent = CheckInEvent();
             var isInCombat = CheckInCombat();
