@@ -15,26 +15,6 @@ namespace Dalamud.FindAnything;
 
 public unsafe class GameStateCache
 {
-    // E8 ?? ?? ?? ?? 3C 01 74 1C
-    [return:MarshalAs(UnmanagedType.U1)]
-    private delegate byte IsDutyUnlockedDelegate(uint contentId);
-
-    private readonly IsDutyUnlockedDelegate? isDutyUnlocked;
-
-    // E8 ?? ?? ?? ?? 84 C0 74 A4
-    private delegate byte IsEmoteUnlockedDelegate(UIState* uiState, uint emoteId, byte unk);
-
-    private readonly IsEmoteUnlockedDelegate? isEmoteUnlocked;
-
-    [return:MarshalAs(UnmanagedType.U1)]
-    private delegate byte IsMountUnlockedDelegate(IntPtr mountBitmask, uint mountId);
-    private readonly IsMountUnlockedDelegate? isMountUnlocked;
-    private IntPtr mountBitmask;
-    private byte* minionBitmask = null;
-
-    private delegate void SearchForItemByCraftingMethodDelegate(AgentInterface* agent, ushort itemId);
-    private readonly SearchForItemByCraftingMethodDelegate? searchForItemByCraftingMethod;
-
     private delegate void SearchForItemByGatheringMethodDelegate(AgentInterface* agent, ushort itemId);
     private readonly SearchForItemByGatheringMethodDelegate searchForItemByGatheringMethod;
 
@@ -50,32 +30,10 @@ public unsafe class GameStateCache
     public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; }
     public IReadOnlyList<Gearset> Gearsets { get; private set; }
+    
+    internal bool IsMinionUnlocked(uint minionId) => UIState.Instance()->IsCompanionUnlocked(minionId);
 
-    internal bool IsDutyUnlocked(uint contentId) {
-        var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.LookingForGroup);
-        return this.isDutyUnlocked(contentId) > 0;
-    }
-
-    internal bool IsMountUnlocked(uint mountId) {
-        if (this.mountBitmask == IntPtr.Zero) {
-            return false;
-        }
-
-        return this.isMountUnlocked(this.mountBitmask, mountId) > 0;
-    }
-
-    internal bool IsMinionUnlocked(uint minionId) {
-        if (this.minionBitmask == null) {
-            return false;
-        }
-
-        return ((1 << ((int) minionId & 7)) & this.minionBitmask[minionId >> 3]) > 0;
-    }
-
-    internal void SearchForItemByCraftingMethod(ushort itemId) {
-        var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.RecipeNote);
-        this.searchForItemByCraftingMethod(agent, itemId);
-    }
+    internal void SearchForItemByCraftingMethod(ushort itemId) => AgentRecipeNote.Instance()->OpenRecipeByItemId(itemId);
 
     internal void SearchForItemByGatheringMethod(ushort itemId) {
         var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.GatheringNote);
@@ -84,70 +42,30 @@ public unsafe class GameStateCache
 
     private GameStateCache()
     {
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 3C 01 74 1C", out var dutyUnlockedPtr)) {
-            PluginLog.Verbose($"dutyUnlockedPtr: {dutyUnlockedPtr:X}");
-            this.isDutyUnlocked = Marshal.GetDelegateForFunctionPointer<IsDutyUnlockedDelegate>(dutyUnlockedPtr);
-        }
-
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 A4", out var emoteUnlockedPtr)) {
-            PluginLog.Verbose($"emoteUnlockedPtr: {emoteUnlockedPtr:X}");
-            this.isEmoteUnlocked = Marshal.GetDelegateForFunctionPointer<IsEmoteUnlockedDelegate>(emoteUnlockedPtr);
-        }
-
-        FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB E8", out this.mountBitmask);
-        PluginLog.Verbose($"mountBitmask: {this.mountBitmask:X}");
-
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? 84 C0 74 5C 8B CB", out var mountUnlockedPtr)) {
-            PluginLog.Verbose($"mountUnlockedPtr: {mountUnlockedPtr:X}");
-            this.isMountUnlocked = Marshal.GetDelegateForFunctionPointer<IsMountUnlockedDelegate>(mountUnlockedPtr);
-        }
-
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 83 F8 06", out var searchCraftingPtr)) {
-            PluginLog.Verbose($"searchCraftingPtr: {searchCraftingPtr:X}");
-            this.searchForItemByCraftingMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByCraftingMethodDelegate>(searchCraftingPtr);
-        }
-
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 63 48 83 F8 07", out var searchGatheringPtr)) {
+        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 63 48 83 F8 ??", out var searchGatheringPtr)) {
             PluginLog.Verbose($"searchGatheringPtr: {searchGatheringPtr:X}");
             this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
-        }
-
-        if (FindAnythingPlugin.TargetScanner.TryGetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? 0F B6 04 08 84 D0 75 10 B8 ?? ?? ?? ?? 48 8B 5C 24", out var minionBitmaskPtr)) {
-            PluginLog.Verbose($"minionBitmaskPtr: {minionBitmaskPtr:X}");
-            this.minionBitmask = (byte*) minionBitmaskPtr;
         }
     }
 
     public void Refresh()
     {
-        if (this.isDutyUnlocked != null)
-        {
-            UnlockedDutyKeys = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()!.Where(x => IsDutyUnlocked(x.Content)).Select(x => x.RowId).ToList();
-        }
+        UnlockedDutyKeys = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()!.Where(x => UIState.IsInstanceContentUnlocked(x.Content)).Select(x => x.RowId).ToList();
 
-        if (this.isEmoteUnlocked != null)
+        var emotes = new List<uint>();
+        foreach (var emote in FindAnythingPlugin.Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0))
         {
-            var emotes = new List<uint>();
-            foreach (var emote in FindAnythingPlugin.Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0))
+            if (emote.UnlockLink == 0 || UIState.Instance()->IsUnlockLinkUnlocked(emote.UnlockLink))
             {
-                if (emote.UnlockLink == 0 || this.isEmoteUnlocked(UIState.Instance(), emote.UnlockLink, 1) > 0)
-                {
-                    emotes.Add(emote.RowId);
-                }
+                emotes.Add(emote.RowId);
             }
-            UnlockedEmoteKeys = emotes;
         }
+        UnlockedEmoteKeys = emotes;
 
-        if (this.isMountUnlocked != null)
-        {
-            UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
-        }
+        UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => PlayerState.Instance()->IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
 
-        if (this.minionBitmask != null)
-        {
-            UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
-        }
-
+        UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        
         var gsModule = RaptureGearsetModule.Instance();
         var cj = FindAnythingPlugin.Data.GetExcelSheet<ClassJob>()!;
         var gearsets = new List<Gearset>();
