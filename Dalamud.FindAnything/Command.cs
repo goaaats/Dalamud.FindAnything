@@ -7,8 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
 namespace Dalamud.FindAnything;
 
-// Taken from XivCommon to prevent dependency
-// User input is ***never*** sent by DailyDuty, only pre-formatted commands
 [StructLayout(LayoutKind.Explicit)]
 [SuppressMessage("ReSharper", "PrivateFieldCanBeConvertedToLocalVariable")]
 internal readonly struct ChatPayload : IDisposable 
