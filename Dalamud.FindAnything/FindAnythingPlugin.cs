@@ -578,7 +578,7 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                Command.Instance.SendChatUnsafe("/gaction \"{Name}\"");
+                Command.Instance.SendChatUnsafe($"/gaction \"{Name}\"");
             }
 
             public bool Equals(GeneralActionSearchResult? other)
