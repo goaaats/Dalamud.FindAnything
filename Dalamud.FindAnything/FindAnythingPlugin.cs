@@ -26,13 +26,14 @@ using Dalamud.Logging;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
 using NCalc;
-using XivCommon;
 
 namespace Dalamud.FindAnything
 {
@@ -79,8 +80,6 @@ namespace Dalamud.FindAnything
         private WindowSystem windowSystem;
         private static SettingsWindow settingsWindow;
         private static GameWindow gameWindow;
-
-        private static XivCommonBase xivCommon;
 
         private enum SearchMode
         {
@@ -579,8 +578,7 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                var message = $"/gaction \"{Name}\"";
-                xivCommon.Functions.Chat.SendMessage(message);
+                Command.Instance.SendChatUnsafe("/gaction \"{Name}\"");
             }
 
             public bool Equals(GeneralActionSearchResult? other)
@@ -671,7 +669,7 @@ namespace Dalamud.FindAnything
                             return;
                         }
 
-                        xivCommon.Functions.Chat.SendMessage(Entry.Line);
+                        Command.Instance.SendChatUnsafe(Entry.Line);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -708,9 +706,9 @@ namespace Dalamud.FindAnything
 
             public uint DataKey { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                xivCommon.Functions.DutyFinder.OpenDuty(DataKey);
+                AgentContentsFinder.Instance()->OpenRegularDuty(DataKey);
             }
 
             public bool Equals(DutySearchResult? other)
@@ -743,9 +741,9 @@ namespace Dalamud.FindAnything
 
             public byte DataKey { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                xivCommon.Functions.DutyFinder.OpenRoulette(DataKey);
+                AgentContentsFinder.Instance()->OpenRouletteDuty(DataKey);
             }
 
             public bool Equals(ContentRouletteSearchResult? other)
@@ -807,7 +805,7 @@ namespace Dalamud.FindAnything
                 if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
                     cmd += " motion";
 
-                xivCommon.Functions.Chat.SendMessage(cmd);
+                Command.Instance.SendChatUnsafe(cmd);
             }
 
             public bool Equals(EmoteSearchResult? other)
@@ -916,8 +914,8 @@ namespace Dalamud.FindAnything
             {
                 if (!Command.StartsWith("/"))
                     throw new Exception("Command in ChatCommandSearchResult didn't start with slash!");
-
-                xivCommon.Functions.Chat.SendMessage(Command);
+                
+                FindAnything.Command.Instance.SendChatUnsafe(Command);
             }
 
             public bool Equals(ChatCommandSearchResult? other)
@@ -1023,7 +1021,7 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                xivCommon.Functions.Chat.SendMessage("/gs change " + Gearset.Slot);
+                Command.Instance.SendChatUnsafe("/gs change " + Gearset.Slot);
             }
 
             public bool Equals(GearsetSearchResult? other)
@@ -1058,7 +1056,7 @@ namespace Dalamud.FindAnything
 
             public void Selected()
             {
-                xivCommon.Functions.Chat.SendMessage($"/mount \"{Mount.Singular}\"");
+                Command.Instance.SendChatUnsafe($"/mount \"{Mount.Singular}\"");
             }
 
             public bool Equals(MountResult? other)
@@ -1091,8 +1089,9 @@ namespace Dalamud.FindAnything
 
             public Companion Minion { get; set; }
 
-            public void Selected() {
-                xivCommon.Functions.Chat.SendMessage($"/minion \"{Minion.Singular}\"");
+            public void Selected()
+            {
+                Command.Instance.SendChatUnsafe($"/minion \"{Minion.Singular}\"");
             }
 
             public bool Equals(MinionResult? other)
@@ -1246,7 +1245,6 @@ namespace Dalamud.FindAnything
             windowSystem.AddWindow(gameWindow);
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
-            xivCommon = new XivCommonBase();
             DalamudReflector = DalamudReflector.Load();
             GameStateCache = GameStateCache.Load();
             Input = new Input();
@@ -1546,27 +1544,30 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.GeneralAction:
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.GeneralAction) && !isInEvent)
                                 {
-                                    var hasMelding = xivCommon.Functions.Journal.IsQuestCompleted(66175); // Waking the Spirit
-                                    var hasAdvancedMelding = xivCommon.Functions.Journal.IsQuestCompleted(66176); // Melding Materia Muchly
-
-                                    foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
+                                    unsafe
                                     {
-                                        // Skip invalid entries, jump, etc
-                                        if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
-                                            continue;
+                                        var hasMelding = UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(66175); // Waking the Spirit
+                                        var hasAdvancedMelding = UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(66176); // Melding Materia Muchly
 
-                                        // Skip Materia Melding/Advanced Material Melding, based on what is unlocked
-                                        if ((!hasMelding || hasAdvancedMelding) && generalAction.Key is 12)
-                                            continue;
-                                        if (!hasAdvancedMelding && generalAction.Key is 13)
-                                            continue;
+                                        foreach (var generalAction in SearchDatabase.GetAll<GeneralAction>())
+                                        {
+                                            // Skip invalid entries, jump, etc
+                                            if (generalAction.Key is 2 or 3 or 1 or 0 or 11 or 26 or 27 or 16 or 17)
+                                                continue;
 
-                                        if (generalAction.Value.Searchable.Contains(term))
-                                            cResults.Add(new GeneralActionSearchResult
-                                            {
-                                                Name = generalAction.Value.Display,
-                                                Icon = TexCache.GeneralActionIcons[generalAction.Key]
-                                            });
+                                            // Skip Materia Melding/Advanced Material Melding, based on what is unlocked
+                                            if ((!hasMelding || hasAdvancedMelding) && generalAction.Key is 12)
+                                                continue;
+                                            if (!hasAdvancedMelding && generalAction.Key is 13)
+                                                continue;
+
+                                            if (generalAction.Value.Searchable.Contains(term))
+                                                cResults.Add(new GeneralActionSearchResult
+                                                {
+                                                    Name = generalAction.Value.Display,
+                                                    Icon = TexCache.GeneralActionIcons[generalAction.Key]
+                                                });
+                                        }
                                     }
                                 }
                                 break;
@@ -2065,7 +2066,6 @@ namespace Dalamud.FindAnything
             Framework.Update -= FrameworkOnUpdate;
             CommandManager.RemoveHandler(commandName);
             CommandManager.RemoveHandler("/bountifuldn");
-            xivCommon.Dispose();
 
             TexCache.Dispose();
             Ipc.Dispose();
