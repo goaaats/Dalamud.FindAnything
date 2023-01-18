@@ -2225,9 +2225,11 @@ namespace Dalamud.FindAnything
 
             var resetScroll = false;
 
-            if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchTerm, 1000,
+            var searchInput = searchTerm;
+            if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchInput, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
             {
+                searchTerm = searchInput.Trim();
                 results = UpdateSearchResults(searchTerm);
                 selectedIndex = 0;
                 framesSinceLastKbChange = 0;
