@@ -205,11 +205,6 @@ public class GameWindow : Window, IDisposable
 
     private SimulationState state;
 
-    private const string SomethingPlaySoundSig = "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? FE C2";
-    private delegate void PlaySoundDelegate(IntPtr path, byte shit);
-
-    private PlaySoundDelegate _playSoundFun;
-
     public GameWindow() : base("DN Farm###dnwindow")
     {
         var assetPath = FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName;
@@ -233,32 +228,10 @@ public class GameWindow : Window, IDisposable
             MinimumSize = new Vector2(200, 200),
             MaximumSize = new Vector2(1000, 800),
         };
-
-        try
-        {
-            var addr = FindAnythingPlugin.TargetScanner.ScanText(SomethingPlaySoundSig);
-            _playSoundFun = Marshal.GetDelegateForFunctionPointer<PlaySoundDelegate>(addr);
-        }
-        catch(Exception e)
-        {
-            PluginLog.Error(e, "Failed to find play sound function");
-        }
-
+        
         Load();
     }
-
-    public void PlayMyTurn()
-    {
-        if (_playSoundFun == null)
-            return;
-
-        var textBytes = Encoding.ASCII.GetBytes("sound/voice/Vo_Line/8202048_en.scd");
-        var ptr = Marshal.AllocHGlobal(textBytes.Length + 1);
-        Marshal.Copy(textBytes, 0, ptr, textBytes.Length);
-        Marshal.WriteByte(ptr + textBytes.Length, 0);
-        _playSoundFun(ptr, 1);
-    }
-
+    
     public void Load()
     {
         if (FindAnythingPlugin.Configuration.SimulationState == null)
@@ -526,9 +499,6 @@ public class GameWindow : Window, IDisposable
                                         clicks++;
                                         BuyDog(kind);
                                     }
-
-                                    if (kind == NoseKind.Thancred)
-                                        PlayMyTurn();
                                 }
                             }
                             else
@@ -567,9 +537,6 @@ public class GameWindow : Window, IDisposable
                                 if (ImGui.Button(btnText))
                                 {
                                     BuyDog(kind);
-
-                                    if (kind == NoseKind.Thancred)
-                                        PlayMyTurn();
                                 }
                             }
                             else
