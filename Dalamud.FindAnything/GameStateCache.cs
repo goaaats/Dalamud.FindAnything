@@ -1,23 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Dalamud.Logging;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
-using Framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework;
 
 namespace Dalamud.FindAnything;
 
 public unsafe class GameStateCache
 {
-    private delegate void SearchForItemByGatheringMethodDelegate(AgentInterface* agent, ushort itemId);
-    private readonly SearchForItemByGatheringMethodDelegate searchForItemByGatheringMethod;
-
     public struct Gearset
     {
         public int Slot { get; set; }
@@ -35,17 +29,12 @@ public unsafe class GameStateCache
 
     internal void SearchForItemByCraftingMethod(ushort itemId) => AgentRecipeNote.Instance()->OpenRecipeByItemId(itemId);
 
-    internal void SearchForItemByGatheringMethod(ushort itemId) {
-        var agent = Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.GatheringNote);
-        this.searchForItemByGatheringMethod(agent, itemId);
-    }
+    internal void SearchForItemByGatheringMethod(ushort itemId) => AgentGatheringNote.Instance()->OpenGatherableByItemId(itemId);
 
     private GameStateCache()
     {
-        if (FindAnythingPlugin.TargetScanner.TryScanText("E8 ?? ?? ?? ?? EB 63 48 83 F8 ??", out var searchGatheringPtr)) {
-            PluginLog.Verbose($"searchGatheringPtr: {searchGatheringPtr:X}");
-            this.searchForItemByGatheringMethod = Marshal.GetDelegateForFunctionPointer<SearchForItemByGatheringMethodDelegate>(searchGatheringPtr);
-        }
+        // Nothing to do here =D
+        // MidoriKami removed all the sigs, sooooo yeah, happy fun times.
     }
 
     public void Refresh()
