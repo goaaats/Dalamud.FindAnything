@@ -44,7 +44,7 @@ public unsafe class GameStateCache
         var emotes = new List<uint>();
         foreach (var emote in FindAnythingPlugin.Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0))
         {
-            if (emote.UnlockLink == 0 || UIState.Instance()->IsUnlockLinkUnlocked(emote.UnlockLink))
+            if (emote.UnlockLink == 0 || UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(emote.UnlockLink))
             {
                 emotes.Add(emote.RowId);
             }
@@ -56,7 +56,7 @@ public unsafe class GameStateCache
         UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         
         var gsModule = RaptureGearsetModule.Instance();
-        var cj = FindAnythingPlugin.Data.GetExcelSheet<ClassJob>()!;
+        
         var gearsets = new List<Gearset>();
         for (var i = 0; i < 100; i++)
         {
