@@ -184,6 +184,14 @@ namespace Dalamud.FindAnything
             SearchSetting.GatheringItems,
         };
 
+        public MatchMode MatchMode { get; set; } = MatchMode.Simple;
+        
+        public string MatchSigilSimple { get; set; } = "'";
+        
+        public string MatchSigilFuzzy { get; set; } = "`";
+        
+        public string MatchSigilFuzzyParts { get; set; } = "~"; 
+
         // the below exist just to make saving less cumbersome
 
         [NonSerialized]

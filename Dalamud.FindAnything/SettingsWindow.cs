@@ -40,6 +40,10 @@ public class SettingsWindow : Window
     private bool notInCombat;
     private bool tcForceBrowser;
     private bool historyEnabled;
+    private MatchMode matchMode;
+    private string matchSigilSimple;
+    private string matchSigilFuzzy;
+    private string matchSigilFuzzyParts;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
     {
@@ -75,6 +79,10 @@ public class SettingsWindow : Window
         this.notInCombat = FindAnythingPlugin.Configuration.NotInCombat;
         this.tcForceBrowser = FindAnythingPlugin.Configuration.TeamCraftForceBrowser;
         this.historyEnabled = FindAnythingPlugin.Configuration.HistoryEnabled;
+        this.matchMode = FindAnythingPlugin.Configuration.MatchMode;
+        this.matchSigilSimple = FindAnythingPlugin.Configuration.MatchSigilSimple;
+        this.matchSigilFuzzy = FindAnythingPlugin.Configuration.MatchSigilFuzzy;
+        this.matchSigilFuzzyParts = FindAnythingPlugin.Configuration.MatchSigilFuzzyParts;
         base.OnOpen();
     }
 
@@ -177,6 +185,36 @@ public class SettingsWindow : Window
         ImGuiHelpers.ScaledDummy(5);
 
         VirtualKeySelect("Quick Select Key", ref quickSelectKey);
+        
+        ImGuiHelpers.ScaledDummy(15);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(15);
+        
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Search Mode");
+        ImGui.TextWrapped("Use this menu to select the default search mode.\n" +
+                          "- \"Simple\" looks for the exact text entered.\n" +
+                          "- \"Fuzzy\" finds close matches to your text even if some characters are missing (e.g. \"dufi\" can locate the Duty Finder).\n" +
+                          "- \"FuzzyParts\" is like Fuzzy but each word in the input is searched for separately, so that input word order does not matter.");
+        
+        if (ImGui.BeginCombo("Search mode", this.matchMode.ToString()))
+        {
+            foreach (var key in Enum.GetValues<MatchMode>())
+            {
+                if (ImGui.Selectable(key.ToString(), key == this.matchMode))
+                {
+                    this.matchMode = key;
+                }
+            }
+
+            ImGui.EndCombo();
+        }
+        
+        ImGuiHelpers.ScaledDummy(5);
+        ImGui.PushItemWidth(40);
+        ImGui.InputText("Simple search mode prefix", ref this.matchSigilSimple, 1);
+        ImGui.InputText("Fuzzy search mode prefix", ref this.matchSigilFuzzy, 1);
+        ImGui.InputText("FuzzyParts search mode prefix", ref this.matchSigilFuzzyParts, 1);
+        ImGui.PopItemWidth();
 
         ImGuiHelpers.ScaledDummy(15);
         ImGui.Separator();
@@ -273,6 +311,11 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.NotInCombat = this.notInCombat;
             FindAnythingPlugin.Configuration.TeamCraftForceBrowser = this.tcForceBrowser;
             FindAnythingPlugin.Configuration.HistoryEnabled = this.historyEnabled;
+            
+            FindAnythingPlugin.Configuration.MatchMode = this.matchMode;
+            FindAnythingPlugin.Configuration.MatchSigilSimple = this.matchSigilSimple;
+            FindAnythingPlugin.Configuration.MatchSigilFuzzy = this.matchSigilFuzzy;
+            FindAnythingPlugin.Configuration.MatchSigilFuzzyParts = this.matchSigilFuzzyParts;
 
             FindAnythingPlugin.Configuration.Save();
 
