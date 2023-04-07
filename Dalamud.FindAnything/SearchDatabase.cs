@@ -16,9 +16,12 @@ namespace Dalamud.FindAnything
         }
 
         private IReadOnlyDictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> SearchData { get; init; }
+        private bool NormalizeKana { get; }
 
-        private SearchDatabase()
+        private SearchDatabase(ClientLanguage lang)
         {
+            NormalizeKana = lang == ClientLanguage.Japanese;
+            
             var data = new Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>>();
             InitData<ContentFinderCondition>(ref data, (r) => r.Name);
             InitData<ContentRoulette>(ref data, (r) => r.Name);
@@ -58,6 +61,7 @@ namespace Dalamud.FindAnything
 
         private void InitData<T>(ref Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> searchDb, Func<T, SeString?> rowToFind) where T : ExcelRow
         {
+            var normalizeKana = NormalizeKana;
             var data = new Dictionary<uint, SearchEntry>();
             foreach (var excelRow in FindAnythingPlugin.Data.GetExcelSheet<T>()!)
             {
@@ -68,7 +72,7 @@ namespace Dalamud.FindAnything
                     data.Add(excelRow.RowId, new SearchEntry
                     {
                         Display = textVal,
-                        Searchable = GetSearchableText(textVal)
+                        Searchable = GetSearchableText(textVal, normalizeKana)
                     });
                 }
 
@@ -77,12 +81,12 @@ namespace Dalamud.FindAnything
             searchDb.Add(typeof(T), data);
         }
 
-        public static string GetSearchableText(string input) => input.ToLowerInvariant().Replace("'", string.Empty);
+        public static string GetSearchableText(string input, bool normalizeKana) => input.Downcase(normalizeKana).Replace("'", string.Empty);
 
         public SearchEntry GetString<T>(uint row) where T : ExcelRow => SearchData[typeof(T)][row];
 
         public IReadOnlyDictionary<uint, SearchEntry> GetAll<T>() where T : ExcelRow => SearchData[typeof(T)];
 
-        public static SearchDatabase Load() => new();
+        public static SearchDatabase Load(ClientLanguage lang) => new(lang);
     }
 }

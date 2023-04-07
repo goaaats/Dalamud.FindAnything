@@ -9,6 +9,7 @@ internal class SearchState
     private string CleanString { get; set; } = string.Empty;
     private string SemanticString { get; set; } = string.Empty;
     private string MatchString { get; set; } = string.Empty;
+    private bool ContainsKana { get; set; } = false;
 
     private readonly Configuration config;
 
@@ -26,6 +27,7 @@ internal class SearchState
         CleanString = string.Empty;
         SemanticString = string.Empty;
         MatchString = string.Empty;
+        ContainsKana = false;
     }
 
     public void SetBaseSearchModeAndTerm(SearchMode searchMode, string term)
@@ -58,6 +60,7 @@ internal class SearchState
             CleanString = string.Empty;
             SemanticString = string.Empty;
             MatchString = string.Empty;
+            ContainsKana = false;
             return;
         }
 
@@ -93,6 +96,17 @@ internal class SearchState
         SemanticString = term;
 
         term = term.ToLower().Replace("'", string.Empty);
+        if (term.ContainsKana())
+        {
+            term = term.Downcase(normalizeKana: true).Replace("'", string.Empty);
+            ContainsKana = true;
+        }
+        else
+        {
+            term = term.ToLowerInvariant().Replace("'", string.Empty);
+            ContainsKana = false;
+        }
+        
         MatchString = term;
 
         MatchMode = matchMode;
@@ -100,7 +114,7 @@ internal class SearchState
 
     public SearchCriteria CreateCriteria()
     {
-        return new SearchCriteria(ActualSearchMode, MatchMode, CleanString, SemanticString, MatchString);
+        return new SearchCriteria(ActualSearchMode, MatchMode, CleanString, SemanticString, MatchString, ContainsKana);
     }
 }
 
@@ -119,15 +133,17 @@ public class SearchCriteria
     public string CleanString { get; }
     public string SemanticString { get; }
     public string MatchString { get; }
+    public bool ContainsKana { get; }
 
     public SearchCriteria(SearchMode searchMode, MatchMode matchMode, string cleanString, string semanticString,
-        string matchString)
+        string matchString, bool containsKana)
     {
         SearchMode = searchMode;
         MatchMode = matchMode;
         CleanString = cleanString;
         SemanticString = semanticString;
         MatchString = matchString;
+        ContainsKana = containsKana;
     }
 
     public bool HasMatchString()

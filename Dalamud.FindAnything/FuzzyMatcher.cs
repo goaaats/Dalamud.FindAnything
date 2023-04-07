@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Dalamud.Logging;
 
 namespace Dalamud.FindAnything;
 
@@ -45,7 +44,7 @@ public readonly ref struct FuzzyMatcher
 
         for (var i = 0; i < span.Length; i++)
         {
-            if (span[i] != ' ')
+            if (span[i] is not ' ' and not '\u3000')
             {
                 if (wordStart < 0)
                 {

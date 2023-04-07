@@ -104,7 +104,7 @@ public class IpcSystem : IDisposable
             Display = searchDisplayName,
             Guid = guid,
             IconId = iconId,
-            Search = searchValue.ToLower()
+            Search = searchValue.Downcase(normalizeKana: true)
         });
         
         PluginLog.Verbose($"[IPC] Registered: {pluginInternalName} - {searchDisplayName} - {guid}");

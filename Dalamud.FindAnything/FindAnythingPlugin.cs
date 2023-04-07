@@ -1251,7 +1251,7 @@ namespace Dalamud.FindAnything
             ShowTeleportChatMessageIpc = PluginInterface.GetIpcSubscriber<bool>("Teleport.ChatMessage");
 
             TexCache = TextureCache.Load(null, Data);
-            SearchDatabase = SearchDatabase.Load();
+            SearchDatabase = SearchDatabase.Load(ClientState.ClientLanguage);
             AetheryteManager = AetheryteManager.Load();
 
             windowSystem = new WindowSystem("wotsit");
@@ -1396,6 +1396,7 @@ namespace Dalamud.FindAnything
 #endif
 
             var matcher = new FuzzyMatcher(criteria.MatchString, criteria.MatchMode);
+            var normalizeKana = criteria.ContainsKana;
             
             var isInDuty = CheckInDuty();
             var isInEvent = CheckInEvent();
@@ -1496,7 +1497,7 @@ namespace Dalamud.FindAnything
                                         var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
                                         var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
                                         var score = matcher.MatchesAny(
-                                            aetheryteName.ToLower().Replace("'", string.Empty),
+                                            aetheryteName.Downcase(normalizeKana).Replace("'", string.Empty),
                                             terriName.Searchable
                                         );
                                         if (score > 0)
@@ -1509,11 +1510,11 @@ namespace Dalamud.FindAnything
                                                 TerriName = terriName.Display
                                             });
 
-                                        marketScore = matcher.Matches("Closest Market Board".ToLower());
+                                        marketScore = matcher.Matches("Closest Market Board".ToLowerInvariant());
                                         if (Configuration.DoMarketBoardShortcut && marketScore > 0 && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
                                             marketBoardResults.Add(aetheryte);
 
-                                        dummyScore = matcher.Matches("Closest Striking Dummy".ToLower());
+                                        dummyScore = matcher.Matches("Closest Striking Dummy".ToLowerInvariant());
                                         if (Configuration.DoStrikingDummyShortcut && dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
                                             strikingDummyResults.Add(aetheryte);
 
@@ -1648,7 +1649,7 @@ namespace Dalamud.FindAnything
 
                                     foreach (var plugin in DalamudReflector.OtherPlugins)
                                     {
-                                        var score = matcher.Matches(plugin.Name.ToLower());
+                                        var score = matcher.Matches(plugin.Name.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new PluginSettingsSearchResult
@@ -1693,9 +1694,9 @@ namespace Dalamud.FindAnything
                                         var cjRow = cj.GetRow(gearset.ClassJob)!;
 
                                         var score = matcher.MatchesAny(
-                                            gearset.Name.ToLower(),
-                                            cjRow.Name.RawString.ToLower(),
-                                            cjRow.Abbreviation.RawString.ToLower(),
+                                            gearset.Name.Downcase(normalizeKana),
+                                            cjRow.Name.RawString.Downcase(normalizeKana),
+                                            cjRow.Abbreviation.RawString.ToLowerInvariant(),
                                             ClassJobRolesMap[gearset.ClassJob]
                                         );
                                         if (score > 0)
@@ -1789,7 +1790,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(mount.Singular.RawString.ToLower());
+                                        var score = matcher.Matches(mount.Singular.RawString.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MountResult
@@ -1812,7 +1813,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(minion.Singular.RawString.ToLower()); 
+                                        var score = matcher.Matches(minion.Singular.RawString.Downcase(normalizeKana)); 
                                         if (score > 0)
                                         {
                                             cResults.Add(new MinionResult
@@ -1827,7 +1828,7 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.MacroLinks:
                                 foreach (var macroLink in Configuration.MacroLinks)
                                 {
-                                    var score = matcher.Matches(macroLink.SearchName.ToLower());
+                                    var score = matcher.Matches(macroLink.SearchName.Downcase(normalizeKana));
                                     if (score > 0)
                                     {
                                         cResults.Add(new MacroLinkSearchResult
@@ -1841,7 +1842,7 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.Internal:
                                 foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
                                 {
-                                    var score = matcher.Matches(InternalSearchResult.GetNameForKind(kind).ToLower());
+                                    var score = matcher.Matches(InternalSearchResult.GetNameForKind(kind).ToLowerInvariant());
                                     if (score > 0)
                                     {
                                         cResults.Add(new InternalSearchResult
@@ -2064,7 +2065,7 @@ namespace Dalamud.FindAnything
                             if (kind == WikiSiteChoicerResult.SiteChoice.TeamCraft && wikiResult.DataCat == WikiSearchResult.DataCategory.Item)
                                 continue;
 
-                            var score = matcher.Matches(kind.ToString().ToLower());
+                            var score = matcher.Matches(kind.ToString().ToLowerInvariant());
                             if (score > 0)
                             {
                                 cResults.Add(new WikiSiteChoicerResult
