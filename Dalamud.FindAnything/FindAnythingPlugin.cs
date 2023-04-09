@@ -65,7 +65,7 @@ namespace Dalamud.FindAnything
         private static IpcSystem Ipc { get; set; }
 
         private bool finderOpen = false;
-        private static string searchTerm = string.Empty;
+        private static SearchState searchState;
         private static int selectedIndex = 0;
 
         private int framesSinceLastKbChange = 0;
@@ -80,14 +80,6 @@ namespace Dalamud.FindAnything
         private WindowSystem windowSystem;
         private static SettingsWindow settingsWindow;
         private static GameWindow gameWindow;
-
-        private enum SearchMode
-        {
-            Top,
-            Wiki,
-            WikiSiteChoicer,
-            EmoteModeChoicer,
-        }
 
         private static readonly IReadOnlyDictionary<uint, string> ClassJobRolesMap = new Dictionary<uint, string>
         {
@@ -136,14 +128,12 @@ namespace Dalamud.FindAnything
             { 40, "healer" },
         };
 
-        private static SearchMode searchMode = SearchMode.Top;
-        private static bool wasTempSearchMode = false;
         private static ISearchResult? choicerTempResult;
 
         private struct HistoryEntry
         {
             public ISearchResult Result;
-            public string SearchTerm;
+            public SearchCriteria SearchCriteria;
         }
 
         private static List<HistoryEntry> history = new();
@@ -569,10 +559,9 @@ namespace Dalamud.FindAnything
 
         private static void SwitchSearchMode(SearchMode newMode)
         {
-            searchMode = newMode;
-            searchTerm = string.Empty;
+            searchState.SetBaseSearchModeAndTerm(newMode, string.Empty);
             selectedIndex = 0;
-            results = UpdateSearchResults(searchTerm);
+            results = UpdateSearchResults(searchState.CreateCriteria());
             PluginLog.Information($"Now in mode: {newMode}");
         }
 
@@ -1262,7 +1251,7 @@ namespace Dalamud.FindAnything
             ShowTeleportChatMessageIpc = PluginInterface.GetIpcSubscriber<bool>("Teleport.ChatMessage");
 
             TexCache = TextureCache.Load(null, Data);
-            SearchDatabase = SearchDatabase.Load();
+            SearchDatabase = SearchDatabase.Load(ClientState.ClientLanguage);
             AetheryteManager = AetheryteManager.Load();
 
             windowSystem = new WindowSystem("wotsit");
@@ -1276,6 +1265,8 @@ namespace Dalamud.FindAnything
             GameStateCache = GameStateCache.Load();
             Input = new Input();
             Ipc = new IpcSystem(PluginInterface, Data, TexCache);
+
+            searchState = new SearchState(Configuration);
 
             Expression.CacheEnabled = true;
             new Expression("1+1").Evaluate(); // Warm up evaluator, takes like 100ms
@@ -1344,7 +1335,7 @@ namespace Dalamud.FindAnything
 
                             if (wiki)
                             {
-                                searchTerm = "?";
+                                searchState.SetTerm(ModeSigilWiki);
                             }
 
                             if (Configuration.PreventPassthrough)
@@ -1392,9 +1383,10 @@ namespace Dalamud.FindAnything
             return Condition[ConditionFlag.InCombat];
         }
 
-        private static ISearchResult[]? UpdateSearchResults(string toSearch)
+        private static ISearchResult[]? UpdateSearchResults(SearchCriteria criteria)
         {
-            if (toSearch.IsNullOrEmpty() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
+            var searchMode = criteria.SearchMode;
+            if (!criteria.HasMatchString() && searchMode != SearchMode.WikiSiteChoicer && searchMode != SearchMode.EmoteModeChoicer)
             {
                 return null;
             }
@@ -1403,7 +1395,8 @@ namespace Dalamud.FindAnything
             var sw = Stopwatch.StartNew();
 #endif
 
-            var matcher = CreateMatcher(toSearch);
+            var matcher = new FuzzyMatcher(criteria.MatchString, criteria.MatchMode);
+            var normalizeKana = criteria.ContainsKana;
             
             var isInDuty = CheckInDuty();
             var isInEvent = CheckInEvent();
@@ -1411,7 +1404,7 @@ namespace Dalamud.FindAnything
 
             var cResults = new List<ISearchResult>();
 
-            switch (searchMode)
+            switch (criteria.SearchMode)
             {
                 case SearchMode.Top:
                 {
@@ -1504,7 +1497,7 @@ namespace Dalamud.FindAnything
                                         var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
                                         var terriName = SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
                                         var score = matcher.MatchesAny(
-                                            aetheryteName.ToLower().Replace("'", string.Empty),
+                                            aetheryteName.Downcase(normalizeKana).Replace("'", string.Empty),
                                             terriName.Searchable
                                         );
                                         if (score > 0)
@@ -1517,11 +1510,11 @@ namespace Dalamud.FindAnything
                                                 TerriName = terriName.Display
                                             });
 
-                                        marketScore = matcher.Matches("Closest Market Board".ToLower());
+                                        marketScore = matcher.Matches("Closest Market Board".ToLowerInvariant());
                                         if (Configuration.DoMarketBoardShortcut && marketScore > 0 && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
                                             marketBoardResults.Add(aetheryte);
 
-                                        dummyScore = matcher.Matches("Closest Striking Dummy".ToLower());
+                                        dummyScore = matcher.Matches("Closest Striking Dummy".ToLowerInvariant());
                                         if (Configuration.DoStrikingDummyShortcut && dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
                                             strikingDummyResults.Add(aetheryte);
 
@@ -1656,7 +1649,7 @@ namespace Dalamud.FindAnything
 
                                     foreach (var plugin in DalamudReflector.OtherPlugins)
                                     {
-                                        var score = matcher.Matches(plugin.Name.ToLower());
+                                        var score = matcher.Matches(plugin.Name.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new PluginSettingsSearchResult
@@ -1701,9 +1694,9 @@ namespace Dalamud.FindAnything
                                         var cjRow = cj.GetRow(gearset.ClassJob)!;
 
                                         var score = matcher.MatchesAny(
-                                            gearset.Name.ToLower(),
-                                            cjRow.Name.RawString.ToLower(),
-                                            cjRow.Abbreviation.RawString.ToLower(),
+                                            gearset.Name.Downcase(normalizeKana),
+                                            cjRow.Name.RawString.Downcase(normalizeKana),
+                                            cjRow.Abbreviation.RawString.ToLowerInvariant(),
                                             ClassJobRolesMap[gearset.ClassJob]
                                         );
                                         if (score > 0)
@@ -1797,7 +1790,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(mount.Singular.RawString.ToLower());
+                                        var score = matcher.Matches(mount.Singular.RawString.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MountResult
@@ -1820,7 +1813,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(minion.Singular.RawString.ToLower()); 
+                                        var score = matcher.Matches(minion.Singular.RawString.Downcase(normalizeKana)); 
                                         if (score > 0)
                                         {
                                             cResults.Add(new MinionResult
@@ -1835,7 +1828,7 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.MacroLinks:
                                 foreach (var macroLink in Configuration.MacroLinks)
                                 {
-                                    var score = matcher.Matches(macroLink.SearchName.ToLower());
+                                    var score = matcher.Matches(macroLink.SearchName.Downcase(normalizeKana));
                                     if (score > 0)
                                     {
                                         cResults.Add(new MacroLinkSearchResult
@@ -1849,7 +1842,7 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.Internal:
                                 foreach (var kind in Enum.GetValues<InternalSearchResult.InternalSearchResultKind>())
                                 {
-                                    var score = matcher.Matches(InternalSearchResult.GetNameForKind(kind).ToLower());
+                                    var score = matcher.Matches(InternalSearchResult.GetNameForKind(kind).ToLowerInvariant());
                                     if (score > 0)
                                     {
                                         cResults.Add(new InternalSearchResult
@@ -1867,7 +1860,7 @@ namespace Dalamud.FindAnything
 
                     if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Maths))
                     {
-                        var expression = new Expression(toSearch);
+                        var expression = new Expression(criteria.CleanString);
 
                         expression.EvaluateFunction += delegate(string name, FunctionArgs args)
                         {
@@ -1953,7 +1946,7 @@ namespace Dalamud.FindAnything
                             catch (ArgumentException ex)
                             {
                                 PluginLog.Verbose(ex, "Expression evaluate error", Array.Empty<object>());
-                                if (toSearch.Any(x => x is >= '0' and <= '9'))
+                                if (criteria.CleanString.Any(x => x is >= '0' and <= '9'))
                                     cResults.Add(new ExpressionResult
                                     {
                                         Result = null,
@@ -1964,7 +1957,7 @@ namespace Dalamud.FindAnything
                         else
                         {
                             PluginLog.Verbose("Expression parse error: " + expression.Error, Array.Empty<object>());
-                            if (toSearch.Any(x => x is >= '0' and <= '9'))
+                            if (criteria.CleanString.Any(x => x is >= '0' and <= '9'))
                                 cResults.Add(new ExpressionResult
                                 {
                                     Result = null,
@@ -1981,15 +1974,9 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.Wiki:
                 {
-                    var wikiMatcher = matcher;
-                    if (matcher.Term.StartsWith("?"))
-                    {
-                        wikiMatcher = CreateMatcher(matcher.Term[1..]);
-                    }
-
                     var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
                         .FirstOrDefault(x => x.TerritoryType.Row == ClientState.TerritoryType);
-                    var score = wikiMatcher.Matches("here");
+                    var score = matcher.Matches("here");
                     if (score > 0 && terriContent != null)
                     {
                         cResults.Add(new WikiSearchResult
@@ -2006,7 +1993,7 @@ namespace Dalamud.FindAnything
                     cResults.Add(new SearchWikiSearchResult
                     {
                         Score = int.MaxValue,
-                        Query = toSearch.StartsWith("?") ? toSearch[1..] : toSearch,
+                        Query = criteria.SemanticString,
                     });
 
                     foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
@@ -2014,7 +2001,7 @@ namespace Dalamud.FindAnything
                         if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
                             continue;
 
-                        score = wikiMatcher.Matches(cfc.Value.Searchable);
+                        score = matcher.Matches(cfc.Value.Searchable);
                         if (score > 0)
                             cResults.Add(new WikiSearchResult
                             {
@@ -2032,7 +2019,7 @@ namespace Dalamud.FindAnything
 
                     foreach (var quest in SearchDatabase.GetAll<Quest>())
                     {
-                        score = wikiMatcher.Matches(quest.Value.Searchable); 
+                        score = matcher.Matches(quest.Value.Searchable); 
                         if (score > 0)
                             cResults.Add(new WikiSearchResult
                             {
@@ -2050,7 +2037,7 @@ namespace Dalamud.FindAnything
 
                     foreach (var item in SearchDatabase.GetAll<Item>())
                     {
-                        score = wikiMatcher.Matches(item.Value.Searchable);
+                        score = matcher.Matches(item.Value.Searchable);
                         if (score > 0)
                             cResults.Add(new WikiSearchResult
                             {
@@ -2071,14 +2058,14 @@ namespace Dalamud.FindAnything
                 case SearchMode.WikiSiteChoicer:
                 {
                     var wikiResult = choicerTempResult as WikiSearchResult;
-                    if (!matcher.Term.IsNullOrEmpty())
+                    if (criteria.HasMatchString())
                     {
                         foreach (var kind in Enum.GetValues<WikiSiteChoicerResult.SiteChoice>())
                         {
                             if (kind == WikiSiteChoicerResult.SiteChoice.TeamCraft && wikiResult.DataCat == WikiSearchResult.DataCategory.Item)
                                 continue;
 
-                            var score = matcher.Matches(kind.ToString().ToLower());
+                            var score = matcher.Matches(kind.ToString().ToLowerInvariant());
                             if (score > 0)
                             {
                                 cResults.Add(new WikiSiteChoicerResult
@@ -2138,12 +2125,12 @@ namespace Dalamud.FindAnything
                     throw new ArgumentOutOfRangeException();
             }
 
-            if (!isInDuty && toSearch.StartsWith("/"))
+            if (!isInDuty && criteria.CleanString.StartsWith("/"))
             {
                 cResults.Add(new ChatCommandSearchResult
                 {
                     Score = int.MaxValue,
-                    Command = toSearch,
+                    Command = criteria.CleanString,
                 });
             }
 
@@ -2152,7 +2139,7 @@ namespace Dalamud.FindAnything
             PluginLog.Debug($"Took: {sw.ElapsedMilliseconds}ms");
 #endif
 
-            if (matcher.Mode != MatchMode.Simple)
+            if (criteria.MatchMode != MatchMode.Simple)
             {
                 return cResults.OrderByDescending(r => r.Score).ToArray();
             }
@@ -2214,14 +2201,14 @@ namespace Dalamud.FindAnything
 
                 foreach (var historyEntry in history)
                 {
-                    var searched = UpdateSearchResults(historyEntry.SearchTerm);
-                    PluginLog.Verbose(" => {Name}, {Type}, {ResultsNow}, {Term}", historyEntry.Result?.CatName, historyEntry.Result?.GetType()?.FullName, searched?.Length, historyEntry.SearchTerm);
+                    var searched = UpdateSearchResults(historyEntry.SearchCriteria);
+                    PluginLog.Verbose(" => {Name}, {Type}, {ResultsNow}, {Term}", historyEntry.Result?.CatName, historyEntry.Result?.GetType()?.FullName, searched?.Length, historyEntry.SearchCriteria.MatchString);
                     
                     
                     var first = searched?.FirstOrDefault(x => x.Equals(historyEntry.Result));
                     if (first == null)
                     {
-                        PluginLog.Verbose("Couldn't find {Term} anymore, removing from history", historyEntry.SearchTerm);
+                        PluginLog.Verbose("Couldn't find {Term} anymore, removing from history", historyEntry.SearchCriteria.MatchString);
                         continue;
                     }
 
@@ -2235,7 +2222,7 @@ namespace Dalamud.FindAnything
 
             if (Configuration.OnlyWikiMode)
             {
-                searchMode = SearchMode.Wiki;
+                searchState.SetBaseSearchMode(SearchMode.Wiki);
             }
 
             GameStateCache.Refresh();
@@ -2245,17 +2232,16 @@ namespace Dalamud.FindAnything
         private void CloseFinder()
         {
             finderOpen = false;
-            searchTerm = string.Empty;
+            searchState.Reset();
             selectedIndex = 0;
-            searchMode = SearchMode.Top;
             choicerTempResult = null;
             isHeld = false;
-            wasTempSearchMode = false;
-            results = UpdateSearchResults(searchTerm);
+            results = UpdateSearchResults(searchState.CreateCriteria());
         }
 
         private const int MAX_ONE_PAGE = 10;
         private const int MAX_TO_SEARCH = 100;
+        public const string ModeSigilWiki = "?";
 
         private int GetTickCount() => Environment.TickCount & Int32.MaxValue;
 
@@ -2291,31 +2277,7 @@ namespace Dalamud.FindAnything
 
             ImGui.PushItemWidth(size.X - (45 * ImGuiHelpers.GlobalScale));
 
-            if (!searchTerm.IsNullOrEmpty())
-            {
-                switch (searchTerm[0])
-                {
-                    case '?':
-                        if (searchMode == SearchMode.Top)
-                        {
-                            searchMode = SearchMode.Wiki;
-                            wasTempSearchMode = true;
-                            PluginLog.Information("AutoSearchMode: Wiki");
-                        }
-                        break;
-                    default:
-                        if (wasTempSearchMode)
-                        {
-                            searchMode = SearchMode.Top;
-                            wasTempSearchMode = false;
-                            results = UpdateSearchResults(searchTerm);
-                            PluginLog.Information("AutoSearchMode: Top");
-                        }
-                        break;
-                }
-            }
-
-            var searchHint = searchMode switch
+            var searchHint = searchState.ActualSearchMode switch
             {
                 SearchMode.Top => "Type to search...",
                 SearchMode.Wiki => "Search in wikis...",
@@ -2326,12 +2288,12 @@ namespace Dalamud.FindAnything
 
             var resetScroll = false;
 
-            var searchInput = searchTerm;
+            var searchInput = searchState.RawString;
             if (ImGui.InputTextWithHint("###findeverythinginput", searchHint, ref searchInput, 1000,
                     ImGuiInputTextFlags.NoUndoRedo))
             {
-                searchTerm = searchInput.Trim();
-                results = UpdateSearchResults(searchTerm);
+                searchState.SetTerm(searchInput);
+                results = UpdateSearchResults(searchState.CreateCriteria());
                 selectedIndex = 0;
                 framesSinceLastKbChange = 0;
                 resetScroll = true;
@@ -2541,7 +2503,7 @@ namespace Dalamud.FindAnything
                             result.Selected();
 
                             // results can be null here, as the wiki mode choicer nulls it when selected
-                            if (results != null && searchMode == SearchMode.Top)
+                            if (results != null && searchState.ActualSearchMode == SearchMode.Top)
                             {
                                 var alreadyInHistory = false;
                                 for (var i = 0; i < history.Count; i++)
@@ -2565,7 +2527,7 @@ namespace Dalamud.FindAnything
                                     history.Insert(0, new HistoryEntry
                                     {
                                         Result = results[index],
-                                        SearchTerm = searchTerm,
+                                        SearchCriteria = searchState.CreateCriteria()
                                     });
                                 }
 
@@ -2589,17 +2551,6 @@ namespace Dalamud.FindAnything
             {
                 CloseFinder();
             }
-        }
-
-        private static FuzzyMatcher CreateMatcher(string toSearch)
-        {
-            return new FuzzyMatcher(toSearch, new FuzzyMatcher.Config
-            {
-                MatchMode = Configuration.MatchMode,
-                SigilSimple = Configuration.MatchSigilSimple,
-                SigilFuzzy = Configuration.MatchSigilFuzzy,
-                SigilFuzzyParts = Configuration.MatchSigilFuzzyParts
-            });
         }
     }
 }

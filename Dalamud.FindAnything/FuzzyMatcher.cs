@@ -3,68 +3,37 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Dalamud.Logging;
 
 namespace Dalamud.FindAnything;
 
 public readonly ref struct FuzzyMatcher
 {
-    public string Term => searchTerm;
-    public MatchMode Mode => mode;
+    private static readonly (int, int)[] EmptySegArray = Array.Empty<(int, int)>();
 
-    private readonly string searchTerm;
-    private readonly string needleString;
-    private readonly ReadOnlySpan<char> needleSpan;
-    private readonly int needleFinalPosition;
-    private readonly (int start, int end)[] needleSegments;
-    private readonly MatchMode mode;
+    private readonly string needleString = string.Empty;
+    private readonly ReadOnlySpan<char> needleSpan = ReadOnlySpan<char>.Empty;
+    private readonly int needleFinalPosition = -1;
+    private readonly (int start, int end)[] needleSegments = EmptySegArray;
+    private readonly MatchMode mode = MatchMode.Simple;
 
-    public class Config
+    public FuzzyMatcher(string term, MatchMode matchMode)
     {
-        public MatchMode MatchMode { get; init; } = MatchMode.Simple;
-        public string SigilSimple { get; init; } = "'";
-        public string SigilFuzzy { get; init; } = "`";
-        public string SigilFuzzyParts { get; init; } = "~";
-    }
-
-    public FuzzyMatcher(string term, Config config)
-    {
-        term = term.Trim();
-        var defaultMatchMode = config.MatchMode;
-
-        if (!string.IsNullOrWhiteSpace(config.SigilFuzzyParts) && term.StartsWith(config.SigilFuzzyParts))
-        {
-            defaultMatchMode = MatchMode.FuzzyParts;
-            term = term[1..];
-        }
-        else if (!string.IsNullOrWhiteSpace(config.SigilFuzzy) && term.StartsWith(config.SigilFuzzy))
-        {
-            defaultMatchMode = MatchMode.Fuzzy;
-            term = term[1..];
-        }
-        else if (!string.IsNullOrWhiteSpace(config.SigilSimple) && term.StartsWith(config.SigilSimple))
-        {
-            defaultMatchMode = MatchMode.Simple;
-            term = term[1..];
-        }
-
-        searchTerm = term;
-        needleString = searchTerm.ToLower().Replace("'", string.Empty);
+        needleString = term;
         needleSpan = needleString.AsSpan();
         needleFinalPosition = needleSpan.Length - 1;
-        mode = defaultMatchMode;
+        mode = matchMode;
 
-        switch (defaultMatchMode)
+        switch (matchMode)
         {
             case MatchMode.FuzzyParts:
                 needleSegments = FindNeedleSegments(needleSpan);
                 break;
             case MatchMode.Fuzzy:
             case MatchMode.Simple:
-                needleSegments = Array.Empty<(int, int)>();
+                needleSegments = EmptySegArray;
                 break;
             default:
-                throw new ArgumentOutOfRangeException("matchMode", defaultMatchMode, null);
+                throw new ArgumentOutOfRangeException(nameof(matchMode), matchMode, null);
         }
     }
 
@@ -75,7 +44,7 @@ public readonly ref struct FuzzyMatcher
 
         for (var i = 0; i < span.Length; i++)
         {
-            if (span[i] != ' ')
+            if (span[i] is not ' ' and not '\u3000')
             {
                 if (wordStart < 0)
                 {

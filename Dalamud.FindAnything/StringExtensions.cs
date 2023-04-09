@@ -1,0 +1,51 @@
+﻿using System;
+
+namespace Dalamud.FindAnything;
+
+public static class StringExtensions
+{
+    public static string Downcase(this string source, bool normalizeKana = false)
+    {
+        if (normalizeKana)
+        {
+            var span = source.AsSpan();
+            for (var t = 0; t < span.Length; t++)
+            {
+                if (span[t] is >= '\u3041' and <= '\u3096') // hiragana range
+                {
+                    var buffer = new char[span.Length];
+                    for (var i = 0; i < span.Length; i++)
+                    {
+                        var c = span[i];
+                        if (c is >= '\u3041' and <= '\u3096')
+                        {
+                            buffer[i] = (char)(c + 0x60); // convert to katakana
+                        }
+                        else
+                        {
+                            buffer[i] = char.ToLowerInvariant(c);
+                        }
+                    }
+
+                    return new ReadOnlySpan<char>(buffer).ToString();
+                }
+            }
+        }
+
+        return source.ToLowerInvariant();
+    }
+
+    public static bool ContainsKana(this string source)
+    {
+        var span = source.AsSpan();
+        for (var t = 0; t < span.Length; t++)
+        {
+            if (span[t] is >= '\u3041' and <= '\u3096' or >= '\u30a1' and <= '\u30f6')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
