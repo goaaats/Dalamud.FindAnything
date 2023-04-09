@@ -2534,13 +2534,31 @@ namespace Dalamud.FindAnything
                         
                         if (index < results.Length)
                         {
-                            closeFinder = results[index].CloseFinder;
-                            results[index].Selected();
+                            var result = results[index];
+                            closeFinder = result.CloseFinder;
+                            result.Selected();
 
                             // results can be null here, as the wiki mode choicer nulls it when selected
                             if (results != null && searchMode == SearchMode.Top)
                             {
-                                if (!history.Any(x => x.Result == results[index]))
+                                var alreadyInHistory = false;
+                                for (var i = 0; i < history.Count; i++)
+                                {
+                                    var historyEntry = history[i];
+                                    if (result.Equals(historyEntry.Result))
+                                    {
+                                        alreadyInHistory = true;
+                                        if (i > 0)
+                                        {
+                                            // Move entry to top of list
+                                            history.RemoveAt(i);
+                                            history.Insert(0, historyEntry);
+                                        }
+                                        break;
+                                    }
+                                }
+
+                                if (!alreadyInHistory)
                                 {
                                     history.Insert(0, new HistoryEntry
                                     {
