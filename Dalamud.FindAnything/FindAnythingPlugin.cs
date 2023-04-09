@@ -2365,13 +2365,15 @@ namespace Dalamud.FindAnything
                 {
                     var childSize = ImGui.GetWindowSize();
                     
-                    //var isCtrl = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.ComboModifier));
-                    var modifierImGuiKey = ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.ComboModifier);
-                    if (Configuration.ComboModifier == VirtualKey.CONTROL) modifierImGuiKey = ImGuiKey.ModCtrl;
-                    if (Configuration.ComboModifier == VirtualKey.MENU) modifierImGuiKey = ImGuiKey.ModAlt;
-                    if (Configuration.ComboModifier == VirtualKey.SHIFT) modifierImGuiKey = ImGuiKey.ModShift;
+                    var quickSelectModifierKey = Configuration.QuickSelectKey switch
+                    {
+                        VirtualKey.CONTROL => ImGuiKey.ModCtrl,
+                        VirtualKey.MENU => ImGuiKey.ModAlt,
+                        VirtualKey.SHIFT => ImGuiKey.ModShift,
+                        _ => ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.QuickSelectKey)
+                    };
                     
-                    var isCtrl = ImGui.IsKeyDown(modifierImGuiKey);
+                    var isQuickSelect = ImGui.IsKeyDown(quickSelectModifierKey);
                     var isDown = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN));
                     var isUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP));
                     var isPgUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR));
@@ -2523,7 +2525,7 @@ namespace Dalamud.FindAnything
                         }
                     }
 
-                    if (isCtrl && numKeysPressed.Any(x => x))
+                    if (isQuickSelect && numKeysPressed.Any(x => x))
                     {
                         clickedIndex = Array.IndexOf(numKeysPressed, true);
                     }
