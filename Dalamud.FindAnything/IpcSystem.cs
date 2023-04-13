@@ -17,6 +17,8 @@ public class IpcSystem : IDisposable
     private readonly ICallGateProvider<string, string, bool> cgUnregisterOne;
     private readonly ICallGateProvider<string, bool> cgUnregisterAll;
     private readonly ICallGateProvider<string, bool> cgInvoke;
+    private readonly ICallGateProvider<bool> cgIsAvailable;
+    private bool isReady;
 
     public Dictionary<string, List<IpcBinding>> TrackedIpcs;
     
@@ -37,18 +39,27 @@ public class IpcSystem : IDisposable
         this.cgUnregisterOne = pluginInterface.GetIpcProvider<string, string, bool>("FA.UnregisterOne");
         this.cgUnregisterAll = pluginInterface.GetIpcProvider<string, bool>("FA.UnregisterAll");
         this.cgInvoke = pluginInterface.GetIpcProvider<string, bool>("FA.Invoke");
+        this.cgIsAvailable = pluginInterface.GetIpcProvider<bool>("FA.IsAvailable");
         
         this.cgRegister.RegisterFunc(Register);
         this.cgRegisterWithSearch.RegisterFunc(Register);
         this.cgUnregisterOne.RegisterFunc(UnregisterOne);
         this.cgUnregisterAll.RegisterFunc(UnregisterAll);
+        this.cgIsAvailable.RegisterFunc(IsAvailable);
 
         this.TrackedIpcs = new Dictionary<string, List<IpcBinding>>();
 
         PluginLog.Verbose("[IPC] Firing FA.Available.");
         var cgAvailable = pluginInterface.GetIpcProvider<bool>("FA.Available");
         cgAvailable.SendMessage();
+        isReady = true;
     }
+
+    private bool IsAvailable()
+    {
+        return isReady;
+    }
+
 
     public void Invoke(string guid)
     {
@@ -114,10 +125,12 @@ public class IpcSystem : IDisposable
 
     public void Dispose()
     {
+        isReady = false;
         this.cgRegister.UnregisterFunc();
         this.cgRegisterWithSearch.UnregisterFunc();
         this.cgUnregisterOne.UnregisterFunc();
         this.cgUnregisterAll.UnregisterFunc();
+        this.cgIsAvailable.UnregisterFunc();
 
         foreach (var trackedIpc in this.TrackedIpcs)
         {
