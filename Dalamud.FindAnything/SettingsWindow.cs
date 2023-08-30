@@ -89,6 +89,22 @@ public class SettingsWindow : Window
     public override void Draw()
     {
         ImGui.TextColored(ImGuiColors.DalamudGrey, "What to search");
+
+        ImGui.SameLine();
+        ImGui.PushFont(UiBuilder.IconFont);
+        ImGui.TextDisabled(FontAwesomeIcon.InfoCircle.ToIconString());
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) {
+            ImGui.BeginTooltip();
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20f);
+            ImGui.TextUnformatted("When using the default \"Simple\" search mode, results will appear in this order.\n\n" +
+                                  "For fuzzy search modes, results appear in 'best match' to 'worst match' order, and " +
+                                  "the order set here will be used only for tie-breaks (when multiple results match " +
+                                  "equally well).");
+            ImGui.PopTextWrapPos();
+            ImGui.EndTooltip();
+        }
+
         for (var i = 0; i < this.order.Count; i++) {
             var search = this.order[i];
 
@@ -189,13 +205,14 @@ public class SettingsWindow : Window
         ImGuiHelpers.ScaledDummy(15);
         ImGui.Separator();
         ImGuiHelpers.ScaledDummy(15);
-        
+
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Search Mode");
         ImGui.TextWrapped("Use this menu to select the default search mode.\n" +
                           "- \"Simple\" looks for the exact text entered.\n" +
                           "- \"Fuzzy\" finds close matches to your text even if some characters are missing (e.g. \"dufi\" can locate the Duty Finder).\n" +
                           "- \"FuzzyParts\" is like Fuzzy but each word in the input is searched for separately, so that input word order does not matter.");
-        
+        ImGui.TextWrapped("When using fuzzy search modes, results are shown in order from best match to worst match.");
+
         if (ImGui.BeginCombo("Search mode", this.matchMode.ToString()))
         {
             foreach (var key in Enum.GetValues<MatchMode>())
@@ -208,8 +225,22 @@ public class SettingsWindow : Window
 
             ImGui.EndCombo();
         }
-        
+
         ImGuiHelpers.ScaledDummy(5);
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Search Prefixes");
+        ImGui.SameLine();
+        ImGui.PushFont(UiBuilder.IconFont);
+        ImGui.TextDisabled(FontAwesomeIcon.InfoCircle.ToIconString());
+        ImGui.PopFont();
+        if (ImGui.IsItemHovered()) {
+            ImGui.BeginTooltip();
+            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 20f);
+            ImGui.TextUnformatted("Inputting one of the prefixes below as the first character of your search text" +
+                                  " will temporarily change the search mode for that search.");
+            ImGui.PopTextWrapPos();
+            ImGui.EndTooltip();
+        }
+        
         ImGui.PushItemWidth(40);
         ImGui.InputText("Simple search mode prefix", ref this.matchSigilSimple, 1);
         ImGui.InputText("Fuzzy search mode prefix", ref this.matchSigilFuzzy, 1);
