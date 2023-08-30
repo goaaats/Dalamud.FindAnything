@@ -634,6 +634,41 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class PluginInterfaceSearchResult : ISearchResult, IEquatable<PluginInterfaceSearchResult>
+        {
+            public string CatName => "Other Plugins";
+            public string Name { get; set; }
+            public IDalamudTextureWrap? Icon => TexCache.PluginInstallerIcon;
+            public int Score { get; set; }
+            public bool CloseFinder => true;
+            public DalamudReflector.PluginEntry Plugin { get; set; }
+
+            public void Selected()
+            {
+                Plugin.OpenMainUi();
+            }
+
+            public bool Equals(PluginInterfaceSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Plugin.Name.Equals(other.Plugin.Name);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((PluginInterfaceSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Plugin.GetHashCode();
+            }
+        }
+
         private class MacroLinkSearchResult : ISearchResult, IEquatable<MacroLinkSearchResult>
         {
             public string CatName => "Macros";
@@ -1670,12 +1705,23 @@ namespace Dalamud.FindAnything
                                         var score = matcher.Matches(plugin.Name.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
-                                            cResults.Add(new PluginSettingsSearchResult
-                                            {
-                                                Score = score,
-                                                Name = plugin.Name,
-                                                Plugin = plugin,
-                                            });
+                                            if (plugin.HasMainUi) {
+                                                cResults.Add(new PluginInterfaceSearchResult
+                                                {
+                                                    Score = score,
+                                                    Name = plugin.Name + " Interface",
+                                                    Plugin = plugin,
+                                                });
+                                            }
+
+                                            if (plugin.HasConfigUi) {
+                                                cResults.Add(new PluginSettingsSearchResult
+                                                {
+                                                    Score = score,
+                                                    Name = plugin.Name + " Settings",
+                                                    Plugin = plugin,
+                                                });
+                                            }
                                         }
                                     }
 
