@@ -46,11 +46,17 @@ public class SettingsWindow : Window
     private string matchSigilFuzzy;
     private string matchSigilFuzzyParts;
 
-    public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings", ImGuiWindowFlags.NoResize)
+    private const int SaveDiscardOffset = -40;
+
+    public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings")
     {
-        this.SizeCondition = ImGuiCond.Always;
-        this.Size = new Vector2(850, 660) * ImGuiHelpers.GlobalScale;
         this.plugin = plugin;
+
+        this.SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(860, 660),
+            MaximumSize = new Vector2(10000, 10000),
+        };
     }
 
     public override void OnOpen()
@@ -89,200 +95,244 @@ public class SettingsWindow : Window
 
     public override void Draw()
     {
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "What to search");
-        for (var i = 0; i < this.order.Count; i++) {
-            var search = this.order[i];
+        if (ImGui.BeginTabBar("##find-anything-tabs")) {
+            if (ImGui.BeginTabItem("General")) {
+                ImGui.BeginChild("ScrollingOthers", ImGuiHelpers.ScaledVector2(0, SaveDiscardOffset), true,
+                    ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoBackground);
 
-            var name = search switch {
-                Configuration.SearchSetting.Duty => "Duties",
-                Configuration.SearchSetting.Aetheryte => "Aetherytes",
-                Configuration.SearchSetting.MainCommand => "Commands",
-                Configuration.SearchSetting.GeneralAction => "General Actions",
-                Configuration.SearchSetting.Emote => "Emotes",
-                Configuration.SearchSetting.PluginSettings => "other plugins",
-                Configuration.SearchSetting.Gearsets => "Gear Sets",
-                Configuration.SearchSetting.CraftingRecipes => "Crafting Recipes",
-                Configuration.SearchSetting.GatheringItems => "Gathering Items",
-                Configuration.SearchSetting.Mounts => "Mounts",
-                Configuration.SearchSetting.Minions => "Minions",
-                Configuration.SearchSetting.MacroLinks => "Macro Links",
-                Configuration.SearchSetting.Internal => "Wotsit",
-                _ => null,
-            };
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "How to open");
 
-            if (name == null) {
-                continue;
-            }
-
-            var isRequired = search is Configuration.SearchSetting.Internal or Configuration.SearchSetting.MacroLinks;
-
-            ImGui.PushFont(UiBuilder.IconFont);
-
-            if (ImGui.Button($"{FontAwesomeIcon.ArrowUp.ToIconString()}##{search}") && i != 0) {
-                (this.order[i], this.order[i - 1]) = (this.order[i - 1], this.order[i]);
-            }
-
-            ImGui.SameLine();
-
-            if (ImGui.Button($"{FontAwesomeIcon.ArrowDown.ToIconString()}##{search}") && i != this.order.Count - 1) {
-                (this.order[i], this.order[i + 1]) = (this.order[i + 1], this.order[i]);
-            }
-
-            ImGui.PopFont();
-
-            ImGui.SameLine();
-
-            if (isRequired) {
-                ImGui.TextUnformatted($"Search in {name}");
-            } else {
-                ImGui.CheckboxFlags($"Search in {name}", ref this.flags, (uint) search);
-            }
-        }
-
-        ImGui.CheckboxFlags("Mathematical Expressions", ref this.flags, (uint) Configuration.SearchSetting.Maths);
-
-        ImGuiHelpers.ScaledDummy(15);
-        ImGui.Separator();
-        ImGuiHelpers.ScaledDummy(15);
-
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "How to open");
-
-        if (ImGui.RadioButton("Keyboard Combo", openMode == Configuration.OpenMode.Combo))
-        {
-            openMode = Configuration.OpenMode.Combo;
-        }
-        if (ImGui.RadioButton("Key Double Tap", openMode == Configuration.OpenMode.ShiftShift))
-        {
-            openMode = Configuration.OpenMode.ShiftShift;
-        }
-
-        ImGuiHelpers.ScaledDummy(10);
-
-        switch (openMode)
-        {
-            case Configuration.OpenMode.ShiftShift:
-                VirtualKeySelect("Key to double tap", ref shiftShiftKey);
-
-                if (ImGui.InputInt("Delay (ms)", ref shiftShiftDelay))
-                {
-                    shiftShiftDelay = Math.Max(shiftShiftDelay, 0);
+                if (ImGui.RadioButton("Keyboard Combo", openMode == Configuration.OpenMode.Combo)) {
+                    openMode = Configuration.OpenMode.Combo;
                 }
-                break;
-            case Configuration.OpenMode.Combo:
-                VirtualKeySelect("Combo Modifier 1", ref comboModifierKey);
-                VirtualKeySelect("Combo Modifier 2", ref comboModifier2Key);
-                VirtualKeySelect("Combo Key", ref comboKey);
 
-                ImGuiHelpers.ScaledDummy(2);
-                VirtualKeySelect("Wiki Modifier(go directly to wiki mode)", ref wikiComboKey);
-                ImGuiHelpers.ScaledDummy(2);
-
-                ImGui.Checkbox("Prevent passthrough to game", ref preventPassthrough);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        ImGuiHelpers.ScaledDummy(5);
-
-        VirtualKeySelect("Quick Select Key", ref quickSelectKey);
-        
-        ImGuiHelpers.ScaledDummy(15);
-        ImGui.Separator();
-        ImGuiHelpers.ScaledDummy(15);
-        
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "Search Mode");
-        ImGui.TextWrapped("Use this menu to select the default search mode.\n" +
-                          "- \"Simple\" looks for the exact text entered.\n" +
-                          "- \"Fuzzy\" finds close matches to your text even if some characters are missing (e.g. \"dufi\" can locate the Duty Finder).\n" +
-                          "- \"FuzzyParts\" is like Fuzzy but each word in the input is searched for separately, so that input word order does not matter.");
-        
-        if (ImGui.BeginCombo("Search mode", this.matchMode.ToString()))
-        {
-            foreach (var key in Enum.GetValues<MatchMode>())
-            {
-                if (ImGui.Selectable(key.ToString(), key == this.matchMode))
-                {
-                    this.matchMode = key;
+                if (ImGui.RadioButton("Key Double Tap", openMode == Configuration.OpenMode.ShiftShift)) {
+                    openMode = Configuration.OpenMode.ShiftShift;
                 }
+
+                ImGuiHelpers.ScaledDummy(10);
+
+                switch (openMode) {
+                    case Configuration.OpenMode.ShiftShift:
+                        VirtualKeySelect("Key to double tap", ref shiftShiftKey);
+
+                        if (ImGui.InputInt("Delay (ms)", ref shiftShiftDelay)) {
+                            shiftShiftDelay = Math.Max(shiftShiftDelay, 0);
+                        }
+
+                        break;
+                    case Configuration.OpenMode.Combo:
+                        VirtualKeySelect("Combo Modifier 1", ref comboModifierKey);
+                        VirtualKeySelect("Combo Modifier 2", ref comboModifier2Key);
+                        VirtualKeySelect("Combo Key", ref comboKey);
+
+                        ImGuiHelpers.ScaledDummy(2);
+                        VirtualKeySelect("Wiki Modifier(go directly to wiki mode)", ref wikiComboKey);
+                        ImGuiHelpers.ScaledDummy(2);
+
+                        ImGui.Checkbox("Prevent passthrough to game", ref preventPassthrough);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                ImGuiHelpers.ScaledDummy(5);
+
+                VirtualKeySelect("Quick Select Key", ref quickSelectKey);
+
+                ImGuiHelpers.ScaledDummy(15);
+                ImGui.Separator();
+                ImGuiHelpers.ScaledDummy(15);
+
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Search mode");
+                ImGui.TextWrapped("Use this menu to select the default search mode:\n" +
+                                  "  - \"Simple\" looks for the exact text entered.\n" +
+                                  "  - \"Fuzzy\" finds close matches to your text even if some characters are missing (e.g. \"dufi\" can locate the Duty Finder).\n" +
+                                  "  - \"FuzzyParts\" is like Fuzzy but each word in the input is searched for separately, so that input word order does not matter.");
+                ImGui.TextWrapped(
+                    "When using fuzzy search modes, results are shown in order from best match to worst match.");
+
+                if (ImGui.BeginCombo("Search mode", this.matchMode.ToString())) {
+                    foreach (var key in Enum.GetValues<MatchMode>()) {
+                        if (ImGui.Selectable(key.ToString(), key == this.matchMode)) {
+                            this.matchMode = key;
+                        }
+                    }
+
+                    ImGui.EndCombo();
+                }
+
+                ImGuiHelpers.ScaledDummy(5);
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Search prefixes");
+                ImGui.SameLine();
+                ImGuiComponents.HelpMarker(
+                    "Inputting one of the prefixes below as the first character of your search text " +
+                    "will temporarily change the search mode for that search.");
+
+                ImGui.PushItemWidth(40);
+                ImGui.InputText("Simple search mode prefix", ref this.matchSigilSimple, 1);
+                ImGui.InputText("Fuzzy search mode prefix", ref this.matchSigilFuzzy, 1);
+                ImGui.InputText("FuzzyParts search mode prefix", ref this.matchSigilFuzzyParts, 1);
+                ImGui.PopItemWidth();
+
+                ImGuiHelpers.ScaledDummy(15);
+                ImGui.Separator();
+                ImGuiHelpers.ScaledDummy(15);
+
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Math constants");
+                ImGui.TextWrapped(
+                    "Use this menu to tie constants to values, to be used in expressions.\nAdd a constant again to edit it.");
+
+                DrawConstantsSection();
+
+                ImGuiHelpers.ScaledDummy(15);
+                ImGui.Separator();
+                ImGuiHelpers.ScaledDummy(15);
+
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
+
+                ImGui.Checkbox("Enable Search History", ref this.historyEnabled);
+                ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
+                ImGui.Checkbox("Show \"Market Board\" shortcut to teleport to the closest market board city",
+                    ref this.marketBoardShortcut);
+                ImGui.Checkbox("Show \"Striking Dummy\" shortcut to teleport to the closest striking dummy location",
+                    ref this.strikingDummyShortcut);
+
+                if (ImGui.BeginCombo("Emote Motion-Only?", this.emoteMotionMode.ToString())) {
+                    foreach (var key in Enum.GetValues<Configuration.EmoteMotionMode>()) {
+                        if (ImGui.Selectable(key.ToString(), key == this.emoteMotionMode)) {
+                            this.emoteMotionMode = key;
+                        }
+                    }
+
+                    ImGui.EndCombo();
+                }
+
+                ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
+                ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
+                ImGui.Checkbox("Directly go to wiki mode when opening search", ref this.onlyWiki);
+                ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800);
+                if (ImGui.BeginCombo("Scroll Speed", this.speed.ToString())) {
+                    foreach (var key in Enum.GetValues<Configuration.ScrollSpeed>()) {
+                        if (ImGui.Selectable(key.ToString(), key == this.speed)) {
+                            this.speed = key;
+                        }
+                    }
+
+                    ImGui.EndCombo();
+                }
+
+                ImGui.Checkbox("Don't open Wotsit in combat", ref this.notInCombat);
+                ImGui.Checkbox("Force TeamCraft links to open in your browser", ref this.tcForceBrowser);
+
+                ImGuiHelpers.ScaledDummy(5);
+
+                // End scrollable container
+                ImGui.EndChild();
+                ImGui.EndTabItem();
             }
 
-            ImGui.EndCombo();
-        }
-        
-        ImGuiHelpers.ScaledDummy(5);
-        ImGui.PushItemWidth(40);
-        ImGui.InputText("Simple search mode prefix", ref this.matchSigilSimple, 1);
-        ImGui.InputText("Fuzzy search mode prefix", ref this.matchSigilFuzzy, 1);
-        ImGui.InputText("FuzzyParts search mode prefix", ref this.matchSigilFuzzyParts, 1);
-        ImGui.PopItemWidth();
+            if (ImGui.BeginTabItem("What to search")) {
+                ImGui.BeginChild("ScrollingMain", ImGuiHelpers.ScaledVector2(0, SaveDiscardOffset), true,
+                    ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoBackground);
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "What to search");
 
-        ImGuiHelpers.ScaledDummy(15);
-        ImGui.Separator();
-        ImGuiHelpers.ScaledDummy(15);
+                ImGui.SameLine();
+                ImGuiComponents.HelpMarker(
+                    "When using the default \"Simple\" search mode, results will appear in the order defined " +
+                    "below.\n\n" +
+                    "For fuzzy search modes, results appear in 'best match' to 'worst match' order, and " +
+                    "the order defined below will be used only for tie-breaks (when multiple results match " +
+                    "equally well).\n\n" +
+                    "Un-ticking a check box will cause all entries from that category to be ignored in any mode.");
 
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro Links");
-        ImGui.TextWrapped("Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
 
-        DrawMacrosSection();
+                for (var i = 0; i < this.order.Count; i++) {
+                    var search = this.order[i];
 
-        ImGuiHelpers.ScaledDummy(15);
-        ImGui.Separator();
-        ImGuiHelpers.ScaledDummy(15);
+                    var name = search switch
+                    {
+                        Configuration.SearchSetting.Duty => "Duties",
+                        Configuration.SearchSetting.Aetheryte => "Aetherytes",
+                        Configuration.SearchSetting.MainCommand => "Commands",
+                        Configuration.SearchSetting.GeneralAction => "General Actions",
+                        Configuration.SearchSetting.Emote => "Emotes",
+                        Configuration.SearchSetting.PluginSettings => "other plugins",
+                        Configuration.SearchSetting.Gearsets => "Gear Sets",
+                        Configuration.SearchSetting.CraftingRecipes => "Crafting Recipes",
+                        Configuration.SearchSetting.GatheringItems => "Gathering Items",
+                        Configuration.SearchSetting.Mounts => "Mounts",
+                        Configuration.SearchSetting.Minions => "Minions",
+                        Configuration.SearchSetting.MacroLinks => "Macro Links",
+                        Configuration.SearchSetting.Internal => "Wotsit",
+                        _ => null,
+                    };
 
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "Math Constants");
-        ImGui.TextWrapped("Use this menu to tie constants to values, to be used in expressions.\nAdd a constant again to edit it.");
+                    if (name == null) {
+                        continue;
+                    }
 
-        DrawConstantsSection();
+                    var isRequired =
+                        search is Configuration.SearchSetting.Internal or Configuration.SearchSetting.MacroLinks;
 
-        ImGuiHelpers.ScaledDummy(15);
-        ImGui.Separator();
-        ImGuiHelpers.ScaledDummy(15);
+                    ImGui.PushFont(UiBuilder.IconFont);
 
-        ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
+                    if (ImGui.Button($"{FontAwesomeIcon.ArrowUp.ToIconString()}##{search}") && i != 0) {
+                        (this.order[i], this.order[i - 1]) = (this.order[i - 1], this.order[i]);
+                    }
 
-        ImGui.Checkbox("Enable Search History", ref this.historyEnabled);
-        ImGui.Checkbox("Show Gil cost in Aetheryte results", ref this.aetheryteGilCost);
-        ImGui.Checkbox("Show \"Market Board\" shortcut to teleport to the closest market board city", ref this.marketBoardShortcut);
-        ImGui.Checkbox("Show \"Striking Dummy\" shortcut to teleport to the closest striking dummy location", ref this.strikingDummyShortcut);
+                    ImGui.SameLine();
 
-        if (ImGui.BeginCombo("Emote Motion-Only?", this.emoteMotionMode.ToString()))
-        {
-            foreach (var key in Enum.GetValues<Configuration.EmoteMotionMode>())
-            {
-                if (ImGui.Selectable(key.ToString(), key == this.emoteMotionMode))
-                {
-                    this.emoteMotionMode = key;
+                    if (ImGui.Button($"{FontAwesomeIcon.ArrowDown.ToIconString()}##{search}") &&
+                        i != this.order.Count - 1) {
+                        (this.order[i], this.order[i + 1]) = (this.order[i + 1], this.order[i]);
+                    }
+
+                    ImGui.PopFont();
+
+                    ImGui.SameLine();
+
+                    if (isRequired) {
+                        ImGui.TextUnformatted($"Search in {name}");
+                    }
+                    else {
+                        ImGui.CheckboxFlags($"Search in {name}", ref this.flags, (uint)search);
+                    }
                 }
+
+                ImGui.CheckboxFlags("Mathematical Expressions", ref this.flags,
+                    (uint)Configuration.SearchSetting.Maths);
+
+                ImGui.EndChild();
+                ImGui.EndTabItem();
             }
 
-            ImGui.EndCombo();
-        }
+            if (ImGui.BeginTabItem("Macro links")) {
+                ImGui.BeginChild("ScrollingMain", ImGuiHelpers.ScaledVector2(0, SaveDiscardOffset), true,
+                    ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoBackground);
 
-        ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
-        ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
-        ImGui.Checkbox("Directly go to wiki mode when opening search", ref this.onlyWiki);
-        ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800);
-        if (ImGui.BeginCombo("Scroll Speed", this.speed.ToString()))
-        {
-            foreach (var key in Enum.GetValues<Configuration.ScrollSpeed>())
-            {
-                if (ImGui.Selectable(key.ToString(), key == this.speed))
-                {
-                    this.speed = key;
-                }
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro links");
+                ImGui.TextWrapped(
+                    "Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
+
+                DrawMacrosSection();
+
+                ImGui.EndChild();
+                ImGui.EndTabItem();
             }
 
-            ImGui.EndCombo();
+
+            ImGui.EndTabBar();
         }
-        ImGui.Checkbox("Don't open Wotsit in combat", ref this.notInCombat);
-        ImGui.Checkbox("Force TeamCraft links to open in your browser", ref this.tcForceBrowser);
 
-        ImGuiHelpers.ScaledDummy(5);
         ImGui.Separator();
-        ImGuiHelpers.ScaledDummy(5);
+        ImGuiHelpers.ScaledDummy(2);
 
-        if (ImGui.Button("Save"))
+        var save = ImGui.Button("Save");
+        ImGui.SameLine();
+        var saveAndClose = ImGui.Button("Save and Close");
+
+        if (save || saveAndClose)
         {
             FindAnythingPlugin.Configuration.ToSearchV3 = (Configuration.SearchSetting) this.flags;
             FindAnythingPlugin.Configuration.Order = this.order;
@@ -321,7 +371,8 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.Save();
 
             FindAnythingPlugin.TexCache.ReloadMacroIcons();
-            IsOpen = false;
+            if (saveAndClose)
+                IsOpen = false;
         }
 
         ImGui.SameLine();
