@@ -16,10 +16,17 @@ public class DalamudReflector
     {
         public string Name { get; set; }
         public UiBuilder UiBuilder { get; set; }
+        public bool HasConfigUi { get; set; }
+        public bool HasMainUi { get; set; }
 
         public void OpenConfigUi()
         {
-            UiBuilder.GetType().GetMethod("OpenConfig", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(UiBuilder, null);
+            UiBuilder.GetType().GetMethod("OpenConfig", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(UiBuilder, null);
+        }
+
+        public void OpenMainUi()
+        {
+            UiBuilder.GetType().GetMethod("OpenMain", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(UiBuilder, null);
         }
     }
 
@@ -48,7 +55,10 @@ public class DalamudReflector
 
             var configUiProp = uib.GetType().GetProperty("HasConfigUi", BindingFlags.NonPublic | BindingFlags.Instance);
             var hasConfigUi = (bool)configUiProp.GetValue(uib);
-            if (!hasConfigUi)
+
+            var mainUiProp = uib.GetType().GetProperty("HasMainUi", BindingFlags.NonPublic | BindingFlags.Instance);
+            var hasMainUi = (bool)mainUiProp.GetValue(uib);
+            if (!hasConfigUi && !hasMainUi)
                 continue;
 
             var name = (string)item.GetType().GetProperty("Name", BindingFlags.Public | BindingFlags.Instance)
@@ -59,8 +69,10 @@ public class DalamudReflector
             
             var entry = new PluginEntry()
             {
-                Name =  name + " Settings",
+                Name =  name,
                 UiBuilder = uib as UiBuilder,
+                HasConfigUi = hasConfigUi,
+                HasMainUi = hasMainUi
             };
             list.Add(entry);
         }
