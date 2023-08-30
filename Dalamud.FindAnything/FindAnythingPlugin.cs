@@ -1134,13 +1134,26 @@ namespace Dalamud.FindAnything
         }
 
         private class CraftingRecipeResult : ISearchResult, IEquatable<CraftingRecipeResult> {
-            public string CatName => "Crafting Recipe";
+            public string CatName
+            {
+                get
+                {
+                    if (CraftType != null) {
+                        return $"Crafting Recipe ({CraftType.Name.RawString})";
+                    }
+
+                    return "Crafting Recipe";
+                }
+            }
+
             public string Name { get; set; }
             public IDalamudTextureWrap? Icon { get; set; }
             public int Score { get; set; }
             public bool CloseFinder => true;
 
             public Recipe Recipe { get; set; }
+
+            public CraftType? CraftType { get; set; }
 
             public void Selected() {
                 var id = this.Recipe.ItemResult.Value?.RowId ?? 0;
@@ -1733,6 +1746,7 @@ namespace Dalamud.FindAnything
                                                 Score = score,
                                                 Recipe = recipe,
                                                 Name = recipeSearch.Value.Display,
+                                                CraftType = recipe.CraftType.Value,
                                                 Icon = tex,
                                             });
                                         }
