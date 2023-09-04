@@ -28,6 +28,12 @@ namespace Dalamud.FindAnything
         public OpenMode Open { get; set; } = OpenMode.Combo;
 
         public uint ShiftShiftDelay { get; set; } = 40;
+        public enum DoubleTapUnit
+        {
+            Frames,
+            Milliseconds,
+        }
+        public DoubleTapUnit ShiftShiftUnit { get; set; } = DoubleTapUnit.Frames;
         public VirtualKey ComboModifier { get; set; } = VirtualKey.CONTROL;
         public VirtualKey ComboModifier2 { get; set; } = VirtualKey.NO_KEY;
         public VirtualKey ComboKey { get; set; } = VirtualKey.T;
