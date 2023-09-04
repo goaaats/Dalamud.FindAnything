@@ -21,6 +21,7 @@ public class SettingsWindow : Window
     private Configuration.OpenMode openMode;
     private VirtualKey shiftShiftKey;
     private int shiftShiftDelay;
+    private Configuration.DoubleTapUnit shiftShiftUnit;
     private VirtualKey comboModifierKey;
     private VirtualKey comboModifier2Key;
     private VirtualKey comboKey;
@@ -68,6 +69,7 @@ public class SettingsWindow : Window
         this.openMode = FindAnythingPlugin.Configuration.Open;
         this.shiftShiftKey = FindAnythingPlugin.Configuration.ShiftShiftKey;
         this.shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
+        this.shiftShiftUnit = FindAnythingPlugin.Configuration.ShiftShiftUnit;
         this.comboKey = FindAnythingPlugin.Configuration.ComboKey;
         this.comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
         this.comboModifier2Key = FindAnythingPlugin.Configuration.ComboModifier2;
@@ -122,10 +124,26 @@ public class SettingsWindow : Window
                     case Configuration.OpenMode.ShiftShift:
                         VirtualKeySelect("Key to double tap", ref shiftShiftKey);
 
-                        if (ImGui.InputInt("Delay (ms)", ref shiftShiftDelay)) {
+                        // ImGui.PushItemWidth(200);
+                        ImGui.PushItemWidth(ImGui.GetWindowWidth() * 0.2f);
+
+                        if (ImGui.InputInt("", ref shiftShiftDelay)) {
                             shiftShiftDelay = Math.Max(shiftShiftDelay, 0);
                         }
 
+                        ImGui.SameLine();
+
+                        if (ImGui.BeginCombo("Delay", shiftShiftUnit.ToString())) {
+                            foreach (var key in Enum.GetValues<Configuration.DoubleTapUnit>()) {
+                                if (ImGui.Selectable(key.ToString(), key == shiftShiftUnit)) {
+                                    shiftShiftUnit = key;
+                                }
+                            }
+
+                            ImGui.EndCombo();
+                        }
+
+                        ImGui.PopItemWidth();
                         break;
                     case Configuration.OpenMode.Combo:
                         VirtualKeySelect("Combo Modifier 1", ref comboModifierKey);
@@ -360,6 +378,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.Open = openMode;
             FindAnythingPlugin.Configuration.ShiftShiftKey = shiftShiftKey;
             FindAnythingPlugin.Configuration.ShiftShiftDelay = (uint) shiftShiftDelay;
+            FindAnythingPlugin.Configuration.ShiftShiftUnit = shiftShiftUnit;
 
             FindAnythingPlugin.Configuration.ComboKey = comboKey;
             FindAnythingPlugin.Configuration.ComboModifier = comboModifierKey;

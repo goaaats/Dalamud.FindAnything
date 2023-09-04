@@ -73,7 +73,8 @@ namespace Dalamud.FindAnything
         private bool isHeldTimeout = false;
         private bool isHeld = false;
 
-        private int timeSinceLastShift = 0;
+        private int framesSinceLastShift = 0;
+        private DateTime lastShiftTime = DateTime.UnixEpoch;
         private bool shiftArmed = false;
         private bool shiftOk = false;
 
@@ -1321,41 +1322,57 @@ namespace Dalamud.FindAnything
             {
                 CloseFinder();
             }
-            else
+            else if (!finderOpen)
             {
+                var shiftDown = Input.IsDown(Configuration.ShiftShiftKey);
+
+                // KeyDown #1 fired
+                if (shiftDown && !shiftArmed) {
+                    shiftArmed = true;
+                    framesSinceLastShift = 0; // Reset frame count
+                    lastShiftTime = DateTime.UtcNow; // Register lastShiftTime at KeyDown
+                }
+
+                // Await KeyUp #1
+                if (shiftArmed) {
+                    framesSinceLastShift++; // Count frames after KeyDown
+                    // KeyUp #1 fired
+                    if (!shiftDown) {
+                        shiftOk = true;
+                    }
+                }
+
+                // Await KeyDown #2
+                if (!shiftDown || !shiftOk)
+                    return;
+
+                // KeyDown #2 fired, so clean up key state (but may re-arm later if delay was too long)
+                shiftArmed = false;
+                shiftOk = false;
+
                 switch (Configuration.Open)
                 {
                     case Configuration.OpenMode.ShiftShift:
-                        var shiftDown = Input.IsDown(Configuration.ShiftShiftKey);
-
-                        if (shiftDown && !shiftArmed)
-                        {
-                            shiftArmed = true;
+                        if (Configuration.ShiftShiftUnit == Configuration.DoubleTapUnit.Frames) {
+                            if (framesSinceLastShift <= Configuration.ShiftShiftDelay) {
+                                OpenFinder();
+                            }
+                            else {
+                                // Delay was too long, so count this as KeyDown #1 instead
+                                shiftArmed = true;
+                                framesSinceLastShift = 0;
+                            }
                         }
-
-                        if (!shiftDown && shiftArmed)
-                        {
-                            shiftOk = true;
+                        else if (Configuration.ShiftShiftUnit == Configuration.DoubleTapUnit.Milliseconds) {
+                            if ((DateTime.UtcNow - lastShiftTime).TotalMilliseconds <= Configuration.ShiftShiftDelay) {
+                                OpenFinder();
+                            }
+                            else {
+                                // Delay was too long, so count this as KeyDown #1 instead
+                                shiftArmed = true;
+                                lastShiftTime = DateTime.UtcNow;
+                            }
                         }
-
-                        if (shiftOk && !shiftDown)
-                        {
-                            timeSinceLastShift++;
-                        }
-                        else if (shiftDown && shiftOk && timeSinceLastShift < Configuration.ShiftShiftDelay)
-                        {
-                            OpenFinder();
-                            timeSinceLastShift = 0;
-                            shiftArmed = false;
-                            shiftOk = false;
-                        }
-                        else if (shiftOk && timeSinceLastShift > Configuration.ShiftShiftDelay)
-                        {
-                            timeSinceLastShift = 0;
-                            shiftArmed = false;
-                            shiftOk = false;
-                        }
-
                         break;
                     case Configuration.OpenMode.Combo:
                         var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier);
