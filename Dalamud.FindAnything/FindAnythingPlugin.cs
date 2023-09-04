@@ -139,6 +139,7 @@ namespace Dalamud.FindAnything
 
         private static List<HistoryEntry> history = new();
         private const int HistoryMax = 5;
+        internal const int DefaultWeight = 100;
 
         private interface ISearchResult
         {
@@ -1460,8 +1461,8 @@ namespace Dalamud.FindAnything
             {
                 case SearchMode.Top:
                 {
-                    foreach (var setting in Configuration.Order)
-                    {
+                    foreach (var setting in Configuration.Order) {
+                        var weight = Configuration.SearchWeights.GetValueOrDefault(setting, DefaultWeight);
                         switch (setting)
                         {
                             case Configuration.SearchSetting.Duty:
@@ -1501,7 +1502,7 @@ namespace Dalamud.FindAnything
                                         {
                                             cResults.Add(new DutySearchResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 CatName = row.ContentType?.Value?.Name ?? "Duty",
                                                 DataKey = cfc.Key,
                                                 Name = cfc.Value.Display,
@@ -1526,7 +1527,7 @@ namespace Dalamud.FindAnything
 
                                             cResults.Add(new ContentRouletteSearchResult()
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 DataKey = (byte) contentRoulette.RowId,
                                                 Name = name,
                                             });
@@ -1555,7 +1556,7 @@ namespace Dalamud.FindAnything
                                         if (score > 0)
                                             cResults.Add(new AetheryteSearchResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Name = aetheryteName,
                                                 Data = aetheryte,
                                                 Icon = TexCache.AetheryteIcon,
@@ -1579,7 +1580,7 @@ namespace Dalamud.FindAnything
                                         var terriName = SearchDatabase.GetString<TerritoryType>(closestMarketBoard.TerritoryId);
                                         cResults.Add(new AetheryteSearchResult
                                         {
-                                            Score = marketScore,
+                                            Score = marketScore * weight,
                                             Name = "Closest Market Board",
                                             Data = closestMarketBoard,
                                             Icon = TexCache.AetheryteIcon,
@@ -1592,7 +1593,7 @@ namespace Dalamud.FindAnything
                                         var terriName = SearchDatabase.GetString<TerritoryType>(closestStrikingDummy.TerritoryId);
                                         cResults.Add(new AetheryteSearchResult
                                         {
-                                            Score = dummyScore,
+                                            Score = dummyScore * weight,
                                             Name = "Closest Striking Dummy",
                                             Data = closestStrikingDummy,
                                             Icon = TexCache.AetheryteIcon,
@@ -1619,7 +1620,7 @@ namespace Dalamud.FindAnything
                                         {
                                             cResults.Add(new MainCommandSearchResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 CommandId = mainCommand.Key,
                                                 Name = mainCommand.Value.Display,
                                                 Icon = TexCache.MainCommandIcons[mainCommand.Key]
@@ -1655,7 +1656,7 @@ namespace Dalamud.FindAnything
                                             if (score > 0)
                                                 cResults.Add(new GeneralActionSearchResult
                                                 {
-                                                    Score = score,
+                                                    Score = score * weight,
                                                     Name = generalAction.Value.Display,
                                                     Icon = TexCache.GeneralActionIcons[generalAction.Key]
                                                 });
@@ -1682,7 +1683,7 @@ namespace Dalamud.FindAnything
                                         {
                                             cResults.Add(new EmoteSearchResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Name = text.Display,
                                                 SlashCommand = slashCmd.Command.RawString,
                                                 Icon = TexCache.EmoteIcons[emoteRow.RowId]
@@ -1707,7 +1708,7 @@ namespace Dalamud.FindAnything
                                             if (plugin.HasMainUi) {
                                                 cResults.Add(new PluginInterfaceSearchResult
                                                 {
-                                                    Score = score,
+                                                    Score = score * weight,
                                                     Name = plugin.Name + " Interface",
                                                     Plugin = plugin,
                                                 });
@@ -1716,7 +1717,7 @@ namespace Dalamud.FindAnything
                                             if (plugin.HasConfigUi) {
                                                 cResults.Add(new PluginSettingsSearchResult
                                                 {
-                                                    Score = score,
+                                                    Score = score * weight,
                                                     Name = plugin.Name + " Settings",
                                                     Plugin = plugin,
                                                 });
@@ -1733,7 +1734,7 @@ namespace Dalamud.FindAnything
                                             {
                                                 cResults.Add(new IpcSearchResult
                                                 {
-                                                    Score = score,
+                                                    Score = score * weight,
                                                     CatName = plugin.Key,
                                                     Name = ipcBinding.Display,
                                                     Guid = ipcBinding.Guid,
@@ -1766,7 +1767,7 @@ namespace Dalamud.FindAnything
                                         {
                                             cResults.Add(new GearsetSearchResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Gearset = gearset,
                                             });
                                         }
@@ -1788,7 +1789,7 @@ namespace Dalamud.FindAnything
 
                                             cResults.Add(new CraftingRecipeResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Recipe = recipe,
                                                 Name = recipeSearch.Value.Display,
                                                 Icon = tex,
@@ -1821,7 +1822,7 @@ namespace Dalamud.FindAnything
 
                                             cResults.Add(new GatheringItemResult()
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Item = gather,
                                                 Name = gatherSearch.Value.Display,
                                                 Icon = tex,
@@ -1858,7 +1859,7 @@ namespace Dalamud.FindAnything
                                         {
                                             cResults.Add(new MountResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Mount = mount,
                                             });
                                         }
@@ -1881,7 +1882,7 @@ namespace Dalamud.FindAnything
                                         {
                                             cResults.Add(new MinionResult
                                             {
-                                                Score = score,
+                                                Score = score * weight,
                                                 Minion = minion,
                                             });
                                         }
@@ -1901,7 +1902,7 @@ namespace Dalamud.FindAnything
                                     {
                                         cResults.Add(new MacroLinkSearchResult
                                         {
-                                            Score = score,
+                                            Score = score * weight,
                                             Entry = macroLink,
                                         });
                                     }
@@ -1915,7 +1916,7 @@ namespace Dalamud.FindAnything
                                     {
                                         cResults.Add(new InternalSearchResult
                                         {
-                                            Score = score,
+                                            Score = score * weight,
                                             Kind = kind
                                         });
                                     }
@@ -2035,7 +2036,7 @@ namespace Dalamud.FindAnything
 
                         var score = matcher.Matches("dn farm");
                         if (score > 0)
-                            cResults.Add(new GameSearchResult { Score = score });
+                            cResults.Add(new GameSearchResult { Score = score * DefaultWeight });
                     }
                 }
                     break;
