@@ -41,6 +41,7 @@ public class SettingsWindow : Window
     private bool onlyWiki;
     private VirtualKey quickSelectKey;
     private List<Configuration.SearchSetting> order = new();
+    private Dictionary<Configuration.SearchSetting, int> searchWeights = new();
     private Configuration.ScrollSpeed speed;
     private bool notInCombat;
     private bool tcForceBrowser;
@@ -89,6 +90,7 @@ public class SettingsWindow : Window
         this.onlyWiki = FindAnythingPlugin.Configuration.OnlyWikiMode;
         this.quickSelectKey = FindAnythingPlugin.Configuration.QuickSelectKey;
         this.order = FindAnythingPlugin.Configuration.Order.ToList();
+        this.searchWeights = new Dictionary<Configuration.SearchSetting, int>(FindAnythingPlugin.Configuration.SearchWeights);
         this.speed = FindAnythingPlugin.Configuration.Speed;
         this.notInCombat = FindAnythingPlugin.Configuration.NotInCombat;
         this.tcForceBrowser = FindAnythingPlugin.Configuration.TeamCraftForceBrowser;
@@ -262,6 +264,13 @@ public class SettingsWindow : Window
                     ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoBackground);
                 ImGui.TextColored(ImGuiColors.DalamudGrey, "What to search");
 
+                ImGui.Columns(2);
+                ImGui.SetColumnWidth(0, 300 + 5 * ImGuiHelpers.GlobalScale);
+                ImGui.SetColumnWidth(1, 200 + 5 * ImGuiHelpers.GlobalScale);
+
+                ImGui.Separator();
+
+                ImGui.Text("Search order");
                 ImGui.SameLine();
                 ImGuiComponents.HelpMarker(
                     "When using the default \"Simple\" search mode, results will appear in the order defined " +
@@ -270,7 +279,21 @@ public class SettingsWindow : Window
                     "the order defined below will be used only for tie-breaks (when multiple results match " +
                     "equally well).\n\n" +
                     "Un-ticking a check box will cause all entries from that category to be ignored in any mode.");
+                ImGui.NextColumn();
 
+                ImGui.Text("Weight");
+                ImGui.SameLine();
+                ImGuiComponents.HelpMarker(
+                    "The weight setting for each category can be used to adjust the internal match score " +
+                    "calculated for results when using fuzzy search modes. When compared to the default weight " +
+                    "of 100, for example, a category with a weight of 200 will have its match scores doubled " +
+                    "while a category with a weight of 50 will have them halved.\n\n" +
+                    "Search results with higher weightings tend to have higher match scores, and therefore " +
+                    "appear higher in the results list.\n\n" +
+                    "Weights are ignored when using the \"Simple\" search mode.");
+                ImGui.NextColumn();
+
+                ImGui.Separator();
 
                 for (var i = 0; i < this.order.Count; i++) {
                     var search = this.order[i];
@@ -302,14 +325,13 @@ public class SettingsWindow : Window
 
                     ImGui.PushFont(UiBuilder.IconFont);
 
-                    if (ImGui.Button($"{FontAwesomeIcon.ArrowUp.ToIconString()}##{search}") && i != 0) {
+                    if (IconButtonEnabledWhen(i != 0, FontAwesomeIcon.ArrowUp, $"{search}")) {
                         (this.order[i], this.order[i - 1]) = (this.order[i - 1], this.order[i]);
                     }
 
                     ImGui.SameLine();
 
-                    if (ImGui.Button($"{FontAwesomeIcon.ArrowDown.ToIconString()}##{search}") &&
-                        i != this.order.Count - 1) {
+                    if (IconButtonEnabledWhen(i != this.order.Count - 1, FontAwesomeIcon.ArrowDown, $"{search}")) {
                         (this.order[i], this.order[i + 1]) = (this.order[i + 1], this.order[i]);
                     }
 
@@ -318,15 +340,43 @@ public class SettingsWindow : Window
                     ImGui.SameLine();
 
                     if (isRequired) {
-                        ImGui.TextUnformatted($"Search in {name}");
+                        var locked = true;
+                        ImGui.PushStyleColor(ImGuiCol.FrameBg, Vector4.Zero);
+                        ImGui.PushStyleColor(ImGuiCol.FrameBgActive, Vector4.Zero);
+                        ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, Vector4.Zero);
+                        ImGui.PushStyleColor(ImGuiCol.CheckMark, ImGuiColors.ParsedGrey);
+                        ImGui.Checkbox($"Search in {name}", ref locked);
+                        ImGui.PopStyleColor(4);
                     }
                     else {
                         ImGui.CheckboxFlags($"Search in {name}", ref this.flags, (uint)search);
                     }
+
+                    ImGui.NextColumn();
+
+                    ImGui.PushItemWidth(120);
+                    var weight = searchWeights.GetValueOrDefault(search, FindAnythingPlugin.DefaultWeight);
+                    if (ImGui.InputInt($"##{search}-weight", ref weight, FindAnythingPlugin.DefaultWeight / 10, FindAnythingPlugin.DefaultWeight)) {
+                        if (weight is > 0 and < FindAnythingPlugin.DefaultWeight * 1000) {
+                            if (weight == FindAnythingPlugin.DefaultWeight) {
+                                searchWeights.Remove(search);
+                            }
+                            else {
+                                searchWeights[search] = weight;
+                            }
+                        }
+                    }
+                    ImGui.PopItemWidth();
+
+                    ImGui.Separator();
+                    ImGui.NextColumn();
                 }
 
                 ImGui.CheckboxFlags("Mathematical Expressions", ref this.flags,
                     (uint)Configuration.SearchSetting.Maths);
+                ImGui.Separator();
+
+                ImGui.Columns(1);
 
                 ImGui.EndChild();
                 ImGui.EndTabItem();
@@ -375,6 +425,7 @@ public class SettingsWindow : Window
         {
             FindAnythingPlugin.Configuration.ToSearchV3 = (Configuration.SearchSetting) this.flags;
             FindAnythingPlugin.Configuration.Order = this.order;
+            FindAnythingPlugin.Configuration.SearchWeights = this.searchWeights;
 
             FindAnythingPlugin.Configuration.Open = openMode;
             FindAnythingPlugin.Configuration.ShiftShiftKey = shiftShiftKey;

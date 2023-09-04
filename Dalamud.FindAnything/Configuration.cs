@@ -25,6 +25,8 @@ namespace Dalamud.FindAnything
             SearchSetting.Reserved20 | SearchSetting.Reserved21 | SearchSetting.Reserved22 | SearchSetting.Reserved23 |
             SearchSetting.Reserved24;
 
+        public Dictionary<SearchSetting, int> SearchWeights = new();
+
         public OpenMode Open { get; set; } = OpenMode.Combo;
 
         public uint ShiftShiftDelay { get; set; } = 40;
