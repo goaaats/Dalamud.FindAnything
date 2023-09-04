@@ -118,6 +118,14 @@ namespace Dalamud.FindAnything
 
         public List<MacroEntry> MacroLinks { get; set; } = new();
 
+        public enum MacroSearchDirection
+        {
+            BottomToTop,
+            TopToBottom,
+        }
+
+        public MacroSearchDirection MacroLinksSearchDirection { get; set; } = MacroSearchDirection.BottomToTop;
+
         public bool DoAetheryteGilCost { get; set; } = false;
         public bool DoMarketBoardShortcut { get; set; } = false;
         public bool DoStrikingDummyShortcut { get; set; } = false;

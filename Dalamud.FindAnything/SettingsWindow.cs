@@ -8,6 +8,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
+using Dalamud.Logging;
+using Dalamud.Utility.Numerics;
 using ImGuiNET;
 using Newtonsoft.Json;
 
@@ -26,6 +28,7 @@ public class SettingsWindow : Window
     private VirtualKey wikiComboKey;
     private bool preventPassthrough;
     private List<Configuration.MacroEntry> macros = new();
+    private Configuration.MacroSearchDirection macroLinksSearch;
     private bool aetheryteGilCost;
     private bool marketBoardShortcut;
     private bool strikingDummyShortcut;
@@ -46,6 +49,7 @@ public class SettingsWindow : Window
     private string matchSigilFuzzy;
     private string matchSigilFuzzyParts;
 
+    private bool macroRearrangeMode;
     private const int SaveDiscardOffset = -40;
 
     public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings")
@@ -71,6 +75,7 @@ public class SettingsWindow : Window
         this.wikiComboKey = FindAnythingPlugin.Configuration.WikiComboKey;
         this.preventPassthrough = FindAnythingPlugin.Configuration.PreventPassthrough;
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
+        this.macroLinksSearch = FindAnythingPlugin.Configuration.MacroLinksSearchDirection;
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
         this.marketBoardShortcut = FindAnythingPlugin.Configuration.DoMarketBoardShortcut;
         this.strikingDummyShortcut = FindAnythingPlugin.Configuration.DoStrikingDummyShortcut;
@@ -90,6 +95,8 @@ public class SettingsWindow : Window
         this.matchSigilSimple = FindAnythingPlugin.Configuration.MatchSigilSimple;
         this.matchSigilFuzzy = FindAnythingPlugin.Configuration.MatchSigilFuzzy;
         this.matchSigilFuzzyParts = FindAnythingPlugin.Configuration.MatchSigilFuzzyParts;
+
+        this.macroRearrangeMode = false;
         base.OnOpen();
     }
 
@@ -312,10 +319,24 @@ public class SettingsWindow : Window
                     ImGuiWindowFlags.HorizontalScrollbar | ImGuiWindowFlags.NoBackground);
 
                 ImGui.TextColored(ImGuiColors.DalamudGrey, "Macro links");
-                ImGui.TextWrapped(
-                    "Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
 
                 DrawMacrosSection();
+
+                ImGuiHelpers.ScaledDummy(15);
+                ImGui.Separator();
+                ImGuiHelpers.ScaledDummy(15);
+
+                ImGui.TextColored(ImGuiColors.DalamudGrey, "Search direction");
+                ImGui.TextWrapped(
+                    "Use this to change the order in which macro links are searched. This may affect which macro links are displayed higher in the result list.");
+
+                if (ImGui.RadioButton("Top to bottom", macroLinksSearch == Configuration.MacroSearchDirection.TopToBottom)) {
+                    macroLinksSearch = Configuration.MacroSearchDirection.TopToBottom;
+                }
+
+                if (ImGui.RadioButton("Bottom to top", macroLinksSearch == Configuration.MacroSearchDirection.BottomToTop)) {
+                    macroLinksSearch = Configuration.MacroSearchDirection.BottomToTop;
+                }
 
                 ImGui.EndChild();
                 ImGui.EndTabItem();
@@ -348,6 +369,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.PreventPassthrough = preventPassthrough;
 
             FindAnythingPlugin.Configuration.MacroLinks = this.macros;
+            FindAnythingPlugin.Configuration.MacroLinksSearchDirection = this.macroLinksSearch;
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
             FindAnythingPlugin.Configuration.DoMarketBoardShortcut = this.marketBoardShortcut;
@@ -383,199 +405,278 @@ public class SettingsWindow : Window
         }
     }
 
+    private int dropSource = -1;
+
     private void DrawMacrosSection()
     {
-        ImGui.Columns(6);
-        ImGui.SetColumnWidth(0, 200 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(1, 140 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(2, 80 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(3, 160 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(4, 160 + 5 * ImGuiHelpers.GlobalScale);
-        ImGui.SetColumnWidth(5, 30 + 5 * ImGuiHelpers.GlobalScale);
+        if (macroRearrangeMode) {
+            ImGui.TextWrapped("Use arrows or drag and drop macros to change the order.");
 
-        ImGui.Separator();
+            for (var macroNumber = macros.Count - 1; macroNumber >= 0; macroNumber--) {
+                var name = macros[macroNumber].SearchName;
+                var size = ImGuiHelpers.GetButtonSize(name).WithX(300f);
+                ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new Vector2(0f, 0.5f));
+                ImGui.Button($"{macros[macroNumber].SearchName}###b{macroNumber}", size);
 
-        ImGui.Text("Search Name");
-        ImGui.NextColumn();
-        ImGui.Text("Kind");
-        ImGui.NextColumn();
-        ImGui.Text("Shared");
-        ImGui.NextColumn();
-        ImGui.Text("ID/Line");
-        ImGui.NextColumn();
-        ImGui.Text("Icon");
-        ImGui.NextColumn();
-        ImGui.Text(string.Empty);
-        ImGui.NextColumn();
-
-        ImGui.Separator();
-
-        for (var macroNumber = this.macros.Count - 1; macroNumber >= 0; macroNumber--)
-        {
-            var macro = this.macros[macroNumber];
-            ImGui.PushID($"macro_{macroNumber}");
-
-            ImGui.SetNextItemWidth(-1);
-
-            var text = macro.SearchName;
-            if (ImGui.InputText($"###macroSn", ref text, 100))
-            {
-                macro.SearchName = text;
-            }
-
-            ImGui.NextColumn();
-
-            if (ImGui.BeginCombo("###macroKnd", macro.Kind.ToString()))
-            {
-                foreach (var macroEntryKind in Enum.GetValues<Configuration.MacroEntry.MacroEntryKind>())
-                {
-                    if (ImGui.Selectable(macroEntryKind.ToString(), macroEntryKind == macro.Kind))
-                    {
-                        macro.Kind = macroEntryKind;
-                    }
+                if (ImGui.BeginDragDropSource()) {
+                    ImGui.SetDragDropPayload("MACRO", IntPtr.Zero, 0);
+                    ImGui.Button($"{macros[macroNumber].SearchName}###d{macroNumber}", size);
+                    dropSource = macroNumber;
+                    ImGui.EndDragDropSource();
                 }
-                ImGui.EndCombo();
-            }
 
-            ImGui.NextColumn();
+                if (ImGui.BeginDragDropTarget()) {
+                    ImGui.AcceptDragDropPayload("MACRO");
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Left)) {
+                        var moving = macros[dropSource];
+                        macros.RemoveAt(dropSource);
+                        macros.Insert(macroNumber, moving);
+                    }
 
-            if (macro.Kind == Configuration.MacroEntry.MacroEntryKind.Id)
-            {
-                var isShared = macro.Shared;
-                if (ImGui.Checkbox($"###macroSh", ref isShared))
-                {
-                    macro.Shared = isShared;
+                    ImGui.EndDragDropTarget();
+                }
+
+                ImGui.PopStyleVar();
+
+                ImGui.SameLine();
+
+                if (IconButtonEnabledWhen(macroNumber <= macros.Count - 2, FontAwesomeIcon.AngleDoubleUp,
+                        $"macro-top-{macroNumber}")) {
+                    var moving = macros[macroNumber];
+                    macros.RemoveAt(macroNumber);
+                    macros.Add(moving);
+                }
+                if (ImGui.IsItemHovered()) {
+                    ImGui.SetTooltip("Move to top");
+                }
+
+                ImGui.SameLine();
+
+                if (IconButtonEnabledWhen(macroNumber <= macros.Count - 2, FontAwesomeIcon.ArrowUp,
+                        $"macro-up-{macroNumber}")) {
+                    macros.Reverse(macroNumber, 2);
+                }
+                if (ImGui.IsItemHovered()) {
+                    ImGui.SetTooltip("Move up");
+                }
+
+                ImGui.SameLine();
+
+                if (IconButtonEnabledWhen(macroNumber >= 1, FontAwesomeIcon.ArrowDown, $"macro-down-{macroNumber}")) {
+                    macros.Reverse(macroNumber - 1, 2);
+                }
+                if (ImGui.IsItemHovered()) {
+                    ImGui.SetTooltip("Move down");
+                }
+
+                ImGui.SameLine();
+
+                if (IconButtonEnabledWhen(macroNumber >= 1, FontAwesomeIcon.AngleDoubleDown,
+                        $"macro-bottom-{macroNumber}")) {
+                    var moving = macros[macroNumber];
+                    macros.RemoveAt(macroNumber);
+                    macros.Insert(0, moving);
+                }
+                if (ImGui.IsItemHovered()) {
+                    ImGui.SetTooltip("Move to bottom");
                 }
             }
-            else
-            {
-                ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.ParsedGrey);
-                ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ImGuiColors.ParsedGrey);
-                ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ImGuiColors.ParsedGrey);
-                ImGui.PushStyleColor(ImGuiCol.CheckMark, ImGuiColors.ParsedGrey);
 
-                var isShared = false;
-                ImGui.Checkbox("###macroSh", ref isShared);
-
-                ImGui.PopStyleColor(4);
+            ImGuiHelpers.ScaledDummy(15);
+            if (ImGui.Button("Stop rearranging")) {
+                macroRearrangeMode = false;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Reverse all")) {
+                macros.Reverse();
             }
 
+        }
+        else {
+            ImGui.TextWrapped(
+                "Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
 
-            ImGui.NextColumn();
+            ImGui.Columns(6);
+            ImGui.SetColumnWidth(0, 200 + 5 * ImGuiHelpers.GlobalScale);
+            ImGui.SetColumnWidth(1, 140 + 5 * ImGuiHelpers.GlobalScale);
+            ImGui.SetColumnWidth(2, 80 + 5 * ImGuiHelpers.GlobalScale);
+            ImGui.SetColumnWidth(3, 160 + 5 * ImGuiHelpers.GlobalScale);
+            ImGui.SetColumnWidth(4, 160 + 5 * ImGuiHelpers.GlobalScale);
+            ImGui.SetColumnWidth(5, 30 + 5 * ImGuiHelpers.GlobalScale);
 
-            switch (macro.Kind)
-            {
-                case Configuration.MacroEntry.MacroEntryKind.Id:
-                    ImGui.SetNextItemWidth(-1);
-
-                    var id = macro.Id;
-                    if (ImGui.InputInt($"###macroId", ref id))
-                    {
-                        id = Math.Max(0, id);
-                        id = Math.Min(99, id);
-                        macro.Id = id;
-                    }
-
-                    break;
-                case Configuration.MacroEntry.MacroEntryKind.SingleLine:
-                    var line = macro.Line;
-                    line ??= string.Empty;
-                    var didColor = false;
-                    if (!line.StartsWith("/"))
-                    {
-                        didColor = true;
-                        ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-                    }
-
-                    ImGui.SetNextItemWidth(-1);
-
-                    if (ImGui.InputText($"###macroId", ref line, 100))
-                    {
-                        macro.Line = line;
-                    }
-
-                    if (didColor)
-                    {
-                        ImGui.PopStyleColor();
-                    }
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            ImGui.NextColumn();
-
-            var icon = macro.IconId;
-
-            ImGui.SetNextItemWidth(-1);
-
-            if (ImGui.InputInt($"###macroIcon", ref icon))
-            {
-                icon = Math.Max(0, icon);
-                macro.IconId = icon;
-            }
-
-            ImGui.NextColumn();
-
-            this.macros[macroNumber] = macro;
-
-            if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash)) this.macros.RemoveAt(macroNumber);
-
-            ImGui.PopID();
-
-            ImGui.NextColumn();
             ImGui.Separator();
+
+            ImGui.Text("Search Name");
+            ImGui.NextColumn();
+            ImGui.Text("Kind");
+            ImGui.NextColumn();
+            ImGui.Text("Shared");
+            ImGui.NextColumn();
+            ImGui.Text("ID/Line");
+            ImGui.NextColumn();
+            ImGui.Text("Icon");
+            ImGui.NextColumn();
+            ImGui.Text(string.Empty);
+            ImGui.NextColumn();
+
+            ImGui.Separator();
+
+            for (var macroNumber = this.macros.Count - 1; macroNumber >= 0; macroNumber--) {
+                var macro = this.macros[macroNumber];
+                ImGui.PushID($"macro_{macroNumber}");
+
+                ImGui.SetNextItemWidth(-1);
+
+                var text = macro.SearchName;
+                if (ImGui.InputText($"###macroSn", ref text, 100)) {
+                    macro.SearchName = text;
+                }
+
+                ImGui.NextColumn();
+
+                if (ImGui.BeginCombo("###macroKnd", macro.Kind.ToString())) {
+                    foreach (var macroEntryKind in Enum.GetValues<Configuration.MacroEntry.MacroEntryKind>()) {
+                        if (ImGui.Selectable(macroEntryKind.ToString(), macroEntryKind == macro.Kind)) {
+                            macro.Kind = macroEntryKind;
+                        }
+                    }
+
+                    ImGui.EndCombo();
+                }
+
+                ImGui.NextColumn();
+
+                if (macro.Kind == Configuration.MacroEntry.MacroEntryKind.Id) {
+                    var isShared = macro.Shared;
+                    if (ImGui.Checkbox($"###macroSh", ref isShared)) {
+                        macro.Shared = isShared;
+                    }
+                }
+                else {
+                    ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.ParsedGrey);
+                    ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ImGuiColors.ParsedGrey);
+                    ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ImGuiColors.ParsedGrey);
+                    ImGui.PushStyleColor(ImGuiCol.CheckMark, ImGuiColors.ParsedGrey);
+
+                    var isShared = false;
+                    ImGui.Checkbox("###macroSh", ref isShared);
+
+                    ImGui.PopStyleColor(4);
+                }
+
+
+                ImGui.NextColumn();
+
+                switch (macro.Kind) {
+                    case Configuration.MacroEntry.MacroEntryKind.Id:
+                        ImGui.SetNextItemWidth(-1);
+
+                        var id = macro.Id;
+                        if (ImGui.InputInt($"###macroId", ref id)) {
+                            id = Math.Max(0, id);
+                            id = Math.Min(99, id);
+                            macro.Id = id;
+                        }
+
+                        break;
+                    case Configuration.MacroEntry.MacroEntryKind.SingleLine:
+                        var line = macro.Line;
+                        line ??= string.Empty;
+                        var didColor = false;
+                        if (!line.StartsWith("/")) {
+                            didColor = true;
+                            ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
+                        }
+
+                        ImGui.SetNextItemWidth(-1);
+
+                        if (ImGui.InputText($"###macroId", ref line, 100)) {
+                            macro.Line = line;
+                        }
+
+                        if (didColor) {
+                            ImGui.PopStyleColor();
+                        }
+
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                ImGui.NextColumn();
+
+                var icon = macro.IconId;
+
+                ImGui.SetNextItemWidth(-1);
+
+                if (ImGui.InputInt($"###macroIcon", ref icon)) {
+                    icon = Math.Max(0, icon);
+                    macro.IconId = icon;
+                }
+
+                ImGui.NextColumn();
+
+                this.macros[macroNumber] = macro;
+
+                if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash)) this.macros.RemoveAt(macroNumber);
+
+                ImGui.PopID();
+
+                ImGui.NextColumn();
+                ImGui.Separator();
+            }
+
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus)) {
+                this.macros.Insert(0, new Configuration.MacroEntry
+                {
+                    Id = 0,
+                    SearchName = "New Macro",
+                    Shared = false,
+                    IconId = 066001,
+                    Line = string.Empty,
+                });
+            }
+
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetTooltip("Add new macro link");
+            }
+
+            ImGui.SameLine();
+
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy)) {
+                var json = JsonConvert.SerializeObject(this.macros);
+                ImGui.SetClipboardText("WM1" + json);
+            }
+
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetTooltip("Copy macro links to clipboard");
+            }
+
+            ImGui.SameLine();
+
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport)) {
+                ImportMacros(ImGui.GetClipboardText());
+            }
+
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetTooltip("Import macro links from clipboard");
+            }
+
+            ImGui.SameLine();
+            if (ImGuiComponents.IconButton(FontAwesomeIcon.ArrowsUpDown)) {
+                macroRearrangeMode = true;
+            }
+            if (ImGui.IsItemHovered()) {
+                ImGui.SetTooltip("Rearrange macro links");
+            }
+
+            ImGui.Columns(1);
         }
-
-        ImGui.NextColumn();
-        ImGui.NextColumn();
-        ImGui.NextColumn();
-        ImGui.NextColumn();
-
-        if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus))
-        {
-            this.macros.Insert(0, new Configuration.MacroEntry
-            {
-                Id = 0,
-                SearchName = "New Macro",
-                Shared = false,
-                IconId = 066001,
-                Line = string.Empty,
-            });
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip("Add new macro link");
-        }
-
-        ImGui.SameLine();
-
-        if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy))
-        {
-            var json = JsonConvert.SerializeObject(this.macros);
-            ImGui.SetClipboardText("WM1" + json);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip("Copy macro links to clipboard");
-        }
-
-        ImGui.SameLine();
-
-        if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport))
-        {
-            ImportMacros(ImGui.GetClipboardText());
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip("Import macro links from clipboard");
-        }
-
-        ImGui.Columns(1);
     }
 
     private string tempConstantName = string.Empty;
@@ -732,5 +833,16 @@ public class SettingsWindow : Window
 
             ImGui.EndCombo();
         }
+    }
+
+    private static bool IconButtonEnabledWhen(bool enabled, FontAwesomeIcon icon, string id)
+    {
+        if (!enabled)
+            ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 0.5f);
+        var result = ImGuiComponents.IconButton(id, icon);
+        if (!enabled)
+            ImGui.PopStyleVar();
+
+        return result && enabled;
     }
 }

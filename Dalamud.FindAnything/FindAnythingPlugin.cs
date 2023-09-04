@@ -1891,7 +1891,12 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.MacroLinks:
-                                foreach (var macroLink in Configuration.MacroLinks)
+                                var macroLinks = Configuration.MacroLinks.AsEnumerable();
+                                if (Configuration.MacroLinksSearchDirection == Configuration.MacroSearchDirection.TopToBottom) {
+                                    macroLinks = macroLinks.Reverse();
+                                }
+
+                                foreach (var macroLink in macroLinks)
                                 {
                                     var score = matcher.Matches(macroLink.SearchName.Downcase(normalizeKana));
                                     if (score > 0)
