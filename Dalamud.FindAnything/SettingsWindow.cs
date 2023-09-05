@@ -50,6 +50,7 @@ public class SettingsWindow : Window
     private string matchSigilFuzzy;
     private string matchSigilFuzzyParts;
 
+    private DateTime? windowOffsetChangeTime;
     private bool macroRearrangeMode;
     private const int SaveDiscardOffset = -40;
 
@@ -237,7 +238,9 @@ public class SettingsWindow : Window
                 ImGui.Checkbox("Show Emote command in search result", ref this.showEmoteCommand);
                 ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref this.wikiModeNoSpoilers);
                 ImGui.Checkbox("Directly go to wiki mode when opening search", ref this.onlyWiki);
-                ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800);
+                if (ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800)) {
+                    this.windowOffsetChangeTime = DateTime.UtcNow;
+                }
                 if (ImGui.BeginCombo("Scroll Speed", this.speed.ToString())) {
                     foreach (var key in Enum.GetValues<Configuration.ScrollSpeed>()) {
                         if (ImGui.Selectable(key.ToString(), key == this.speed)) {
@@ -462,15 +465,29 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.Save();
 
             FindAnythingPlugin.TexCache.ReloadMacroIcons();
-            if (saveAndClose)
-                IsOpen = false;
         }
 
         ImGui.SameLine();
 
-        if (ImGui.Button("Discard"))
+        if (ImGui.Button("Discard") || saveAndClose)
         {
             IsOpen = false;
+            windowOffsetChangeTime = null;
+        }
+
+        if (windowOffsetChangeTime != null) {
+            // Use same positioning/size logic as main window
+            var size = new Vector2(500, 40) * ImGuiHelpers.GlobalScale;
+            var startPos = ImGuiHelpers.MainViewport.Pos + (ImGuiHelpers.MainViewport.Size / 2 - size / 2);
+            startPos.Y -= 200;
+            startPos += posOffset;
+
+            var drawList = ImGui.GetForegroundDrawList();
+            drawList.AddRect(startPos, startPos + size, ImGui.ColorConvertFloat4ToU32(ImGuiColors.ParsedGreen));
+
+            if ((DateTime.UtcNow - windowOffsetChangeTime.Value).TotalSeconds > 3) {
+                windowOffsetChangeTime = null;
+            }
         }
     }
 
