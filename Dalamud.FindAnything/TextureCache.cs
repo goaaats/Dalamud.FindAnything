@@ -1,73 +1,78 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Dalamud.Data;
-using Dalamud.Interface;
-using Dalamud.Logging;
-using ImGuiScene;
+using Dalamud.Interface.Internal;
+using Dalamud.Plugin.Services;
 using Lumina.Excel.GeneratedSheets;
 
 namespace Dalamud.FindAnything
 {
     public class TextureCache : IDisposable
     {
-        private readonly UiBuilder uiBuilder;
-        private readonly DataManager data;
+        private readonly ITextureProvider textureProvider;
 
-        public IReadOnlyDictionary<uint, TextureWrap> MainCommandIcons { get; init; }
-        public IReadOnlyDictionary<uint, TextureWrap> GeneralActionIcons { get; init; }
-        public IReadOnlyDictionary<uint, TextureWrap> ContentTypeIcons { get; init; }
-        public IReadOnlyDictionary<uint, TextureWrap> EmoteIcons { get; init; }
-        public IReadOnlyDictionary<uint, TextureWrap> ClassJobIcons { get; init; }
-        public IReadOnlyDictionary<uint, TextureWrap> MountIcons { get; init; }
-        public IReadOnlyDictionary<uint, TextureWrap> MinionIcons { get; init; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> MainCommandIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> GeneralActionIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> ContentTypeIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> EmoteIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> ClassJobIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> MountIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> MinionIcons { get; }
 
-        public Dictionary<uint, TextureWrap> ExtraIcons { get; private set; }
+        public Dictionary<uint, IDalamudTextureWrap> ExtraIcons { get; }
 
-        public TextureWrap AetheryteIcon { get; init; }
-        public TextureWrap WikiIcon { get; init; }
-        public TextureWrap PluginInstallerIcon { get; init; }
-        public TextureWrap LogoutIcon { get; init; }
-        public TextureWrap EmoteIcon { get; init; }
-        public TextureWrap HintIcon { get; set; }
-        public TextureWrap ChatIcon { get; set; }
-        public TextureWrap MathsIcon { get; set; }
+        public IDalamudTextureWrap AetheryteIcon { get; }
+        public IDalamudTextureWrap WikiIcon { get; }
+        public IDalamudTextureWrap PluginInstallerIcon { get; }
+        public IDalamudTextureWrap LogoutIcon { get; }
+        public IDalamudTextureWrap EmoteIcon { get; }
+        public IDalamudTextureWrap HintIcon { get; }
+        public IDalamudTextureWrap ChatIcon { get; }
+        public IDalamudTextureWrap MathsIcon { get; }
 
-        public TextureWrap GameIcon { get; set; }
+        public IDalamudTextureWrap GameIcon { get; }
 
-        private TextureCache(UiBuilder uiBuilder, DataManager data)
+        private IDalamudTextureWrap? GetIconTexture(uint iconId)
         {
-            this.uiBuilder = uiBuilder;
-            this.data = data;
+            var path = textureProvider.GetIconPath(iconId, ITextureProvider.IconFlags.None);
+            if (path == null)
+                return null;
 
-            var mainCommands = new Dictionary<uint, TextureWrap>();
+            return textureProvider.GetTextureFromGame(path);
+        }
+
+        private TextureCache(IDataManager data, ITextureProvider textureProvider)
+        {
+            this.textureProvider = textureProvider;
+
+            var mainCommands = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var mainCommand in data.GetExcelSheet<MainCommand>()!)
             {
-                mainCommands.Add(mainCommand.RowId, data!.GetImGuiTextureHqIcon((uint) mainCommand.Icon)!);
+                mainCommands.Add(mainCommand.RowId, GetIconTexture((uint) mainCommand.Icon)!);
             }
             MainCommandIcons = mainCommands;
 
-            var generalActions = new Dictionary<uint, TextureWrap>();
+            var generalActions = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var action in data.GetExcelSheet<GeneralAction>()!)
             {
-                generalActions.Add(action.RowId, data!.GetImGuiTextureHqIcon((uint) action.Icon)!);
+                generalActions.Add(action.RowId, GetIconTexture((uint) action.Icon)!);
             }
             GeneralActionIcons = generalActions;
 
-            var contentTypes = new Dictionary<uint, TextureWrap>();
+            var contentTypes = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var cType in data.GetExcelSheet<ContentType>()!)
             {
                 if (cType.Icon == 0)
                     continue;
 
-                contentTypes.Add(cType.RowId, data!.GetImGuiTextureHqIcon((uint) cType.Icon)!);
+                contentTypes.Add(cType.RowId, GetIconTexture(cType.Icon)!);
             }
             ContentTypeIcons = contentTypes;
 
-            var emotes = new Dictionary<uint, TextureWrap>();
+            var emotes = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var emote in data.GetExcelSheet<Emote>()!)
             {
-                var icon = data!.GetImGuiTextureHqIcon((uint)emote.Icon);
+                var icon = GetIconTexture(emote.Icon);
                 if (icon == null)
                     continue;
 
@@ -75,13 +80,13 @@ namespace Dalamud.FindAnything
             }
             EmoteIcons = emotes;
 
-            var cjIcons = new Dictionary<uint, TextureWrap>();
+            var cjIcons = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var classJob in data.GetExcelSheet<ClassJob>()!)
             {
-                TextureWrap? icon = null;
+                IDalamudTextureWrap? icon;
                 if (classJob.JobIndex != 0)
                 {
-                    icon = data.GetImGuiTextureHqIcon(062400 + (uint)classJob.JobIndex);
+                    icon = GetIconTexture(062400 + (uint)classJob.JobIndex);
                 }
                 else
                 {
@@ -111,30 +116,30 @@ namespace Dalamud.FindAnything
                         _ => 0,
                     };
 
-                    icon = data.GetImGuiTextureHqIcon(062300 + (uint) offset);
+                    icon = GetIconTexture(062300 + (uint) offset);
                 }
 
                 if (icon != null)
                     cjIcons.Add(classJob.RowId, icon);
             }
             ClassJobIcons = cjIcons;
-            PluginLog.Information(ClassJobIcons.Count + " class jobs loaded.");
+            FindAnythingPlugin.Log.Information(ClassJobIcons.Count + " class jobs loaded.");
 
-            var mountIcons = new Dictionary<uint, TextureWrap>();
+            var mountIcons = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var mount in data.GetExcelSheet<Mount>()!)
             {
-                var icon = data!.GetImGuiTextureHqIcon(mount.Icon);
+                var icon = GetIconTexture(mount.Icon);
                 if (icon == null)
                     continue;
 
                 mountIcons.Add(mount.RowId, icon);
             }
             MountIcons = mountIcons;
-            
-            var minionIcons = new Dictionary<uint, TextureWrap>();
+
+            var minionIcons = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var minion in data.GetExcelSheet<Companion>()!)
             {
-                var icon = data!.GetImGuiTextureHqIcon(minion.Icon);
+                var icon = GetIconTexture(minion.Icon);
                 if (icon == null)
                     continue;
 
@@ -142,19 +147,20 @@ namespace Dalamud.FindAnything
             }
             MinionIcons = minionIcons;
 
-            AetheryteIcon = data.GetImGuiTextureHqIcon(066417)!;
-            WikiIcon = data.GetImGuiTextureHqIcon(066404)!;
-            PluginInstallerIcon = data.GetImGuiTextureHqIcon(066472)!;
-            LogoutIcon = data.GetImGuiTextureHqIcon(066403)!;
-            EmoteIcon = data.GetImGuiTextureHqIcon(066420)!;
-            HintIcon = data.GetImGuiTextureHqIcon(066453)!;
-            ChatIcon = data.GetImGuiTextureHqIcon(066473)!;
-            MathsIcon = data.GetImGuiTextureHqIcon(062409)!;
+            AetheryteIcon = GetIconTexture(066417)!;
+            WikiIcon = GetIconTexture(066404)!;
+            PluginInstallerIcon = GetIconTexture(066472)!;
+            LogoutIcon = GetIconTexture(066403)!;
+            EmoteIcon = GetIconTexture(066420)!;
+            HintIcon = GetIconTexture(066453)!;
+            ChatIcon = GetIconTexture(066473)!;
+            MathsIcon = GetIconTexture(062409)!;
 
-            this.ExtraIcons = new Dictionary<uint, TextureWrap>();
+            ExtraIcons = new Dictionary<uint, IDalamudTextureWrap>();
 
-            GameIcon = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(
+            var gameIconPath = new FileInfo(Path.Combine(
                 FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "Normal.png"));
+            GameIcon = textureProvider.GetTextureFromFile(gameIconPath)!;
 
             ReloadMacroIcons();
         }
@@ -169,16 +175,16 @@ namespace Dalamud.FindAnything
 
         public void EnsureExtraIcon(uint iconId)
         {
-            if (this.ExtraIcons.ContainsKey(iconId))
+            if (ExtraIcons.ContainsKey(iconId))
                 return;
 
-            var tex = this.data.GetImGuiTextureHqIcon(iconId);
+            var tex = GetIconTexture(iconId);
 
             if (tex != null)
-                this.ExtraIcons[iconId] = tex;
+                ExtraIcons[iconId] = tex;
         }
 
-        public static TextureCache Load(UiBuilder uiBuilder, DataManager data) => new TextureCache(uiBuilder, data);
+        public static TextureCache Load(IDataManager data, ITextureProvider textureProvider) => new(data, textureProvider);
 
         public void Dispose()
         {
@@ -202,22 +208,22 @@ namespace Dalamud.FindAnything
                 icon.Value.Dispose();
             }
 
-            foreach (var icon in this.ExtraIcons)
+            foreach (var icon in ExtraIcons)
             {
                 icon.Value.Dispose();
             }
 
-            foreach (var icon in this.ClassJobIcons)
-            {
-                icon.Value.Dispose();
-            }
-            
-            foreach (var icon in this.MountIcons)
+            foreach (var icon in ClassJobIcons)
             {
                 icon.Value.Dispose();
             }
 
-            foreach (var icon in this.MinionIcons)
+            foreach (var icon in MountIcons)
+            {
+                icon.Value.Dispose();
+            }
+
+            foreach (var icon in MinionIcons)
             {
                 icon.Value.Dispose();
             }

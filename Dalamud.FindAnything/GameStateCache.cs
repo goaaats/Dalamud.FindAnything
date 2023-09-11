@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -55,14 +54,13 @@ public unsafe class GameStateCache
 
         UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         
-        var gsModule = RaptureGearsetModule.Instance();
-        
+        var gsEntries = (RaptureGearsetModule.GearsetEntry*)RaptureGearsetModule.Instance()->Entries;
         var gearsets = new List<Gearset>();
         for (var i = 0; i < 100; i++)
         {
-            var gs = gsModule->Gearset[i];
+            var gs = &gsEntries[i];
 
-            if (gs == null || !gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
+            if (!gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
                 continue;
 
             var name = MemoryHelper.ReadString(new IntPtr(gs->Name), 47);
@@ -77,8 +75,8 @@ public unsafe class GameStateCache
 
         Gearsets = gearsets;
 
-        PluginLog.LogVerbose($"{UnlockedDutyKeys.Count} duties unlocked.");
-        PluginLog.LogVerbose($"{UnlockedEmoteKeys.Count} emotes unlocked.");
+        FindAnythingPlugin.Log.Verbose($"{UnlockedDutyKeys.Count} duties unlocked.");
+        FindAnythingPlugin.Log.Verbose($"{UnlockedEmoteKeys.Count} emotes unlocked.");
     }
 
     public static GameStateCache Load() => new GameStateCache();

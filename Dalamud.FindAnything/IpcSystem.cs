@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Data;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
+using Dalamud.Plugin.Services;
 
 namespace Dalamud.FindAnything;
 
 public class IpcSystem : IDisposable
 {
-    private readonly DataManager data;
+    private readonly IDataManager data;
     private readonly TextureCache texCache;
     private readonly ICallGateProvider<string, string, uint, string> cgRegister;
     private readonly ICallGateProvider<string, string, string, uint, string> cgRegisterWithSearch;
@@ -28,7 +27,7 @@ public class IpcSystem : IDisposable
         public string Guid { get; set; }
     }
 
-    public IpcSystem(DalamudPluginInterface pluginInterface, DataManager data, TextureCache texCache)
+    public IpcSystem(DalamudPluginInterface pluginInterface, IDataManager data, TextureCache texCache)
     {
         this.data = data;
         this.texCache = texCache;
@@ -45,7 +44,7 @@ public class IpcSystem : IDisposable
 
         this.TrackedIpcs = new Dictionary<string, List<IpcBinding>>();
 
-        PluginLog.Verbose("[IPC] Firing FA.Available.");
+        FindAnythingPlugin.Log.Verbose("[IPC] Firing FA.Available.");
         var cgAvailable = pluginInterface.GetIpcProvider<bool>("FA.Available");
         cgAvailable.SendMessage();
     }
@@ -75,7 +74,7 @@ public class IpcSystem : IDisposable
         {
             this.TrackedIpcs.Remove(pluginInternalName);
             
-            PluginLog.Verbose($"[IPC] All IPCs unregistered: {pluginInternalName}");
+            FindAnythingPlugin.Log.Verbose($"[IPC] All IPCs unregistered: {pluginInternalName}");
             return true;
         }
 
@@ -107,7 +106,7 @@ public class IpcSystem : IDisposable
             Search = searchValue.Downcase(normalizeKana: true)
         });
         
-        PluginLog.Verbose($"[IPC] Registered: {pluginInternalName} - {searchDisplayName} - {guid}");
+        FindAnythingPlugin.Log.Verbose($"[IPC] Registered: {pluginInternalName} - {searchDisplayName} - {guid}");
         
         return guid;
     }

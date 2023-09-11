@@ -9,11 +9,11 @@ using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
+using Dalamud.Interface.Internal;
 using Dalamud.Interface.Internal.Notifications;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
 using ImGuiNET;
-using ImGuiScene;
 
 namespace Dalamud.FindAnything.Game;
 
@@ -174,13 +174,13 @@ public class GameWindow : Window, IDisposable
         }},
     };
 
-    private Dictionary<NoseKind, TextureWrap> noseTextures;
-    private TextureWrap thiefTexture;
-    private TextureWrap clerkNeedsTexture;
-    private TextureWrap clerkBoutiqueTexture;
-    private TextureWrap clerkBuilderTexture;
-    private TextureWrap sageTexture;
-    private TextureWrap goldenTicketTexture;
+    private Dictionary<NoseKind, IDalamudTextureWrap> noseTextures;
+    private IDalamudTextureWrap thiefTexture;
+    private IDalamudTextureWrap clerkNeedsTexture;
+    private IDalamudTextureWrap clerkBoutiqueTexture;
+    private IDalamudTextureWrap clerkBuilderTexture;
+    private IDalamudTextureWrap sageTexture;
+    private IDalamudTextureWrap goldenTicketTexture;
 
     public class SimulationState
     {
@@ -207,21 +207,18 @@ public class GameWindow : Window, IDisposable
 
     public GameWindow() : base("DN Farm###dnwindow")
     {
-        var assetPath = FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName;
-
-        noseTextures = new Dictionary<NoseKind, TextureWrap>();
+        noseTextures = new Dictionary<NoseKind, IDalamudTextureWrap>();
         foreach (var noseKind in Enum.GetValues<NoseKind>())
         {
-            var path = Path.Combine(assetPath, "noses", noseKind + ".png");
-            noseTextures.Add(noseKind, FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(path));
+            noseTextures.Add(noseKind, LoadImage(noseKind + ".png"));
         }
 
-        thiefTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "Thief.png"));
-        clerkNeedsTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkNeeds.png"));
-        clerkBoutiqueTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkBoutique.png"));
-        clerkBuilderTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "ClerkBuilder.png"));
-        sageTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "Sage.png"));
-        goldenTicketTexture = FindAnythingPlugin.PluginInterface.UiBuilder.LoadImage(Path.Combine(assetPath, "noses", "goldenticket.png"));
+        thiefTexture = LoadImage("Thief.png");
+        clerkNeedsTexture = LoadImage("ClerkNeeds.png");
+        clerkBoutiqueTexture = LoadImage("ClerkBoutique.png");
+        clerkBuilderTexture = LoadImage("ClerkBuilder.png");
+        sageTexture = LoadImage("Sage.png");
+        goldenTicketTexture = LoadImage("goldenticket.png");
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -230,6 +227,12 @@ public class GameWindow : Window, IDisposable
         };
         
         Load();
+    }
+
+    private static IDalamudTextureWrap LoadImage(string fileName)
+    {
+        var file = new FileInfo(Path.Combine(FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", fileName));
+        return FindAnythingPlugin.TextureProvider.GetTextureFromFile(file)!;
     }
     
     public void Load()
@@ -264,7 +267,7 @@ public class GameWindow : Window, IDisposable
     {
         var timeSinceSave = DateTimeOffset.Now - state.LastSaved;
         var numHoursSpent = Math.Floor(timeSinceSave.TotalHours);
-        PluginLog.Verbose($"{numHoursSpent} hours since last save");
+        FindAnythingPlugin.Log.Verbose($"{numHoursSpent} hours since last save");
         if (numHoursSpent > 0 && this.state.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs))
         {
             var earnedRestedDn = (ETERNITY_DN_PER_HOUR * numHoursSpent) * numEternityDogs;
@@ -376,7 +379,7 @@ public class GameWindow : Window, IDisposable
                 this.thiefActive = true;
                 this.thiefMessageDismissed = false;
                 this.thiefWillStealAt = DateTimeOffset.Now.AddSeconds(random.Next(8, 15));
-                PluginLog.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
+                FindAnythingPlugin.Log.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
             }
 
             this.state.LastSaved = DateTimeOffset.Now;

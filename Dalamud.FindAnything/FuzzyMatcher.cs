@@ -137,12 +137,12 @@ public readonly ref struct FuzzyMatcher
         var needleSize = needleEnd - needleStart + 1;
 
         var score = CalculateRawScore(needleSize, startPos, gaps, consecutive, borderMatches);
-        // PluginLog.Debug(
+        // FindAnythingPlugin.Log.Debug(
         //     $"['{needleString.Substring(needleStart, needleEnd - needleStart + 1)}' in '{haystack}'] fwd: needleSize={needleSize} startPos={startPos} gaps={gaps} consecutive={consecutive} borderMatches={borderMatches} score={score}");
 
         (startPos, gaps, consecutive, borderMatches) = FindReverse(haystack, endPos, needleStart, needleEnd);
         var revScore = CalculateRawScore(needleSize, startPos, gaps, consecutive, borderMatches);
-        // PluginLog.Debug(
+        // FindAnythingPlugin.Log.Debug(
         //     $"['{needleString.Substring(needleStart, needleEnd - needleStart + 1)}' in '{haystack}'] rev: needleSize={needleSize} startPos={startPos} gaps={gaps} consecutive={consecutive} borderMatches={borderMatches} score={revScore}");
 
         return int.Max(score, revScore);
