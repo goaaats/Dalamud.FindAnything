@@ -1341,87 +1341,92 @@ namespace Dalamud.FindAnything
             {
                 CloseFinder();
             }
-            else if (!finderOpen)
-            {
-                var shiftDown = Input.IsDown(Configuration.ShiftShiftKey);
-
-                // KeyDown #1 fired
-                if (shiftDown && !shiftArmed) {
-                    shiftArmed = true;
-                    framesSinceLastShift = 0; // Reset frame count
-                    lastShiftTime = DateTime.UtcNow; // Register lastShiftTime at KeyDown
-                }
-
-                // Await KeyUp #1
-                if (shiftArmed) {
-                    framesSinceLastShift++; // Count frames after KeyDown
-                    // KeyUp #1 fired
-                    if (!shiftDown) {
-                        shiftOk = true;
-                    }
-                }
-
-                // Await KeyDown #2
-                if (!shiftDown || !shiftOk)
-                    return;
-
-                // KeyDown #2 fired, so clean up key state (but may re-arm later if delay was too long)
-                shiftArmed = false;
-                shiftOk = false;
-
-                switch (Configuration.Open)
-                {
-                    case Configuration.OpenMode.ShiftShift:
-                        if (Configuration.ShiftShiftUnit == Configuration.DoubleTapUnit.Frames) {
-                            if (framesSinceLastShift <= Configuration.ShiftShiftDelay) {
-                                OpenFinder();
-                            }
-                            else {
-                                // Delay was too long, so count this as KeyDown #1 instead
-                                shiftArmed = true;
-                                framesSinceLastShift = 0;
-                            }
-                        }
-                        else if (Configuration.ShiftShiftUnit == Configuration.DoubleTapUnit.Milliseconds) {
-                            if ((DateTime.UtcNow - lastShiftTime).TotalMilliseconds <= Configuration.ShiftShiftDelay) {
-                                OpenFinder();
-                            }
-                            else {
-                                // Delay was too long, so count this as KeyDown #1 instead
-                                shiftArmed = true;
-                                lastShiftTime = DateTime.UtcNow;
-                            }
-                        }
-                        break;
+            else if (!finderOpen) {
+                switch (Configuration.Open) {
                     case Configuration.OpenMode.Combo:
-                        var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier);
-                        var mod2 = Configuration.ComboModifier2 == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboModifier2);
-                        var key = Configuration.ComboKey == VirtualKey.NO_KEY || Input.IsDown(Configuration.ComboKey);
-
-                        var wiki = Configuration.WikiComboKey != VirtualKey.NO_KEY && Input.IsDown(Configuration.WikiComboKey);
-
-                        if (mod && mod2 && key)
-                        {
-                            OpenFinder();
-
-                            if (wiki)
-                            {
-                                searchState.SetTerm(ModeSigilWiki);
-                            }
-
-                            if (Configuration.PreventPassthrough)
-                            {
-                                UnsetKey(Configuration.ComboModifier);
-                                UnsetKey(Configuration.ComboModifier2);
-                                UnsetKey(Configuration.ComboKey);
-
-                                if (wiki)
-                                    UnsetKey(Configuration.WikiComboKey);
-                            }
-                        }
+                        CheckOpenWithCombo();
+                        break;
+                    case Configuration.OpenMode.ShiftShift:
+                        CheckOpenWithDoubleTap();
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        private void CheckOpenWithCombo()
+        {
+            var mod = Configuration.ComboModifier == VirtualKey.NO_KEY || Input!.IsDown(Configuration.ComboModifier);
+            var mod2 = Configuration.ComboModifier2 == VirtualKey.NO_KEY || Input!.IsDown(Configuration.ComboModifier2);
+            var key = Configuration.ComboKey == VirtualKey.NO_KEY || Input!.IsDown(Configuration.ComboKey);
+
+            var wiki = Configuration.WikiComboKey != VirtualKey.NO_KEY && Input!.IsDown(Configuration.WikiComboKey);
+
+            if (mod && mod2 && key) {
+                OpenFinder();
+
+                if (wiki) {
+                    searchState.SetTerm(ModeSigilWiki);
+                }
+
+                if (Configuration.PreventPassthrough) {
+                    UnsetKey(Configuration.ComboModifier);
+                    UnsetKey(Configuration.ComboModifier2);
+                    UnsetKey(Configuration.ComboKey);
+
+                    if (wiki)
+                        UnsetKey(Configuration.WikiComboKey);
+                }
+            }
+        }
+
+        private void CheckOpenWithDoubleTap()
+        {
+            var shiftDown = Input!.IsDown(Configuration.ShiftShiftKey);
+
+            // KeyDown #1 fired
+            if (shiftDown && !shiftArmed) {
+                shiftArmed = true;
+                framesSinceLastShift = 0; // Reset frame count
+                lastShiftTime = DateTime.UtcNow; // Register lastShiftTime at KeyDown
+            }
+
+            // Await KeyUp #1
+            if (shiftArmed) {
+                framesSinceLastShift++; // Count frames after KeyDown
+                // KeyUp #1 fired
+                if (!shiftDown) {
+                    shiftOk = true;
+                }
+            }
+
+            // Await KeyDown #2
+            if (!shiftDown || !shiftOk)
+                return;
+
+            // KeyDown #2 fired, so clean up key state (but may re-arm later if delay was too long)
+            shiftArmed = false;
+            shiftOk = false;
+
+            if (Configuration.ShiftShiftUnit == Configuration.DoubleTapUnit.Frames) {
+                if (framesSinceLastShift <= Configuration.ShiftShiftDelay) {
+                    OpenFinder();
+                }
+                else {
+                    // Delay was too long, so count this as KeyDown #1 instead
+                    shiftArmed = true;
+                    framesSinceLastShift = 0;
+                }
+            }
+            else if (Configuration.ShiftShiftUnit == Configuration.DoubleTapUnit.Milliseconds) {
+                if ((DateTime.UtcNow - lastShiftTime).TotalMilliseconds <= Configuration.ShiftShiftDelay) {
+                    OpenFinder();
+                }
+                else {
+                    // Delay was too long, so count this as KeyDown #1 instead
+                    shiftArmed = true;
+                    lastShiftTime = DateTime.UtcNow;
                 }
             }
         }
