@@ -6,7 +6,6 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using Dalamud.Interface.Internal.Notifications;
-using Dalamud.Logging;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
@@ -147,7 +146,7 @@ public static class GameRewards
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, "Could not set Desktop Wallpaper.");
+                FindAnythingPlugin.Log.Error(ex, "Could not set Desktop Wallpaper.");
             }
         }
     }

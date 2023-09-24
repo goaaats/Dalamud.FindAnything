@@ -25,9 +25,17 @@ namespace Dalamud.FindAnything
             SearchSetting.Reserved20 | SearchSetting.Reserved21 | SearchSetting.Reserved22 | SearchSetting.Reserved23 |
             SearchSetting.Reserved24;
 
+        public Dictionary<SearchSetting, int> SearchWeights = new();
+
         public OpenMode Open { get; set; } = OpenMode.Combo;
 
         public uint ShiftShiftDelay { get; set; } = 40;
+        public enum DoubleTapUnit
+        {
+            Frames,
+            Milliseconds,
+        }
+        public DoubleTapUnit ShiftShiftUnit { get; set; } = DoubleTapUnit.Frames;
         public VirtualKey ComboModifier { get; set; } = VirtualKey.CONTROL;
         public VirtualKey ComboModifier2 { get; set; } = VirtualKey.NO_KEY;
         public VirtualKey ComboKey { get; set; } = VirtualKey.T;
@@ -117,6 +125,14 @@ namespace Dalamud.FindAnything
         }
 
         public List<MacroEntry> MacroLinks { get; set; } = new();
+
+        public enum MacroSearchDirection
+        {
+            BottomToTop,
+            TopToBottom,
+        }
+
+        public MacroSearchDirection MacroLinksSearchDirection { get; set; } = MacroSearchDirection.BottomToTop;
 
         public bool DoAetheryteGilCost { get; set; } = false;
         public bool DoMarketBoardShortcut { get; set; } = false;

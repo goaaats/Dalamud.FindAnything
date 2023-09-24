@@ -51,7 +51,7 @@ public class Command
 
     public Command()
     {
-        SignatureHelper.Initialise(this);
+        FindAnythingPlugin.GameInteropProvider.InitializeFromAttributes(this);
     }
     
     public unsafe void SendChatUnsafe(string command)
