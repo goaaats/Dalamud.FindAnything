@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Keys;
-using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
 
 namespace Dalamud.FindAnything;
@@ -11,7 +11,7 @@ public unsafe class Input
 {
     [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
-    public static bool IsGameFocused
+    private static bool IsGameFocused
     {
         get
         {
@@ -19,28 +19,21 @@ public unsafe class Input
             if (activatedHandle == IntPtr.Zero)
                 return false;
 
-            var procId = Environment.ProcessId;
             _ = GetWindowThreadProcessId(activatedHandle, out var activeProcId);
 
-            return activeProcId == procId;
+            return activeProcId == Environment.ProcessId;
         }
     }
-    
-    private static IntPtr isTextInputActivePtr = IntPtr.Zero;
-    private static bool IsGameTextInputActive => isTextInputActivePtr != IntPtr.Zero && *(bool*)isTextInputActivePtr;
-    
+
+    private static bool IsGameTextInputActive =>
+        Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.IsTextInputActive();
+
     public static bool Disabled => IsGameTextInputActive || !IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetKeyboardState(byte[] lpKeyState);
     private static readonly byte[] keyboardState = new byte[256];
-
-    public Input()
-    {
-        try { isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; } // Located in AtkInputManager
-        catch { FindAnythingPlugin.Log.Error("Failed loading textActiveBoolPtr"); }
-    }
 
     public void Update()
     {
