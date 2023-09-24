@@ -1341,7 +1341,7 @@ namespace Dalamud.FindAnything
             {
                 CloseFinder();
             }
-            else if (!finderOpen) {
+            else {
                 switch (Configuration.Open) {
                     case Configuration.OpenMode.Combo:
                         CheckOpenWithCombo();
@@ -1370,6 +1370,7 @@ namespace Dalamud.FindAnything
                     searchState.SetTerm(ModeSigilWiki);
                 }
 
+                // We do not skip these even if finderOpen is true since we need to cancel keys still held after open
                 if (Configuration.PreventPassthrough) {
                     UnsetKey(Configuration.ComboModifier);
                     UnsetKey(Configuration.ComboModifier2);
@@ -1383,6 +1384,9 @@ namespace Dalamud.FindAnything
 
         private void CheckOpenWithDoubleTap()
         {
+            if (finderOpen)
+                return;
+
             var shiftDown = Input!.IsDown(Configuration.ShiftShiftKey);
 
             // KeyDown #1 fired
