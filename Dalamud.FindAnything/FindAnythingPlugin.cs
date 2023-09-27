@@ -2545,12 +2545,23 @@ namespace Dalamud.FindAnything
                     for (var i = 0; i < results.Length; i++)
                     {
                         var result = results[i];
-                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, ImGuiSelectableFlags.None,
+                        var selectableFlags = ImGuiSelectableFlags.None;
+
+                        var disableMouse = Configuration.DisableMouseSelection && !isQuickSelect;
+                        if (disableMouse) {
+                            selectableFlags = ImGuiSelectableFlags.Disabled;
+                            ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
+                        }
+
+                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, selectableFlags,
                                 new Vector2(childSize.X, textSize.Y)))
                         {
                             Log.Information("Selectable click");
                             clickedIndex = i;
                         }
+
+                        if (disableMouse)
+                            ImGui.PopStyleVar();
 
                         var thisTextSize = ImGui.CalcTextSize(result.Name);
 
