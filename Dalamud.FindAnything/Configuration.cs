@@ -50,6 +50,7 @@ namespace Dalamud.FindAnything
         public bool WikiModeNoSpoilers { get; set; } = true;
         public bool TeamCraftForceBrowser { get; set; } = false;
         public bool DisableMouseSelection { get; set; } = false;
+        public bool OpenCraftingLogToRecipe { get; set; } = false;
 
         public enum OpenMode
         {

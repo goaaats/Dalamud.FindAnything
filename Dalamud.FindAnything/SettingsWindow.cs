@@ -47,6 +47,7 @@ public class SettingsWindow : Window
     private bool tcForceBrowser;
     private bool historyEnabled;
     private bool disableMouseSelection;
+    private bool openCraftingLogToRecipe;
     private MatchMode matchMode;
     private string matchSigilSimple;
     private string matchSigilFuzzy;
@@ -98,6 +99,7 @@ public class SettingsWindow : Window
         this.tcForceBrowser = FindAnythingPlugin.Configuration.TeamCraftForceBrowser;
         this.historyEnabled = FindAnythingPlugin.Configuration.HistoryEnabled;
         this.disableMouseSelection = FindAnythingPlugin.Configuration.DisableMouseSelection;
+        this.openCraftingLogToRecipe = FindAnythingPlugin.Configuration.OpenCraftingLogToRecipe;
         this.matchMode = FindAnythingPlugin.Configuration.MatchMode;
         this.matchSigilSimple = FindAnythingPlugin.Configuration.MatchSigilSimple;
         this.matchSigilFuzzy = FindAnythingPlugin.Configuration.MatchSigilFuzzy;
@@ -257,6 +259,7 @@ public class SettingsWindow : Window
                 ImGui.Checkbox("Don't open Wotsit in combat", ref this.notInCombat);
                 ImGui.Checkbox("Force TeamCraft links to open in your browser", ref this.tcForceBrowser);
                 ImGui.Checkbox("Disable mouse selection in results list unless Quick Select Key is held", ref this.disableMouseSelection);
+                ImGui.Checkbox("When selecting a crafting recipe, jump to the recipe instead of using Recipe Search", ref this.openCraftingLogToRecipe);
 
                 ImGuiHelpers.ScaledDummy(5);
 
@@ -461,6 +464,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.TeamCraftForceBrowser = this.tcForceBrowser;
             FindAnythingPlugin.Configuration.HistoryEnabled = this.historyEnabled;
             FindAnythingPlugin.Configuration.DisableMouseSelection = this.disableMouseSelection;
+            FindAnythingPlugin.Configuration.OpenCraftingLogToRecipe = this.openCraftingLogToRecipe;
 
             FindAnythingPlugin.Configuration.MatchMode = this.matchMode;
             FindAnythingPlugin.Configuration.MatchSigilSimple = this.matchSigilSimple;

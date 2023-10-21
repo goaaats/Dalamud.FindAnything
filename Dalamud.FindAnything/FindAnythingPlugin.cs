@@ -1193,9 +1193,14 @@ namespace Dalamud.FindAnything
             public CraftType? CraftType { get; set; }
 
             public void Selected() {
-                var id = this.Recipe.ItemResult.Value?.RowId ?? 0;
-                if (id > 0) {
-                    GameStateCache.SearchForItemByCraftingMethod((ushort) (id % 500_000));
+                if (Configuration.OpenCraftingLogToRecipe) {
+                    GameStateCache.OpenRecipe(this.Recipe.RowId);
+                }
+                else {
+                    var id = this.Recipe.ItemResult.Value?.RowId ?? 0;
+                    if (id > 0) {
+                        GameStateCache.SearchForItemByCraftingMethod(id % 500_000);
+                    }
                 }
             }
 
