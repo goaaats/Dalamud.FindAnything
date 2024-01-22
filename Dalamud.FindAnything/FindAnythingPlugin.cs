@@ -2343,6 +2343,7 @@ namespace Dalamud.FindAnything
 
         private const int MAX_ONE_PAGE = 10;
         private const int MAX_TO_SEARCH = 100;
+        private const int SELECTION_SCROLL_OFFSET = 1;
         public const string ModeSigilWiki = "?";
 
         private int GetTickCount() => Environment.TickCount & Int32.MaxValue;
@@ -2356,8 +2357,9 @@ namespace Dalamud.FindAnything
 
             ImGuiHelpers.ForceNextWindowMainViewport();
 
-            var size = new Vector2(500, 40);
-            size *= ImGuiHelpers.GlobalScale;
+            var textSize = ImGui.CalcTextSize("poop");
+            var size = new Vector2(500 * ImGuiHelpers.GlobalScale,
+                textSize.Y + ImGui.GetStyle().FramePadding.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2);
 
             var mainViewportSize = ImGuiHelpers.MainViewport.Size;
             var mainViewportMiddle = mainViewportSize / 2;
@@ -2367,9 +2369,14 @@ namespace Dalamud.FindAnything
             startPos += Configuration.PositionOffset;
 
             var scaledFour = 4 * ImGuiHelpers.GlobalScale;
+            var iconSize = textSize with { X = textSize.Y };
 
-            if (results != null)
-                size.Y += Math.Min(results.Length, MAX_ONE_PAGE) * (21 * ImGuiHelpers.GlobalScale);
+            if (results is { Length: > 0 })
+            {
+                size.Y += Math.Min(results.Length, MAX_ONE_PAGE) * (float.Floor(textSize.Y) + float.Floor(scaledFour));
+                size.Y -= float.Floor(scaledFour / 2);
+                size.Y += ImGui.GetStyle().ItemSpacing.Y;
+            }
 
             ImGui.SetNextWindowPos(startPos);
             ImGui.SetNextWindowSize(size);
@@ -2417,8 +2424,6 @@ namespace Dalamud.FindAnything
                 Log.Verbose("Focus loss or escape");
                 closeFinder = true;
             }
-
-            var textSize = ImGui.CalcTextSize("poop");
 
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ImGuiHelpers.GlobalScale, scaledFour));
             ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(scaledFour, scaledFour));
@@ -2546,12 +2551,18 @@ namespace Dalamud.FindAnything
 
                     framesSinceLastKbChange++;
                     var clickedIndex= -1;
+                    var selectedScrollPos = 0f;
 
                     for (var i = 0; i < results.Length; i++)
                     {
                         var result = results[i];
-                        var selectableFlags = ImGuiSelectableFlags.None;
 
+                        if (i == selectedIndex - SELECTION_SCROLL_OFFSET)
+                        {
+                            selectedScrollPos = ImGui.GetCursorPosY();
+                        }
+
+                        var selectableFlags = ImGuiSelectableFlags.None;
                         var disableMouse = Configuration.DisableMouseSelection && !isQuickSelect;
                         if (disableMouse) {
                             selectableFlags = ImGuiSelectableFlags.Disabled;
@@ -2584,15 +2595,15 @@ namespace Dalamud.FindAnything
                         if (result.Icon != null)
                         {
                             ImGui.SameLine(size.X - (50 * ImGuiHelpers.GlobalScale));
-                            ImGui.Image(result.Icon.ImGuiHandle, new Vector2(17, 17) * ImGuiHelpers.GlobalScale);
+                            ImGui.Image(result.Icon.ImGuiHandle, iconSize);
                         }
                     }
 
                     if(isUp || isDown || isPgUp || isPgDn || resetScroll)
                     {
-                        if (selectedIndex > 1)
+                        if (selectedIndex > 0)
                         {
-                            ImGui.SetScrollY((selectedIndex - 1) * (textSize.Y + scaledFour));
+                            ImGui.SetScrollY(selectedScrollPos);
                         }
                         else
                         {
