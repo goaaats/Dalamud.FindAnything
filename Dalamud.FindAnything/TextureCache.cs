@@ -18,6 +18,8 @@ namespace Dalamud.FindAnything
         public IReadOnlyDictionary<uint, IDalamudTextureWrap> ClassJobIcons { get; }
         public IReadOnlyDictionary<uint, IDalamudTextureWrap> MountIcons { get; }
         public IReadOnlyDictionary<uint, IDalamudTextureWrap> MinionIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> FashionAccessoryIcons { get; }
+        public IReadOnlyDictionary<uint, IDalamudTextureWrap> CollectionIcons { get; }
 
         public Dictionary<uint, IDalamudTextureWrap> ExtraIcons { get; }
 
@@ -147,6 +149,28 @@ namespace Dalamud.FindAnything
             }
             MinionIcons = minionIcons;
 
+            var fashionAccessoryIcons = new Dictionary<uint, IDalamudTextureWrap>();
+            foreach (var ornament in data.GetExcelSheet<Ornament>()!)
+            {
+                var icon = GetIconTexture(ornament.Icon);
+                if (icon == null)
+                    continue;
+
+                fashionAccessoryIcons.Add(ornament.RowId, icon);
+            }
+            FashionAccessoryIcons = fashionAccessoryIcons;
+
+            var collectionIcons = new Dictionary<uint, IDalamudTextureWrap>();
+            foreach (var mcGuffin in data.GetExcelSheet<McGuffinUIData>()!)
+            {
+                var icon = GetIconTexture(mcGuffin.Icon);
+                if (icon == null)
+                    continue;
+
+                collectionIcons.Add(mcGuffin.RowId, icon);
+            }
+            CollectionIcons = collectionIcons;
+
             AetheryteIcon = GetIconTexture(066417)!;
             WikiIcon = GetIconTexture(066404)!;
             PluginInstallerIcon = GetIconTexture(066472)!;
@@ -224,6 +248,16 @@ namespace Dalamud.FindAnything
             }
 
             foreach (var icon in MinionIcons)
+            {
+                icon.Value.Dispose();
+            }
+
+            foreach (var icon in FashionAccessoryIcons)
+            {
+                icon.Value.Dispose();
+            }
+
+            foreach (var icon in CollectionIcons)
             {
                 icon.Value.Dispose();
             }

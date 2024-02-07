@@ -22,6 +22,8 @@ public unsafe class GameStateCache
     public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
     public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; }
+    public IReadOnlyList<uint> UnlockedCollectionKeys { get; set; }
+    public IReadOnlyList<uint> UnlockedFashionAccessoryKeys { get; set; }
     public IReadOnlyList<Gearset> Gearsets { get; private set; }
     
     internal bool IsMinionUnlocked(uint minionId) => UIState.Instance()->IsCompanionUnlocked(minionId);
@@ -53,6 +55,10 @@ public unsafe class GameStateCache
         UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => PlayerState.Instance()->IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
 
         UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+
+        UnlockedFashionAccessoryKeys = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()!.Where(x => PlayerState.Instance()->IsOrnamentUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+
+        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!.Where(x => PlayerState.Instance()->IsMcGuffinUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         
         var gsEntries = (RaptureGearsetModule.GearsetEntry*)RaptureGearsetModule.Instance()->Entries;
         var gearsets = new List<Gearset>();
