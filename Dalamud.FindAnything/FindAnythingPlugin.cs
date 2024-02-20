@@ -2370,6 +2370,8 @@ namespace Dalamud.FindAnything
 
             var scaledFour = 4 * ImGuiHelpers.GlobalScale;
             var iconSize = textSize with { X = textSize.Y };
+            var scrollbarWidth = ImGui.GetStyle().ScrollbarSize + 2;
+            var windowPadding = ImGui.GetStyle().WindowPadding.X * 2;
 
             if (results is { Length: > 0 })
             {
@@ -2384,7 +2386,7 @@ namespace Dalamud.FindAnything
 
             ImGui.Begin("###findeverything", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 
-            ImGui.PushItemWidth(size.X - (45 * ImGuiHelpers.GlobalScale));
+            ImGui.PushItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X);
 
             var searchHint = searchState.ActualSearchMode switch
             {
@@ -2588,13 +2590,13 @@ namespace Dalamud.FindAnything
 
                         if (i < 9 && Configuration.QuickSelectKey != VirtualKey.NO_KEY)
                         {
-                            ImGui.SameLine(size.X - (65 * ImGuiHelpers.GlobalScale));
+                            ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
                             ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
                         }
 
                         if (result.Icon != null)
                         {
-                            ImGui.SameLine(size.X - (50 * ImGuiHelpers.GlobalScale));
+                            ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
                             ImGui.Image(result.Icon.ImGuiHandle, iconSize);
                         }
                     }
