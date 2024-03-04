@@ -4,6 +4,7 @@ using Dalamud.Utility;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using Lumina.Text;
+using Lumina.Text.Payloads;
 
 namespace Dalamud.FindAnything
 {
@@ -69,6 +70,16 @@ namespace Dalamud.FindAnything
                 if (result != null)
                 {
                     var textVal = result.ToDalamudString().TextValue;
+
+                    // Handle special case of <if([gnum75>0],Controller,Gamepad)> Settings
+                    if (excelRow is MainCommand
+                        && result.Payloads is [{ PayloadType: PayloadType.If } ifPayload, { PayloadType: PayloadType.Text } textPayload]
+                        && ifPayload.Expressions[0].ToString() == "[gnum75>0]")
+                    {
+                        // Just use the second candidate (gnum75 == 0) since we're never on console
+                        textVal = (ifPayload.Expressions[2].ToString() ?? "Gamepad") + textPayload;
+                    }
+
                     data.Add(excelRow.RowId, new SearchEntry
                     {
                         Display = textVal,
