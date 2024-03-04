@@ -15,15 +15,13 @@ namespace Dalamud.FindAnything
 
         public SearchSetting ToSearchV3 { get; set; } =
             SearchSetting.Aetheryte | SearchSetting.Duty | SearchSetting.MainCommand | SearchSetting.GeneralAction |
-            SearchSetting.Emote | SearchSetting.PluginSettings
-            | SearchSetting.Gearsets | SearchSetting.CraftingRecipes | SearchSetting.GatheringItems | SearchSetting.Mounts |
-            SearchSetting.Minions | SearchSetting.MacroLinks | SearchSetting.Internal | SearchSetting.Maths |
-            SearchSetting.Reserved8
-            | SearchSetting.Reserved9 | SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 |
-            SearchSetting.Reserved13 | SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16
-            | SearchSetting.Reserved17 | SearchSetting.Reserved18 | SearchSetting.Reserved19 |
-            SearchSetting.Reserved20 | SearchSetting.Reserved21 | SearchSetting.Reserved22 | SearchSetting.Reserved23 |
-            SearchSetting.Reserved24;
+            SearchSetting.Emote | SearchSetting.PluginSettings | SearchSetting.Gearsets | SearchSetting.CraftingRecipes |
+            SearchSetting.GatheringItems | SearchSetting.Mounts | SearchSetting.Minions | SearchSetting.MacroLinks |
+            SearchSetting.Internal | SearchSetting.Maths | SearchSetting.FashionAccessories | SearchSetting.Collection |
+            SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 | SearchSetting.Reserved13 |
+            SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16 | SearchSetting.Reserved17 |
+            SearchSetting.Reserved18 | SearchSetting.Reserved19 | SearchSetting.Reserved20 | SearchSetting.Reserved21 |
+            SearchSetting.Reserved22 | SearchSetting.Reserved23 | SearchSetting.Reserved24;
 
         public Dictionary<SearchSetting, int> SearchWeights = new();
 
@@ -74,8 +72,8 @@ namespace Dalamud.FindAnything
             MacroLinks = 1 << 11, // Cannot be toggled off
             Internal = 1 << 12, // Cannot be toggled off
             Maths = 1 << 13,
-            Reserved8 = 1 << 14,
-            Reserved9 = 1 << 15,
+            FashionAccessories = 1 << 14,
+            Collection = 1 << 15,
             Reserved10 = 1 << 16,
             Reserved11 = 1 << 17,
             Reserved12 = 1 << 18,
@@ -196,6 +194,8 @@ namespace Dalamud.FindAnything
             SearchSetting.PluginSettings,
             SearchSetting.Emote,
             SearchSetting.Internal,
+            SearchSetting.Collection,
+            SearchSetting.FashionAccessories,
             SearchSetting.CraftingRecipes,
             SearchSetting.GatheringItems,
         };

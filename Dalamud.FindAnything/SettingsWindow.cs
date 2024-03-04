@@ -316,6 +316,8 @@ public class SettingsWindow : Window
                         Configuration.SearchSetting.Minions => "Minions",
                         Configuration.SearchSetting.MacroLinks => "Macro Links",
                         Configuration.SearchSetting.Internal => "Wotsit",
+                        Configuration.SearchSetting.FashionAccessories => "Fashion Accessories",
+                        Configuration.SearchSetting.Collection => "Collection",
                         _ => null,
                     };
 

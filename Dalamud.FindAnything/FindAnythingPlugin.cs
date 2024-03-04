@@ -1256,6 +1256,78 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class FashionAccessoryResult : ISearchResult, IEquatable<FashionAccessoryResult>
+        {
+            public string CatName => "Fashion Accessory";
+            public string Name => Ornament.Singular;
+            public IDalamudTextureWrap? Icon => TexCache.FashionAccessoryIcons[Ornament.RowId];
+            public int Score { get; set; }
+            public bool CloseFinder => true;
+
+            public Ornament Ornament { get; set; }
+
+            public void Selected()
+            {
+                Command.Instance.SendChatUnsafe($"/fashion \"{Ornament.Singular}\"");
+            }
+
+            public bool Equals(FashionAccessoryResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.Ornament.RowId.Equals(other.Ornament.RowId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((FashionAccessoryResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.Ornament.GetHashCode();
+            }
+        }
+
+        private class CollectionResult : ISearchResult, IEquatable<CollectionResult>
+        {
+            public string CatName => "Collection";
+            public string Name => McGuffin.Name;
+            public IDalamudTextureWrap? Icon => TexCache.CollectionIcons[McGuffin.RowId];
+            public int Score { get; set; }
+            public bool CloseFinder => true;
+
+            public McGuffinUIData McGuffin { get; set; }
+
+            public void Selected()
+            {
+                Interop.Instance.UseMgGuffin(McGuffin.RowId);
+            }
+
+            public bool Equals(CollectionResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.McGuffin.RowId.Equals(other.McGuffin.RowId);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((CollectionResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return this.McGuffin.GetHashCode();
+            }
+        }
+
         private class GameSearchResult : ISearchResult
         {
             public string CatName => string.Empty;
@@ -1947,6 +2019,52 @@ namespace Dalamud.FindAnything
                                             Score = score * weight,
                                             Kind = kind
                                         });
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.FashionAccessories:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.FashionAccessories))
+                                {
+                                    foreach (var ornament in Data.GetExcelSheet<Ornament>()!)
+                                    {
+                                        if (!GameStateCache.UnlockedFashionAccessoryKeys.Contains(ornament.RowId))
+                                            continue;
+
+                                        var score = matcher.Matches(ornament.Singular.RawString.Downcase(normalizeKana));
+                                        if (score > 0)
+                                        {
+                                            cResults.Add(new FashionAccessoryResult
+                                            {
+                                                Score = score * weight,
+                                                Ornament = ornament,
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.Collection:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Collection))
+                                {
+                                    foreach (var mcGuffin in Data.GetExcelSheet<McGuffinUIData>()!)
+                                    {
+                                        if (!GameStateCache.UnlockedCollectionKeys.Contains(mcGuffin.RowId))
+                                            continue;
+
+                                        var score = matcher.Matches(mcGuffin.Name.RawString.Downcase(normalizeKana));
+                                        if (score > 0)
+                                        {
+                                            cResults.Add(new CollectionResult
+                                            {
+                                                Score = score * weight,
+                                                McGuffin = mcGuffin,
+                                            });
+                                        }
+
+                                        if (cResults.Count > MAX_TO_SEARCH)
+                                            break;
                                     }
                                 }
                                 break;
