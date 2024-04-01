@@ -33,6 +33,8 @@ public class SettingsWindow : Window
     private bool aetheryteGilCost;
     private bool marketBoardShortcut;
     private bool strikingDummyShortcut;
+    private bool innRoomShortcut;
+    private bool innRoomShortcutNoLimsa;
     private Configuration.EmoteMotionMode emoteMotionMode;
     private bool showEmoteCommand;
     private bool wikiModeNoSpoilers;
@@ -83,8 +85,8 @@ public class SettingsWindow : Window
         this.macros = FindAnythingPlugin.Configuration.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         this.macroLinksSearch = FindAnythingPlugin.Configuration.MacroLinksSearchDirection;
         this.aetheryteGilCost = FindAnythingPlugin.Configuration.DoAetheryteGilCost;
-        this.marketBoardShortcut = FindAnythingPlugin.Configuration.DoMarketBoardShortcut;
-        this.strikingDummyShortcut = FindAnythingPlugin.Configuration.DoStrikingDummyShortcut;
+        this.marketBoardShortcut = FindAnythingPlugin.Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.MarketBoard);
+        this.strikingDummyShortcut = FindAnythingPlugin.Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.StrikingDummy);
         this.emoteMotionMode = FindAnythingPlugin.Configuration.EmoteMode;
         this.showEmoteCommand = FindAnythingPlugin.Configuration.ShowEmoteCommand;
         this.wikiModeNoSpoilers = FindAnythingPlugin.Configuration.WikiModeNoSpoilers;
@@ -229,6 +231,11 @@ public class SettingsWindow : Window
                     ref this.marketBoardShortcut);
                 ImGui.Checkbox("Show \"Striking Dummy\" shortcut to teleport to the closest striking dummy location",
                     ref this.strikingDummyShortcut);
+                ImGui.Checkbox("Show \"Inn Room\" shortcut to teleport to the closest inn room", ref this.innRoomShortcut);
+                if (this.innRoomShortcut)
+                {
+                    ImGui.Checkbox("Don't consider Limsa a valid Inn Room location", ref this.innRoomShortcutNoLimsa);
+                }
 
                 if (ImGui.BeginCombo("Emote Motion-Only?", this.emoteMotionMode.ToString())) {
                     foreach (var key in Enum.GetValues<Configuration.EmoteMotionMode>()) {
@@ -453,8 +460,14 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MacroLinksSearchDirection = this.macroLinksSearch;
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
-            FindAnythingPlugin.Configuration.DoMarketBoardShortcut = this.marketBoardShortcut;
-            FindAnythingPlugin.Configuration.DoStrikingDummyShortcut = this.strikingDummyShortcut;
+            
+            var aetheryteShortcuts = Configuration.AetheryteAdditionalShortcut.None;
+            if (this.marketBoardShortcut) aetheryteShortcuts |= Configuration.AetheryteAdditionalShortcut.MarketBoard;
+            if (this.strikingDummyShortcut) aetheryteShortcuts |= Configuration.AetheryteAdditionalShortcut.StrikingDummy;
+            if (this.innRoomShortcut) aetheryteShortcuts |= Configuration.AetheryteAdditionalShortcut.InnRoom;
+            FindAnythingPlugin.Configuration.AetheryteShortcuts = aetheryteShortcuts;
+            FindAnythingPlugin.Configuration.AetheryteInnRoomShortcutExcludeLimsa = this.innRoomShortcutNoLimsa;
+            
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;

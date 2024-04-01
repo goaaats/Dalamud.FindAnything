@@ -1659,8 +1659,10 @@ namespace Dalamud.FindAnything
                                 {
                                     var marketBoardResults = new List<AetheryteEntry>();
                                     var strikingDummyResults = new List<AetheryteEntry>();
+                                    var innRoomResults = new List<AetheryteEntry>();
                                     var marketScore = 0;
                                     var dummyScore = 0;
+                                    var innScore = 0;
                                     foreach (var aetheryte in Aetherytes)
                                     {
                                         var aetheryteName = AetheryteManager.GetAetheryteName(aetheryte);
@@ -1669,7 +1671,9 @@ namespace Dalamud.FindAnything
                                             aetheryteName.Downcase(normalizeKana).Replace("'", string.Empty),
                                             terriName.Searchable
                                         );
+
                                         if (score > 0)
+                                        {
                                             cResults.Add(new AetheryteSearchResult
                                             {
                                                 Score = score * weight,
@@ -1678,14 +1682,28 @@ namespace Dalamud.FindAnything
                                                 Icon = TexCache.AetheryteIcon,
                                                 TerriName = terriName.Display
                                             });
+                                        }
 
                                         marketScore = matcher.Matches("Closest Market Board".ToLowerInvariant());
-                                        if (Configuration.DoMarketBoardShortcut && marketScore > 0 && AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
-                                            marketBoardResults.Add(aetheryte);
+                                        innScore = matcher.Matches("Closest Inn Room".ToLowerInvariant());
+                                        if (AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId))
+                                        {
+                                            if (Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.MarketBoard) && marketScore > 0)
+                                                marketBoardResults.Add(aetheryte);
+
+                                            if (Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.InnRoom) && innScore > 0)
+                                            {
+                                                if (!Configuration.AetheryteInnRoomShortcutExcludeLimsa || aetheryte.TerritoryId != 128)
+                                                    innRoomResults.Add(aetheryte);
+                                            }
+                                        }
 
                                         dummyScore = matcher.Matches("Closest Striking Dummy".ToLowerInvariant());
-                                        if (Configuration.DoStrikingDummyShortcut && dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
+                                        if (Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.StrikingDummy) &&
+                                            dummyScore > 0 &&  AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
+                                        {
                                             strikingDummyResults.Add(aetheryte);
+                                        }
 
                                         if (cResults.Count > MAX_TO_SEARCH)
                                             break;
@@ -1713,6 +1731,19 @@ namespace Dalamud.FindAnything
                                             Name = "Closest Striking Dummy",
                                             Data = closestStrikingDummy,
                                             Icon = TexCache.AetheryteIcon,
+                                            TerriName = terriName.Display
+                                        });
+                                    }
+                                    if (innRoomResults.Count > 0)
+                                    {
+                                        var closestInnRoom = innRoomResults.OrderBy(a1 => a1.GilCost).First();
+                                        var terriName = SearchDatabase.GetString<TerritoryType>(closestInnRoom.TerritoryId);
+                                        cResults.Add(new AetheryteSearchResult
+                                        {
+                                            Score = innScore * weight,
+                                            Name = "Closest Inn Room",
+                                            Data = closestInnRoom,
+                                            Icon = TexCache.InnRoomIcon,
                                             TerriName = terriName.Display
                                         });
                                     }

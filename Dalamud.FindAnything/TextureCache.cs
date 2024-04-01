@@ -31,6 +31,7 @@ namespace Dalamud.FindAnything
         public IDalamudTextureWrap HintIcon { get; }
         public IDalamudTextureWrap ChatIcon { get; }
         public IDalamudTextureWrap MathsIcon { get; }
+        public IDalamudTextureWrap InnRoomIcon { get; }
 
         public IDalamudTextureWrap GameIcon { get; }
 
@@ -179,6 +180,7 @@ namespace Dalamud.FindAnything
             HintIcon = GetIconTexture(066453)!;
             ChatIcon = GetIconTexture(066473)!;
             MathsIcon = GetIconTexture(062409)!;
+            InnRoomIcon = GetIconTexture(020731)!;
 
             ExtraIcons = new Dictionary<uint, IDalamudTextureWrap>();
 

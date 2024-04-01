@@ -135,8 +135,22 @@ namespace Dalamud.FindAnything
         public MacroSearchDirection MacroLinksSearchDirection { get; set; } = MacroSearchDirection.BottomToTop;
 
         public bool DoAetheryteGilCost { get; set; } = false;
-        public bool DoMarketBoardShortcut { get; set; } = false;
-        public bool DoStrikingDummyShortcut { get; set; } = false;
+
+
+        [Flags]
+        public enum AetheryteAdditionalShortcut
+        {
+            None,
+            MarketBoard = 1 << 0,
+            StrikingDummy = 1 << 1,
+            InnRoom = 1 << 2,
+        }
+        
+        public AetheryteAdditionalShortcut AetheryteShortcuts { get; set; } = AetheryteAdditionalShortcut.MarketBoard |
+                                                                              AetheryteAdditionalShortcut.StrikingDummy |
+                                                                              AetheryteAdditionalShortcut.InnRoom;
+        public bool AetheryteInnRoomShortcutExcludeLimsa { get; set; } = false;
+        
         public EmoteMotionMode EmoteMode { get; set; } = EmoteMotionMode.Default;
         public bool ShowEmoteCommand { get; set; } = false;
 
