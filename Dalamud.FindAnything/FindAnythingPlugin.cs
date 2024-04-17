@@ -1300,12 +1300,12 @@ namespace Dalamud.FindAnything
         private class CollectionResult : ISearchResult, IEquatable<CollectionResult>
         {
             public string CatName => "Collection";
-            public string Name => McGuffin.Name;
-            public IDalamudTextureWrap? Icon => TexCache.CollectionIcons[McGuffin.RowId];
+            public string Name => McGuffinUIData.Name;
+            public IDalamudTextureWrap? Icon => TexCache.CollectionIcons[McGuffinUIData.RowId];
             public int Score { get; set; }
             public bool CloseFinder => true;
-
-            public McGuffinUIData McGuffin { get; set; }
+            public McGuffin McGuffin { get; set; }
+            public McGuffinUIData McGuffinUIData { get; set; }
 
             public void Selected()
             {
@@ -2053,18 +2053,20 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.Collection:
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Collection))
                                 {
-                                    foreach (var mcGuffin in Data.GetExcelSheet<McGuffinUIData>()!)
+                                    foreach (var mcGuffin in Data.GetExcelSheet<McGuffin>()!)
                                     {
                                         if (!GameStateCache.UnlockedCollectionKeys.Contains(mcGuffin.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(mcGuffin.Name.RawString.Downcase(normalizeKana));
+                                        var uiData = mcGuffin.UIData.Value!; // Already checked validity in UnlockedCollectionKeys
+                                        var score = matcher.Matches(uiData.Name.RawString.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new CollectionResult
                                             {
                                                 Score = score * weight,
                                                 McGuffin = mcGuffin,
+                                                McGuffinUIData = uiData
                                             });
                                         }
 

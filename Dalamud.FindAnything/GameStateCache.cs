@@ -59,7 +59,7 @@ public unsafe class GameStateCache
 
         UnlockedFashionAccessoryKeys = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()!.Where(x => PlayerState.Instance()->IsOrnamentUnlocked(x.RowId)).Select(x => x.RowId).ToList();
 
-        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!.Where(x => PlayerState.Instance()->IsMcGuffinUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!.Where(x => x.UIData.Value is { RowId: > 0 } && PlayerState.Instance()->IsMcGuffinUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         
         var gsEntries = (RaptureGearsetModule.GearsetEntry*)RaptureGearsetModule.Instance()->Entries;
         var gearsets = new List<Gearset>();
