@@ -24,6 +24,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -1529,6 +1530,16 @@ namespace Dalamud.FindAnything
                    Condition[ConditionFlag.BoundByDuty95];
         }
 
+        private static unsafe bool CheckInExplorerMode()
+        {
+            var activeContentDirector = EventFramework.Instance()->DirectorModule.ActiveContentDirector;
+            if (activeContentDirector == null) {
+                return false;
+            }
+
+            return (activeContentDirector->Director.ContentFlags & 1) != 0;
+        }
+
         private static bool CheckInEvent()
         {
             return Condition[ConditionFlag.Occupied] ||
@@ -1556,6 +1567,7 @@ namespace Dalamud.FindAnything
             var normalizeKana = criteria.ContainsKana;
             
             var isInDuty = CheckInDuty();
+            var isInCombatDuty = CheckInDuty() && !CheckInExplorerMode();
             var isInEvent = CheckInEvent();
             var isInCombat = CheckInCombat();
 
@@ -1941,7 +1953,7 @@ namespace Dalamud.FindAnything
                                 break;
                             case Configuration.SearchSetting.Mounts:
                                 // This is nasty, should just use TerritoryIntendedUse...
-                                var isInNoMountDuty = isInDuty;
+                                var isInNoMountDuty = isInCombatDuty;
                                 var currentTerri = Data.GetExcelSheet<TerritoryType>()?
                                     .GetRow(ClientState.TerritoryType);
 
@@ -1975,7 +1987,7 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.Minions:
-                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Minions) && !isInDuty && !isInCombat)
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Minions) && !isInCombatDuty && !isInCombat)
                                 {
                                     foreach (var minion in Data.GetExcelSheet<Companion>()!)
                                     {
@@ -2347,7 +2359,7 @@ namespace Dalamud.FindAnything
                     throw new ArgumentOutOfRangeException();
             }
 
-            if (!isInDuty && criteria.CleanString.StartsWith("/"))
+            if (!isInCombatDuty && criteria.CleanString.StartsWith("/"))
             {
                 cResults.Add(new ChatCommandSearchResult
                 {
