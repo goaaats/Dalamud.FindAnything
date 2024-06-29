@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Dalamud.Game;
 using Dalamud.Game.ClientState.Aetherytes;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.GeneratedSheets;
 
 namespace Dalamud.FindAnything {
@@ -67,8 +69,8 @@ namespace Dalamud.FindAnything {
             return m_StrikingDummyIds.Contains(id);
         }
 
-        public string GetAetheryteName(AetheryteEntry info) {
-            if (info.IsAppartment)
+        public string GetAetheryteName(IAetheryteEntry info) {
+            if (info.IsApartment)
                 return m_AppartmentName ??= GetAppartmentName();
             if (info.IsSharedHouse) {
                 if (m_HouseNames.TryGetValue((info.Ward, info.Plot), out var house))
@@ -82,7 +84,7 @@ namespace Dalamud.FindAnything {
         }
 
         private static unsafe string GetAppartmentName() {
-            var tm = Framework.Instance()->GetUiModule()->GetRaptureTextModule();
+            var tm = UIModule.Instance()->GetRaptureTextModule();
             var sp = tm->GetAddonText(8518);
             var name = Marshal.PtrToStringUTF8(new IntPtr(sp)) ?? string.Empty;
             return FindAnythingPlugin.PluginInterface.Sanitizer.Sanitize(name);
@@ -90,8 +92,8 @@ namespace Dalamud.FindAnything {
 
         private static unsafe string GetSharedHouseName(int ward, int plot) {
             if (ward > 30) return $"SHARED_HOUSE_W{ward}_P{plot}";
-            var tm = Framework.Instance()->GetUiModule()->GetRaptureTextModule();
-            var sp = tm->FormatAddonText2(8519, ward, plot);
+            var tm = UIModule.Instance()->GetRaptureTextModule();
+            var sp = tm->FormatAddonText2IntInt(8519, ward, plot);
             return Marshal.PtrToStringUTF8(new IntPtr(sp)) ?? $"SHARED_HOUSE_W{ward}_P{plot}";
         }
 

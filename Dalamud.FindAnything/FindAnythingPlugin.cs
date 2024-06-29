@@ -18,6 +18,8 @@ using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Internal;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Ipc;
@@ -26,6 +28,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
@@ -37,11 +40,9 @@ namespace Dalamud.FindAnything
 {
     public sealed class FindAnythingPlugin : IDalamudPlugin
     {
-        public string Name => "Wotsit";
-
         private const string commandName = "/wotsit";
 
-        [PluginService] public static DalamudPluginInterface PluginInterface { get; private set; }
+        [PluginService] public static IDalamudPluginInterface PluginInterface { get; private set; }
         [PluginService] public static ICommandManager CommandManager { get; private set; }
         public static Configuration Configuration { get; set; }
         [PluginService] public static IFramework Framework { get; private set; }
@@ -55,6 +56,7 @@ namespace Dalamud.FindAnything
         [PluginService] public static ITextureProvider TextureProvider { get; private set; }
         [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; }
         [PluginService] public static IPluginLog Log { get; private set; }
+        [PluginService] public static INotificationManager Notifications { get; private set; }
 
         public static TextureCache TexCache { get; private set; }
         private static SearchDatabase SearchDatabase { get; set; }
@@ -145,7 +147,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName { get; }
             public string Name { get; }
-            public IDalamudTextureWrap? Icon { get; }
+            public ISharedImmediateTexture? Icon { get; }
             public int Score { get; }
             public bool CloseFinder { get; }
 
@@ -156,7 +158,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName { get; set; }
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public uint DataKey { get; set; }
 
@@ -200,7 +202,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => string.Empty;
             public string Name => $"Open on {Site}";
-            public IDalamudTextureWrap? Icon => TexCache.WikiIcon;
+            public ISharedImmediateTexture? Icon => TexCache.WikiIcon;
             public int Score { get; set; }
 
             public enum SiteChoice
@@ -328,7 +330,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => string.Empty;
             public string Name => $"Search for \"{Query}\" in wikis...";
-            public IDalamudTextureWrap? Icon => TexCache.WikiIcon;
+            public ISharedImmediateTexture? Icon => TexCache.WikiIcon;
             public int Score { get; set; }
 
             public string Query { get; set; }
@@ -382,9 +384,9 @@ namespace Dalamud.FindAnything
             }
 
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
-            public AetheryteEntry Data { get; set; }
+            public IAetheryteEntry Data { get; set; }
 
             public string TerriName { get; set; }
 
@@ -444,7 +446,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Commands";
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public uint CommandId { get; set; }
 
@@ -452,7 +454,7 @@ namespace Dalamud.FindAnything
 
             public unsafe void Selected()
             {
-                FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->ExecuteMainCommand(CommandId);
+                UIModule.Instance()->ExecuteMainCommand(CommandId);
             }
 
             public bool Equals(MainCommandSearchResult? other)
@@ -489,7 +491,7 @@ namespace Dalamud.FindAnything
 
             public string Name => GetNameForKind(this.Kind);
 
-            public IDalamudTextureWrap? Icon => Kind switch
+            public ISharedImmediateTexture? Icon => Kind switch
             {
                 InternalSearchResultKind.WikiMode => TexCache.WikiIcon,
                 _ => TexCache.PluginInstallerIcon,
@@ -571,7 +573,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "General Actions";
             public string Name { get; set;  }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
 
             public bool CloseFinder => true;
@@ -606,7 +608,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Other Plugins";
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon => TexCache.PluginInstallerIcon;
+            public ISharedImmediateTexture? Icon => TexCache.PluginInstallerIcon;
             public int Score { get; set; }
             public bool CloseFinder => true;
             public DalamudReflector.PluginEntry Plugin { get; set; }
@@ -641,7 +643,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Other Plugins";
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon => TexCache.PluginInstallerIcon;
+            public ISharedImmediateTexture? Icon => TexCache.PluginInstallerIcon;
             public int Score { get; set; }
             public bool CloseFinder => true;
             public DalamudReflector.PluginEntry Plugin { get; set; }
@@ -676,16 +678,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Macros";
             public string Name => Entry.SearchName.Split(';', StringSplitOptions.TrimEntries).First();
-            public IDalamudTextureWrap? Icon
-            {
-                get
-                {
-                    if (TexCache.ExtraIcons.ContainsKey((uint) Entry.IconId))
-                        return TexCache.ExtraIcons[(uint) Entry.IconId];
-
-                    return null;
-                }
-            }
+            public ISharedImmediateTexture? Icon => TexCache.GetIcon((uint)Entry.IconId);
             
             public int Score { get; set; }
 
@@ -745,7 +738,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName { get; set; }
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -781,7 +774,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Duty Roulette";
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon => TexCache.ContentTypeIcons[1];
+            public ISharedImmediateTexture? Icon => TexCache.RoulettesIcon;
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -828,7 +821,7 @@ namespace Dalamud.FindAnything
             }
 
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public string SlashCommand { get; set; }
 
@@ -887,7 +880,7 @@ namespace Dalamud.FindAnything
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            public IDalamudTextureWrap? Icon => TexCache.EmoteIcon;
+            public ISharedImmediateTexture? Icon => TexCache.EmoteIcon;
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -938,7 +931,7 @@ namespace Dalamud.FindAnything
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            public IDalamudTextureWrap? Icon => TexCache.HintIcon;
+            public ISharedImmediateTexture? Icon => TexCache.HintIcon;
             public int Score { get; set; }
             public bool CloseFinder => false;
 
@@ -954,7 +947,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => string.Empty;
             public string Name => $"Run chat command \"{Command}\"";
-            public IDalamudTextureWrap? Icon => TexCache.ChatIcon;
+            public ISharedImmediateTexture? Icon => TexCache.ChatIcon;
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -993,7 +986,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName { get; set; }
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1043,7 +1036,7 @@ namespace Dalamud.FindAnything
                 }
             }
 
-            public IDalamudTextureWrap Icon => TexCache.MathsIcon;
+            public ISharedImmediateTexture Icon => TexCache.MathsIcon;
             
             public int Score { get; set; }
 
@@ -1067,7 +1060,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Gearset";
             public string Name => Gearset.Name;
-            public IDalamudTextureWrap? Icon => TexCache.ClassJobIcons[Gearset.ClassJob];
+            public ISharedImmediateTexture? Icon => TexCache.ClassJobIcons[Gearset.ClassJob];
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1103,7 +1096,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Mount";
             public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular);
-            public IDalamudTextureWrap? Icon => TexCache.MountIcons[Mount.RowId];
+            public ISharedImmediateTexture? Icon => TexCache.GetIcon(Mount.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1139,7 +1132,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Minion";
             public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular);
-            public IDalamudTextureWrap? Icon => TexCache.MinionIcons[Minion.RowId];
+            public ISharedImmediateTexture? Icon => TexCache.GetIcon(Minion.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1185,7 +1178,7 @@ namespace Dalamud.FindAnything
             }
 
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1229,7 +1222,7 @@ namespace Dalamud.FindAnything
         private class GatheringItemResult : ISearchResult, IEquatable<GatheringItemResult> {
             public string CatName => "Gathering Item";
             public string Name { get; set; }
-            public IDalamudTextureWrap? Icon { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1266,7 +1259,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Fashion Accessory";
             public string Name => Ornament.Singular;
-            public IDalamudTextureWrap? Icon => TexCache.FashionAccessoryIcons[Ornament.RowId];
+            public ISharedImmediateTexture? Icon => TexCache.GetIcon(Ornament.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1302,7 +1295,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => "Collection";
             public string Name => McGuffinUIData.Name;
-            public IDalamudTextureWrap? Icon => TexCache.CollectionIcons[McGuffinUIData.RowId];
+            public ISharedImmediateTexture? Icon => TexCache.GetIcon(McGuffinUIData.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
             public McGuffin McGuffin { get; set; }
@@ -1338,7 +1331,7 @@ namespace Dalamud.FindAnything
         {
             public string CatName => string.Empty;
             public string Name => "DN Farm";
-            public IDalamudTextureWrap? Icon => TexCache.GameIcon;
+            public ISharedImmediateTexture? Icon => TexCache.GameIcon;
             public int Score { get; set; }
             public bool CloseFinder => true;
 
@@ -1622,7 +1615,7 @@ namespace Dalamud.FindAnything
                                                 CatName = row.ContentType?.Value?.Name ?? "Duty",
                                                 DataKey = cfc.Key,
                                                 Name = cfc.Value.Display,
-                                                Icon = TexCache.ContentTypeIcons[row.ContentType.Row],
+                                                Icon = TexCache.GetIcon(row.ContentType?.Value?.Icon ?? 0),
                                             });
                                         }
 
@@ -1657,9 +1650,9 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.Aetheryte:
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                                 {
-                                    var marketBoardResults = new List<AetheryteEntry>();
-                                    var strikingDummyResults = new List<AetheryteEntry>();
-                                    var innRoomResults = new List<AetheryteEntry>();
+                                    var marketBoardResults = new List<IAetheryteEntry>();
+                                    var strikingDummyResults = new List<IAetheryteEntry>();
+                                    var innRoomResults = new List<IAetheryteEntry>();
                                     var marketScore = 0;
                                     var dummyScore = 0;
                                     var innScore = 0;
@@ -1833,7 +1826,7 @@ namespace Dalamud.FindAnything
                                                 Score = score * weight,
                                                 Name = text.Display,
                                                 SlashCommand = slashCmd.Command.RawString,
-                                                Icon = TexCache.EmoteIcons[emoteRow.RowId]
+                                                Icon = TexCache.GetIcon(emoteRow.Icon)
                                             });
 
                                             if (cResults.Count > MAX_TO_SEARCH)
@@ -1885,7 +1878,7 @@ namespace Dalamud.FindAnything
                                                     CatName = plugin.Key,
                                                     Name = ipcBinding.Display,
                                                     Guid = ipcBinding.Guid,
-                                                    Icon = TexCache.ExtraIcons[ipcBinding.IconId],
+                                                    Icon = TexCache.GetIcon(ipcBinding.IconId),
                                                 });
                                             }
 
@@ -1931,16 +1924,13 @@ namespace Dalamud.FindAnything
                                             var recipe = Data.GetExcelSheet<Recipe>()!.GetRow(recipeSearch.Key)!;
                                             var itemResult = recipe.ItemResult.Value!;
 
-                                            TexCache.EnsureExtraIcon(itemResult.Icon);
-                                            TexCache.ExtraIcons.TryGetValue(itemResult.Icon, out var tex);
-
                                             cResults.Add(new CraftingRecipeResult
                                             {
                                                 Score = score * weight,
                                                 Recipe = recipe,
                                                 Name = recipeSearch.Value.Display,
                                                 CraftType = recipe.CraftType.Value,
-                                                Icon = tex,
+                                                Icon = TexCache.GetIcon(itemResult.Icon),
                                             });
                                         }
 
@@ -1965,15 +1955,12 @@ namespace Dalamud.FindAnything
 
                                         var score = matcher.Matches(gatherSearch.Value.Searchable);
                                         if (score > 0) {
-                                            TexCache.EnsureExtraIcon(item.Icon);
-                                            TexCache.ExtraIcons.TryGetValue(item.Icon, out var tex);
-
                                             cResults.Add(new GatheringItemResult()
                                             {
                                                 Score = score * weight,
                                                 Item = gather,
                                                 Name = gatherSearch.Value.Display,
-                                                Icon = tex,
+                                                Icon = TexCache.GetIcon(item.Icon),
                                             });
                                         }
 
@@ -2419,8 +2406,7 @@ namespace Dalamud.FindAnything
             Framework.Update -= FrameworkOnUpdate;
             CommandManager.RemoveHandler(commandName);
             CommandManager.RemoveHandler("/bountifuldn");
-
-            TexCache.Dispose();
+            
             Ipc.Dispose();
         }
 
@@ -2760,7 +2746,7 @@ namespace Dalamud.FindAnything
                         if (result.Icon != null)
                         {
                             ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
-                            ImGui.Image(result.Icon.ImGuiHandle, iconSize);
+                            ImGui.Image(result.Icon.GetWrapOrEmpty().ImGuiHandle, iconSize);
                         }
                     }
 

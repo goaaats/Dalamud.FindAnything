@@ -61,22 +61,20 @@ public unsafe class GameStateCache
 
         UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!.Where(x => x.UIData.Value is { RowId: > 0 } && PlayerState.Instance()->IsMcGuffinUnlocked(x.RowId)).Select(x => x.RowId).ToList();
         
-        var gsEntries = (RaptureGearsetModule.GearsetEntry*)RaptureGearsetModule.Instance()->Entries;
+        var gsEntries = RaptureGearsetModule.Instance()->Entries;
         var gearsets = new List<Gearset>();
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < gsEntries.Length; i++)
         {
-            var gs = &gsEntries[i];
+            var gs = gsEntries[i];
 
-            if (!gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
+            if (!gs.Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
                 continue;
-
-            var name = MemoryHelper.ReadString(new IntPtr(gs->Name), 47);
 
             gearsets.Add(new Gearset
             {
                 Slot = i + 1,
-                ClassJob = gs->ClassJob,
-                Name = name,
+                ClassJob = gs.ClassJob,
+                Name = gs.NameString,
             });
         }
 

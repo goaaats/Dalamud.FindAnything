@@ -29,7 +29,7 @@ public class IpcSystem : IDisposable
         public string Guid { get; set; }
     }
 
-    public IpcSystem(DalamudPluginInterface pluginInterface, IDataManager data, TextureCache texCache)
+    public IpcSystem(IDalamudPluginInterface pluginInterface, IDataManager data, TextureCache texCache)
     {
         this.data = data;
         this.texCache = texCache;
@@ -106,8 +106,6 @@ public class IpcSystem : IDisposable
         }
 
         var guid = Guid.NewGuid().ToString();
-        
-        this.texCache.EnsureExtraIcon(iconId);
 
         ipcList.Add(new IpcBinding
         {

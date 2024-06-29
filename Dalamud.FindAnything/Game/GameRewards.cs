@@ -5,7 +5,7 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
-using Dalamud.Interface.Internal.Notifications;
+using Dalamud.Interface.ImGuiNotification;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
@@ -142,7 +142,11 @@ public static class GameRewards
             try
             {
                 Wallpaper.Set(Path.Combine(FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "wallpaper.jpg"), Wallpaper.Style.Fill);
-                FindAnythingPlugin.PluginInterface.UiBuilder.AddNotification("Wallpaper bought!", "Congrats!", NotificationType.Success);
+                FindAnythingPlugin.Notifications.AddNotification(new Notification
+                {
+                    Title = "Wallpaper bought!",
+                    Content = "Congrats!",
+                });
             }
             catch (Exception ex)
             {

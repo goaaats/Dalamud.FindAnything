@@ -487,8 +487,6 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MatchSigilFuzzyParts = this.matchSigilFuzzyParts;
 
             FindAnythingPlugin.Configuration.Save();
-
-            FindAnythingPlugin.TexCache.ReloadMacroIcons();
         }
 
         ImGui.SameLine();

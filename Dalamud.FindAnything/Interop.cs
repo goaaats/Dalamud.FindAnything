@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace Dalamud.FindAnything;
@@ -28,7 +29,7 @@ public class Interop
             throw new InvalidOperationException("Could not find signature for using collection item");
         }
 
-        var module = (IntPtr)Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.McGuffin);
+        var module = (IntPtr)UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.McGuffin);
         useMcGuffin(module, mcGuffinId);
     }
 }

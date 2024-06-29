@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace Dalamud.FindAnything;
 
@@ -60,7 +61,7 @@ public class Command
             throw new InvalidOperationException("Could not find signature for chat sending");
         }
 
-        var uiModule = (nint) Framework.Instance()->GetUiModule();
+        var uiModule = (nint)UIModule.Instance();
 
         using var payload = new ChatPayload(Encoding.UTF8.GetBytes($"{command}"));
         var mem1 = Marshal.AllocHGlobal(400);

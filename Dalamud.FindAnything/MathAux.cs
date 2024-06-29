@@ -33,7 +33,7 @@ public static class MathAux
             return 0;
 
         var cjIndex = FindAnythingPlugin.ClientState.LocalPlayer.ClassJob.GameData.ExpArrayIndex;
-        return UIState.Instance()->PlayerState.ClassJobExpArray[cjIndex];
+        return UIState.Instance()->PlayerState.ClassJobExperience[cjIndex];
     }
 
     public static int GetExpLeft()
