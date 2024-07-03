@@ -15,7 +15,7 @@ public class Interop
 
     private delegate byte UseMcGuffinDelegate(IntPtr module, uint id);
 
-    [Signature("E8 ?? ?? ?? ?? EB 0C 48 8B 07")]
+    [Signature("48 89 5C 24 ?? 57 48 83 EC 40 80 3D ?? ?? ?? ?? ??")]
     private readonly UseMcGuffinDelegate? useMcGuffin = null!;
 
     public Interop()
