@@ -129,6 +129,8 @@ namespace Dalamud.FindAnything
             { 38, "ranged dps" },
             { 39, "melee dps" },
             { 40, "healer" },
+            { 41, "melee dps" },
+            { 42, "ranged dps" }
         };
 
         private static ISearchResult? choicerTempResult;
