@@ -26,6 +26,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -1535,6 +1536,15 @@ namespace Dalamud.FindAnything
             return (activeContentDirector->Director.ContentFlags & 1) != 0;
         }
 
+        private static unsafe bool CheckInLeve()
+        {
+            var director = UIState.Instance()->DirectorTodo.Director;
+            if (director == null) return false;
+
+            return director->Info.EventId.ContentId is EventHandlerType.GatheringLeveDirector
+                or EventHandlerType.BattleLeveDirector;
+        }
+
         private static bool CheckInEvent()
         {
             return Condition[ConditionFlag.Occupied] ||
@@ -1562,7 +1572,7 @@ namespace Dalamud.FindAnything
             var normalizeKana = criteria.ContainsKana;
             
             var isInDuty = CheckInDuty();
-            var isInCombatDuty = CheckInDuty() && !CheckInExplorerMode();
+            var isInCombatDuty = isInDuty && !CheckInExplorerMode() && !CheckInLeve();
             var isInEvent = CheckInEvent();
             var isInCombat = CheckInCombat();
 
