@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using Dalamud.Game;
 using Dalamud.Utility;
 using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
-using Lumina.Text;
-using Lumina.Text.Payloads;
+using Lumina.Excel.Sheets;
+using Lumina.Text.ReadOnly;
 
 namespace Dalamud.FindAnything
 {
@@ -27,8 +26,8 @@ namespace Dalamud.FindAnything
             var data = new Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>>();
             InitData<ContentFinderCondition>(ref data, (r) => r.Name);
             InitData<ContentRoulette>(ref data, (r) => r.Name);
-            InitData<TerritoryType>(ref data, (r) => r.PlaceName?.Value?.Name);
-            InitData<Aetheryte>(ref data, (r) => r.PlaceName?.Value?.Name);
+            InitData<TerritoryType>(ref data, (r) => r.PlaceName.ValueNullable?.Name);
+            InitData<Aetheryte>(ref data, (r) => r.PlaceName.ValueNullable?.Name);
             InitData<MainCommand>(ref data, (r) => r.Name);
             InitData<GeneralAction>(ref data, (r) => r.Name);
             InitData<Emote>(ref data, (r) => r.Name);
@@ -36,49 +35,53 @@ namespace Dalamud.FindAnything
             InitData<Item>(ref data, (r) => r.Name);
             InitData<Recipe>(ref data, r =>
             {
-                var itemResult = r.ItemResult.Value;
+                var itemResult = r.ItemResult.ValueNullable;
 
-                if (itemResult == null || itemResult.RowId == 0) {
+                if (itemResult == null || itemResult.Value.RowId == 0) {
                     return null;
                 }
 
-                return itemResult.Name;
+                return itemResult.Value.Name;
             });
 
             var item = FindAnythingPlugin.Data.GetExcelSheet<Item>()!;
 
             InitData<GatheringItem>(ref data, r =>
             {
-                var itemResult = item.GetRow((uint)r.Item);
+                var itemResult = item.GetRowOrDefault(r.Item.RowId);
 
-                if (itemResult == null || itemResult.RowId == 0) {
+                if (itemResult == null || itemResult.Value.RowId == 0) {
                     return null;
                 }
 
-                return itemResult.Name;
+                return itemResult.Value.Name;
             });
 
             SearchData = data;
         }
 
-        private void InitData<T>(ref Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> searchDb, Func<T, SeString?> rowToFind) where T : ExcelRow
+        private void InitData<T>(ref Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> searchDb, Func<T, ReadOnlySeString?> rowToFind) where T : struct, IExcelRow<T>
         {
             var normalizeKana = NormalizeKana;
             var data = new Dictionary<uint, SearchEntry>();
-            foreach (var excelRow in FindAnythingPlugin.Data.GetExcelSheet<T>()!)
+            foreach (var excelRow in FindAnythingPlugin.Data.GetExcelSheet<T>())
             {
-                var result = rowToFind.Invoke(excelRow);
-                if (result != null)
+                if (rowToFind.Invoke(excelRow) is { } result)
                 {
-                    var textVal = result.ToDalamudString().TextValue;
+                    var textVal = result.ExtractText();
+                    if (textVal.IsNullOrEmpty())
+                        continue;
 
-                    // Handle special case of <if([gnum75>0],Controller,Gamepad)> Settings
-                    if (excelRow is MainCommand
-                        && result.Payloads is [{ PayloadType: PayloadType.If } ifPayload, { PayloadType: PayloadType.Text } textPayload]
-                        && ifPayload.Expressions[0].ToString() == "[gnum75>0]")
-                    {
-                        // Just use the second candidate (gnum75 == 0) since we're never on console
-                        textVal = (ifPayload.Expressions[2].ToString() ?? "Gamepad") + textPayload;
+                    try {
+                        if (excelRow is MainCommand && textVal.StartsWith(" ")) {
+                            var macroText = result.ToString();
+                            if (macroText.StartsWith("<if([gnum75>0")) {
+                                textVal = macroText.Split(")")[0].Split(",")[2] + textVal;
+                            }
+                        }
+                    }
+                    catch (Exception e) {
+                        FindAnythingPlugin.Log.Warning(e, "Failed to parse (assumed) Controller/Gamepad Settings main command");
                     }
 
                     data.Add(excelRow.RowId, new SearchEntry
@@ -95,9 +98,9 @@ namespace Dalamud.FindAnything
 
         public static string GetSearchableText(string input, bool normalizeKana) => input.Downcase(normalizeKana).Replace("'", string.Empty);
 
-        public SearchEntry GetString<T>(uint row) where T : ExcelRow => SearchData[typeof(T)][row];
+        public SearchEntry GetString<T>(uint row) where T : struct, IExcelRow<T> => SearchData[typeof(T)][row];
 
-        public IReadOnlyDictionary<uint, SearchEntry> GetAll<T>() where T : ExcelRow => SearchData[typeof(T)];
+        public IReadOnlyDictionary<uint, SearchEntry> GetAll<T>() where T : struct, IExcelRow<T> => SearchData[typeof(T)];
 
         public static SearchDatabase Load(ClientLanguage lang) => new(lang);
     }

@@ -4,9 +4,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Aetherytes;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace Dalamud.FindAnything {
     public class AetheryteManager {
@@ -101,7 +100,7 @@ namespace Dalamud.FindAnything {
             var list = new List<uint>(10);
             var sheet = FindAnythingPlugin.Data.GetExcelSheet<Aetheryte>(ClientLanguage.English)!;
             foreach (var aetheryte in sheet) {
-                if (aetheryte.PlaceName.Row is 1145 or 1160)
+                if (aetheryte.PlaceName.RowId is 1145 or 1160)
                     list.Add(aetheryte.RowId);
             }
             array = list.ToArray();
@@ -111,7 +110,7 @@ namespace Dalamud.FindAnything {
             var sheet = FindAnythingPlugin.Data.GetExcelSheet<Aetheryte>(language)!;
             dict.Clear();
             foreach (var row in sheet) {
-                var name = row.PlaceName.Value?.Name?.ToString();
+                var name = row.PlaceName.ValueNullable?.Name.ToString();
                 if (string.IsNullOrEmpty(name))
                     continue;
                 name = FindAnythingPlugin.PluginInterface.Sanitizer.Sanitize(name);
@@ -123,7 +122,7 @@ namespace Dalamud.FindAnything {
             var sheet = FindAnythingPlugin.Data.GetExcelSheet<Aetheryte>(language)!;
             dict.Clear();
             foreach (var row in sheet) {
-                var name = row.Territory.Value?.PlaceName.Value?.Name?.ToString();
+                var name = row.Territory.ValueNullable?.PlaceName.ValueNullable?.Name.ToString();
                 if (string.IsNullOrEmpty(name))
                     continue;
                 if (row is not { IsAetheryte: true }) continue;
