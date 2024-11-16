@@ -1,5 +1,5 @@
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace Dalamud.FindAnything;
 
@@ -11,7 +11,7 @@ public static class MathAux
             return 0;
 
         var paramGrow = FindAnythingPlugin.Data.GetExcelSheet<ParamGrow>()!;
-        if (paramGrow.RowCount < level)
+        if (paramGrow.Count < level)
         {
             return 0;
         }
@@ -32,7 +32,7 @@ public static class MathAux
         if (FindAnythingPlugin.ClientState.LocalPlayer == null)
             return 0;
 
-        var cjIndex = FindAnythingPlugin.ClientState.LocalPlayer.ClassJob.GameData.ExpArrayIndex;
+        var cjIndex = FindAnythingPlugin.ClientState.LocalPlayer.ClassJob.Value.ExpArrayIndex;
         return UIState.Instance()->PlayerState.ClassJobExperience[cjIndex];
     }
 

@@ -26,6 +26,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -33,7 +34,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using NCalc;
 
 namespace Dalamud.FindAnything
@@ -1097,7 +1098,7 @@ namespace Dalamud.FindAnything
         private class MountResult : ISearchResult, IEquatable<MountResult>
         {
             public string CatName => "Mount";
-            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular);
+            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular.ExtractText());
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Mount.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1133,7 +1134,7 @@ namespace Dalamud.FindAnything
         private class MinionResult : ISearchResult, IEquatable<MinionResult>
         {
             public string CatName => "Minion";
-            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular);
+            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular.ExtractText());
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Minion.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1172,7 +1173,7 @@ namespace Dalamud.FindAnything
                 get
                 {
                     if (CraftType != null) {
-                        return $"Crafting Recipe ({CraftType.Name.RawString})";
+                        return $"Crafting Recipe ({CraftType?.Name.ExtractText()})";
                     }
 
                     return "Crafting Recipe";
@@ -1193,7 +1194,7 @@ namespace Dalamud.FindAnything
                     GameStateCache.OpenRecipe(this.Recipe.RowId);
                 }
                 else {
-                    var id = this.Recipe.ItemResult.Value?.RowId ?? 0;
+                    var id = this.Recipe.ItemResult.ValueNullable?.RowId ?? 0;
                     if (id > 0) {
                         GameStateCache.SearchForItemByCraftingMethod(id % 500_000);
                     }
@@ -1231,8 +1232,8 @@ namespace Dalamud.FindAnything
             public GatheringItem Item { get; set; }
 
             public void Selected() {
-                if (this.Item.Item > 0) {
-                    GameStateCache.SearchForItemByGatheringMethod((ushort) (this.Item.Item % 500_000));
+                if (this.Item.Item.RowId > 0) {
+                    GameStateCache.SearchForItemByGatheringMethod((ushort) (this.Item.Item.RowId % 500_000));
                 }
             }
 
@@ -1260,7 +1261,7 @@ namespace Dalamud.FindAnything
         private class FashionAccessoryResult : ISearchResult, IEquatable<FashionAccessoryResult>
         {
             public string CatName => "Fashion Accessory";
-            public string Name => Ornament.Singular;
+            public string Name => Ornament.Singular.ExtractText();
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Ornament.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1296,7 +1297,7 @@ namespace Dalamud.FindAnything
         private class CollectionResult : ISearchResult, IEquatable<CollectionResult>
         {
             public string CatName => "Collection";
-            public string Name => McGuffinUIData.Name;
+            public string Name => McGuffinUIData.Name.ExtractText();
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(McGuffinUIData.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1535,6 +1536,15 @@ namespace Dalamud.FindAnything
             return (activeContentDirector->Director.ContentFlags & 1) != 0;
         }
 
+        private static unsafe bool CheckInLeve()
+        {
+            var director = UIState.Instance()->DirectorTodo.Director;
+            if (director == null) return false;
+
+            return director->Info.EventId.ContentId is EventHandlerType.GatheringLeveDirector
+                or EventHandlerType.BattleLeveDirector;
+        }
+
         private static bool CheckInEvent()
         {
             return Condition[ConditionFlag.Occupied] ||
@@ -1562,7 +1572,7 @@ namespace Dalamud.FindAnything
             var normalizeKana = criteria.ContainsKana;
             
             var isInDuty = CheckInDuty();
-            var isInCombatDuty = CheckInDuty() && !CheckInExplorerMode();
+            var isInCombatDuty = isInDuty && !CheckInExplorerMode() && !CheckInLeve();
             var isInEvent = CheckInEvent();
             var isInCombat = CheckInCombat();
 
@@ -1584,9 +1594,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
                                             continue;
 
-                                        var row = Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(cfc.Key);
-
-                                        if (row == null || row.ContentType == null)
+                                        if (Data.GetExcelSheet<ContentFinderCondition>().GetRowOrDefault(cfc.Key) is not { } contentType)
                                             continue;
 
                                         /*
@@ -1605,7 +1613,7 @@ namespace Dalamud.FindAnything
                                         */
 
                                         // Only include dungeon, trials, raids, ultimates
-                                        if (row.ContentType.Row is not (2 or 4 or 5 or 28))
+                                        if (contentType.RowId is not (2 or 4 or 5 or 28))
                                             continue;
 
                                         var score = matcher.Matches(cfc.Value.Searchable); 
@@ -1614,10 +1622,10 @@ namespace Dalamud.FindAnything
                                             cResults.Add(new DutySearchResult
                                             {
                                                 Score = score * weight,
-                                                CatName = row.ContentType?.Value?.Name ?? "Duty",
+                                                CatName = contentType.Name.ExtractText(),
                                                 DataKey = cfc.Key,
                                                 Name = cfc.Value.Display,
-                                                Icon = TexCache.GetIcon(row.ContentType?.Value?.Icon ?? 0),
+                                                Icon = TexCache.GetIcon(contentType.Icon),
                                             });
                                         }
 
@@ -1816,10 +1824,10 @@ namespace Dalamud.FindAnything
 
                                         var score = matcher.MatchesAny(
                                             text.Searchable,
-                                            slashCmd.Command.RawString,
-                                            slashCmd.Alias.RawString,
-                                            slashCmd.ShortCommand.RawString,
-                                            slashCmd.ShortAlias.RawString
+                                            slashCmd.Command.ExtractText(),
+                                            slashCmd.Alias.ExtractText(),
+                                            slashCmd.ShortCommand.ExtractText(),
+                                            slashCmd.ShortAlias.ExtractText()
                                         );
                                         if (score > 0)
                                         {
@@ -1827,7 +1835,7 @@ namespace Dalamud.FindAnything
                                             {
                                                 Score = score * weight,
                                                 Name = text.Display,
-                                                SlashCommand = slashCmd.Command.RawString,
+                                                SlashCommand = slashCmd.Command.ExtractText(),
                                                 Icon = TexCache.GetIcon(emoteRow.Icon)
                                             });
 
@@ -1901,8 +1909,8 @@ namespace Dalamud.FindAnything
 
                                         var score = matcher.MatchesAny(
                                             gearset.Name.Downcase(normalizeKana),
-                                            cjRow.Name.RawString.Downcase(normalizeKana),
-                                            cjRow.Abbreviation.RawString.ToLowerInvariant(),
+                                            cjRow.Name.ExtractText().Downcase(normalizeKana),
+                                            cjRow.Abbreviation.ExtractText().ToLowerInvariant(),
                                             ClassJobRolesMap[gearset.ClassJob]
                                         );
                                         if (score > 0)
@@ -1949,9 +1957,9 @@ namespace Dalamud.FindAnything
                                     foreach (var gatherSearch in SearchDatabase.GetAll<GatheringItem>())
                                     {
                                         var gather = gatheringItem.GetRow(gatherSearch.Key)!;
-                                        var item = items.GetRow((uint) gather.Item);
+                                        var item = items.GetRowOrDefault(gather.Item.RowId);
 
-                                        if (item == null || item.RowId == 0) {
+                                        if (item == null || item.Value.RowId == 0) {
                                             continue;
                                         }
 
@@ -1962,7 +1970,7 @@ namespace Dalamud.FindAnything
                                                 Score = score * weight,
                                                 Item = gather,
                                                 Name = gatherSearch.Value.Display,
-                                                Icon = TexCache.GetIcon(item.Icon),
+                                                Icon = TexCache.GetIcon(item.Value.Icon),
                                             });
                                         }
 
@@ -1977,9 +1985,9 @@ namespace Dalamud.FindAnything
                                 var currentTerri = Data.GetExcelSheet<TerritoryType>()?
                                     .GetRow(ClientState.TerritoryType);
 
-                                if (currentTerri != null && currentTerri.ContentFinderCondition.Row != 0)
+                                if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0)
                                 {
-                                    var type = currentTerri.ContentFinderCondition.Value.ContentType.Row;
+                                    var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
                                     if (type == 26 || type == 29)
                                         isInNoMountDuty = false;
                                 }
@@ -1991,7 +1999,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(mount.Singular.RawString.Downcase(normalizeKana));
+                                        var score = matcher.Matches(mount.Singular.ExtractText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MountResult
@@ -2014,7 +2022,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(minion.Singular.RawString.Downcase(normalizeKana)); 
+                                        var score = matcher.Matches(minion.Singular.ExtractText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MinionResult
@@ -2067,7 +2075,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedFashionAccessoryKeys.Contains(ornament.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(ornament.Singular.RawString.Downcase(normalizeKana));
+                                        var score = matcher.Matches(ornament.Singular.ExtractText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new FashionAccessoryResult
@@ -2091,7 +2099,7 @@ namespace Dalamud.FindAnything
                                             continue;
 
                                         var uiData = mcGuffin.UIData.Value!; // Already checked validity in UnlockedCollectionKeys
-                                        var score = matcher.Matches(uiData.Name.RawString.Downcase(normalizeKana));
+                                        var score = matcher.Matches(uiData.Name.ExtractText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new CollectionResult
@@ -2229,15 +2237,15 @@ namespace Dalamud.FindAnything
                 case SearchMode.Wiki:
                 {
                     var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
-                        .FirstOrDefault(x => x.TerritoryType.Row == ClientState.TerritoryType);
+                        .FirstOrNull(x => x.TerritoryType.RowId == ClientState.TerritoryType);
                     var score = matcher.Matches("here");
                     if (score > 0 && terriContent != null)
                     {
                         cResults.Add(new WikiSearchResult
                         {
                             Score = int.MaxValue,
-                            Name = terriContent.Name,
-                            DataKey = terriContent.RowId,
+                            Name = terriContent.Value.Name.ExtractText(),
+                            DataKey = terriContent.Value.RowId,
                             Icon = TexCache.WikiIcon,
                             CatName = "Current Duty",
                             DataCat = WikiSearchResult.DataCategory.Instance,
@@ -2586,7 +2594,8 @@ namespace Dalamud.FindAnything
                 if (ImGui.BeginChild("###findAnythingScroller"))
                 {
                     var childSize = ImGui.GetWindowSize();
-                    
+                    var selectableSize = new Vector2(childSize.X, textSize.Y);
+
                     var quickSelectModifierKey = Configuration.QuickSelectKey switch
                     {
                         VirtualKey.CONTROL => ImGuiKey.ModCtrl,
@@ -2722,8 +2731,7 @@ namespace Dalamud.FindAnything
                             ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
                         }
 
-                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, selectableFlags,
-                                new Vector2(childSize.X, textSize.Y)))
+                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, selectableFlags, selectableSize))
                         {
                             Log.Information("Selectable click");
                             clickedIndex = i;
