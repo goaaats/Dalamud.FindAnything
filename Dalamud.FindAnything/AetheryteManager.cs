@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Aetherytes;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.Sheets;
 
@@ -110,7 +111,7 @@ namespace Dalamud.FindAnything {
             var sheet = FindAnythingPlugin.Data.GetExcelSheet<Aetheryte>(language)!;
             dict.Clear();
             foreach (var row in sheet) {
-                var name = row.PlaceName.ValueNullable?.Name.ToString();
+                var name = row.PlaceName.ValueNullable?.Name.ToDalamudString().TextValue;
                 if (string.IsNullOrEmpty(name))
                     continue;
                 name = FindAnythingPlugin.PluginInterface.Sanitizer.Sanitize(name);
@@ -122,7 +123,7 @@ namespace Dalamud.FindAnything {
             var sheet = FindAnythingPlugin.Data.GetExcelSheet<Aetheryte>(language)!;
             dict.Clear();
             foreach (var row in sheet) {
-                var name = row.Territory.ValueNullable?.PlaceName.ValueNullable?.Name.ToString();
+                var name = row.Territory.ValueNullable?.PlaceName.ValueNullable?.Name.ToDalamudString().TextValue;
                 if (string.IsNullOrEmpty(name))
                     continue;
                 if (row is not { IsAetheryte: true }) continue;
