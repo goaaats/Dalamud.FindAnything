@@ -1594,7 +1594,8 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
                                             continue;
 
-                                        if (Data.GetExcelSheet<ContentFinderCondition>().GetRowOrDefault(cfc.Key) is not { } contentType)
+                                        if (Data.GetExcelSheet<ContentFinderCondition>().GetRowOrDefault(cfc.Key) is not
+                                            { ContentType.ValueNullable: { } contentType } row)
                                             continue;
 
                                         /*
@@ -1622,7 +1623,7 @@ namespace Dalamud.FindAnything
                                             cResults.Add(new DutySearchResult
                                             {
                                                 Score = score * weight,
-                                                CatName = contentType.Name.ExtractText(),
+                                                CatName = row.Name.ExtractText(),
                                                 DataKey = cfc.Key,
                                                 Name = cfc.Value.Display,
                                                 Icon = TexCache.GetIcon(contentType.Icon),
