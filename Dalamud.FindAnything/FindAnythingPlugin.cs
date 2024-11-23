@@ -35,6 +35,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
+using Lumina.Extensions;
 using NCalc;
 
 namespace Dalamud.FindAnything
@@ -1098,7 +1099,7 @@ namespace Dalamud.FindAnything
         private class MountResult : ISearchResult, IEquatable<MountResult>
         {
             public string CatName => "Mount";
-            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular.ExtractText());
+            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular.ToText());
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Mount.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1134,7 +1135,7 @@ namespace Dalamud.FindAnything
         private class MinionResult : ISearchResult, IEquatable<MinionResult>
         {
             public string CatName => "Minion";
-            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular.ExtractText());
+            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular.ToText());
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Minion.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1173,7 +1174,7 @@ namespace Dalamud.FindAnything
                 get
                 {
                     if (CraftType != null) {
-                        return $"Crafting Recipe ({CraftType?.Name.ExtractText()})";
+                        return $"Crafting Recipe ({CraftType?.Name.ToText()})";
                     }
 
                     return "Crafting Recipe";
@@ -1261,7 +1262,7 @@ namespace Dalamud.FindAnything
         private class FashionAccessoryResult : ISearchResult, IEquatable<FashionAccessoryResult>
         {
             public string CatName => "Fashion Accessory";
-            public string Name => Ornament.Singular.ExtractText();
+            public string Name => Ornament.Singular.ToText();
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Ornament.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1297,7 +1298,7 @@ namespace Dalamud.FindAnything
         private class CollectionResult : ISearchResult, IEquatable<CollectionResult>
         {
             public string CatName => "Collection";
-            public string Name => McGuffinUIData.Name.ExtractText();
+            public string Name => McGuffinUIData.Name.ToText();
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(McGuffinUIData.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -1623,7 +1624,7 @@ namespace Dalamud.FindAnything
                                             cResults.Add(new DutySearchResult
                                             {
                                                 Score = score * weight,
-                                                CatName = row.Name.ExtractText(),
+                                                CatName = row.Name.ToText(),
                                                 DataKey = cfc.Key,
                                                 Name = cfc.Value.Display,
                                                 Icon = TexCache.GetIcon(contentType.Icon),
@@ -1825,10 +1826,10 @@ namespace Dalamud.FindAnything
 
                                         var score = matcher.MatchesAny(
                                             text.Searchable,
-                                            slashCmd.Command.ExtractText(),
-                                            slashCmd.Alias.ExtractText(),
-                                            slashCmd.ShortCommand.ExtractText(),
-                                            slashCmd.ShortAlias.ExtractText()
+                                            slashCmd.Command.ToText(),
+                                            slashCmd.Alias.ToText(),
+                                            slashCmd.ShortCommand.ToText(),
+                                            slashCmd.ShortAlias.ToText()
                                         );
                                         if (score > 0)
                                         {
@@ -1836,7 +1837,7 @@ namespace Dalamud.FindAnything
                                             {
                                                 Score = score * weight,
                                                 Name = text.Display,
-                                                SlashCommand = slashCmd.Command.ExtractText(),
+                                                SlashCommand = slashCmd.Command.ToText(),
                                                 Icon = TexCache.GetIcon(emoteRow.Icon)
                                             });
 
@@ -1910,8 +1911,8 @@ namespace Dalamud.FindAnything
 
                                         var score = matcher.MatchesAny(
                                             gearset.Name.Downcase(normalizeKana),
-                                            cjRow.Name.ExtractText().Downcase(normalizeKana),
-                                            cjRow.Abbreviation.ExtractText().ToLowerInvariant(),
+                                            cjRow.Name.ToText().Downcase(normalizeKana),
+                                            cjRow.Abbreviation.ToText().ToLowerInvariant(),
                                             ClassJobRolesMap[gearset.ClassJob]
                                         );
                                         if (score > 0)
@@ -2000,7 +2001,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(mount.Singular.ExtractText().Downcase(normalizeKana));
+                                        var score = matcher.Matches(mount.Singular.ToText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MountResult
@@ -2023,7 +2024,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(minion.Singular.ExtractText().Downcase(normalizeKana));
+                                        var score = matcher.Matches(minion.Singular.ToText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MinionResult
@@ -2076,7 +2077,7 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedFashionAccessoryKeys.Contains(ornament.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(ornament.Singular.ExtractText().Downcase(normalizeKana));
+                                        var score = matcher.Matches(ornament.Singular.ToText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new FashionAccessoryResult
@@ -2100,7 +2101,7 @@ namespace Dalamud.FindAnything
                                             continue;
 
                                         var uiData = mcGuffin.UIData.Value!; // Already checked validity in UnlockedCollectionKeys
-                                        var score = matcher.Matches(uiData.Name.ExtractText().Downcase(normalizeKana));
+                                        var score = matcher.Matches(uiData.Name.ToText().Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new CollectionResult
@@ -2237,7 +2238,7 @@ namespace Dalamud.FindAnything
 
                 case SearchMode.Wiki:
                 {
-                    var terriContent = Data.GetExcelSheet<ContentFinderCondition>()!
+                    var terriContent = Data.GetExcelSheet<ContentFinderCondition>()
                         .FirstOrNull(x => x.TerritoryType.RowId == ClientState.TerritoryType);
                     var score = matcher.Matches("here");
                     if (score > 0 && terriContent != null)
@@ -2245,7 +2246,7 @@ namespace Dalamud.FindAnything
                         cResults.Add(new WikiSearchResult
                         {
                             Score = int.MaxValue,
-                            Name = terriContent.Value.Name.ExtractText(),
+                            Name = terriContent.Value.Name.ToText(),
                             DataKey = terriContent.Value.RowId,
                             Icon = TexCache.WikiIcon,
                             CatName = "Current Duty",
