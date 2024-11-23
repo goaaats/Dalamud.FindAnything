@@ -68,13 +68,13 @@ namespace Dalamud.FindAnything
             {
                 if (rowToFind.Invoke(excelRow) is { } result)
                 {
-                    var textVal = result.ExtractText();
+                    var textVal = result.ToText();
                     if (textVal.IsNullOrEmpty())
                         continue;
 
                     try {
                         if (excelRow is MainCommand && textVal.StartsWith(" ")) {
-                            var macroText = result.ToString();
+                            var macroText = result.ToString(); // Using ToString on purpose to grab macro details below
                             if (macroText.StartsWith("<if([gnum75>0")) {
                                 textVal = macroText.Split(")")[0].Split(",")[2] + textVal;
                             }
