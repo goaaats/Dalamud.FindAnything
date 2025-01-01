@@ -8,7 +8,6 @@ using Dalamud.Plugin;
 using System.Linq;
 using System.Net;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Web;
 using Dalamud.FindAnything.Game;
@@ -17,16 +16,13 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Internal;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -1854,23 +1850,33 @@ namespace Dalamud.FindAnything
 
                                     foreach (var plugin in DalamudReflector.OtherPlugins)
                                     {
-                                        var score = matcher.Matches(plugin.Name.Downcase(normalizeKana));
-                                        if (score > 0)
+                                        if (plugin.HasMainUi)
                                         {
-                                            if (plugin.HasMainUi) {
+                                            var name = $"Open {plugin.Name} Interface";
+                                            var score = matcher.Matches(name.Downcase(normalizeKana));
+
+                                            if (score > 0)
+                                            {
                                                 cResults.Add(new PluginInterfaceSearchResult
                                                 {
                                                     Score = score * weight,
-                                                    Name = plugin.Name + " Interface",
+                                                    Name = name,
                                                     Plugin = plugin,
                                                 });
                                             }
+                                        }
 
-                                            if (plugin.HasConfigUi) {
+                                        if (plugin.HasConfigUi)
+                                        {
+                                            var name = $"Open {plugin.Name} Settings";
+                                            var score = matcher.Matches(name.Downcase(normalizeKana));
+
+                                            if (score > 0)
+                                            {
                                                 cResults.Add(new PluginSettingsSearchResult
                                                 {
                                                     Score = score * weight,
-                                                    Name = plugin.Name + " Settings",
+                                                    Name = name,
                                                     Plugin = plugin,
                                                 });
                                             }
