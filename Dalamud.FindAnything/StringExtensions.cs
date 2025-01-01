@@ -27,7 +27,7 @@ public static class StringExtensions
                         }
                     }
 
-                    return new ReadOnlySpan<char>(buffer).ToString();
+                    return new string(buffer);
                 }
             }
         }
