@@ -18,6 +18,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
@@ -1349,6 +1350,17 @@ namespace Dalamud.FindAnything
         public FindAnythingPlugin()
         {
             Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+
+            // If we are in simple mode, switch to fuzzy mode
+            if (Configuration.MatchModeOld.HasValue)
+            {
+                Configuration.MatchMode = Configuration.MatchModeOld.Value == MatchMode.Simple ?
+                    MatchMode.Fuzzy :
+                    Configuration.MatchModeOld.Value;
+
+                Configuration.MatchModeOld = null;
+            }
+            
             Configuration.Initialize(PluginInterface);
 
             CommandManager.AddHandler(commandName, new CommandInfo(OnCommand)
@@ -1990,14 +2002,18 @@ namespace Dalamud.FindAnything
                             case Configuration.SearchSetting.Mounts:
                                 // This is nasty, should just use TerritoryIntendedUse...
                                 var isInNoMountDuty = isInCombatDuty;
-                                var currentTerri = Data.GetExcelSheet<TerritoryType>()?
-                                    .GetRow(ClientState.TerritoryType);
 
-                                if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0)
+                                if (ClientState.TerritoryType != 0)
                                 {
-                                    var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
-                                    if (type == 26 || type == 29)
-                                        isInNoMountDuty = false;
+                                    var currentTerri = Data.GetExcelSheet<TerritoryType>()?
+                                        .GetRow(ClientState.TerritoryType);
+
+                                    if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0)
+                                    {
+                                        var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
+                                        if (type == 26 || type == 29)
+                                            isInNoMountDuty = false;
+                                    }
                                 }
 
                                 if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInNoMountDuty && !isInCombat)
@@ -2515,44 +2531,10 @@ namespace Dalamud.FindAnything
 
         private int GetTickCount() => Environment.TickCount & Int32.MaxValue;
 
-        private void DrawUI()
+        private void DrawFinder(Vector2 size, Vector2 iconSize, Vector2 textSize, float windowPadding, float scrollbarWidth, float scaledFour, out bool closeFinder)
         {
-            if (!finderOpen)
-                return;
-
-            var closeFinder = false;
-
-            ImGuiHelpers.ForceNextWindowMainViewport();
-
-            var textSize = ImGui.CalcTextSize("poop");
-            var size = new Vector2(500 * ImGuiHelpers.GlobalScale,
-                textSize.Y + ImGui.GetStyle().FramePadding.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2);
-
-            var mainViewportSize = ImGuiHelpers.MainViewport.Size;
-            var mainViewportMiddle = mainViewportSize / 2;
-            var startPos = ImGuiHelpers.MainViewport.Pos + (mainViewportMiddle - (size / 2));
-
-            startPos.Y -= 200;
-            startPos += Configuration.PositionOffset;
-
-            var scaledFour = 4 * ImGuiHelpers.GlobalScale;
-            var iconSize = textSize with { X = textSize.Y };
-            var scrollbarWidth = ImGui.GetStyle().ScrollbarSize + 2;
-            var windowPadding = ImGui.GetStyle().WindowPadding.X * 2;
-
-            if (results is { Length: > 0 })
-            {
-                size.Y += Math.Min(results.Length, MAX_ONE_PAGE) * (float.Floor(textSize.Y) + float.Floor(scaledFour));
-                size.Y -= float.Floor(scaledFour / 2);
-                size.Y += ImGui.GetStyle().ItemSpacing.Y;
-            }
-
-            ImGui.SetNextWindowPos(startPos);
-            ImGui.SetNextWindowSize(size);
-            ImGui.SetNextWindowSizeConstraints(size, new Vector2(size.X, size.Y + (400 * ImGuiHelpers.GlobalScale)));
-
-            ImGui.Begin("###findeverything", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-
+            closeFinder = false;
+            
             ImGui.PushItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X);
 
             var searchHint = searchState.ActualSearchMode switch
@@ -2584,9 +2566,10 @@ namespace Dalamud.FindAnything
 
             ImGui.SameLine();
 
-            ImGui.PushFont(UiBuilder.IconFont);
-            ImGui.Text(FontAwesomeIcon.Search.ToIconString());
-            ImGui.PopFont();
+            using (var _ = ImRaii.PushFont(UiBuilder.IconFont))
+            {
+                ImGui.Text(FontAwesomeIcon.Search.ToIconString());
+            }
 
             if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.ESCAPE)))
             {
@@ -2594,249 +2577,299 @@ namespace Dalamud.FindAnything
                 closeFinder = true;
             }
 
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ImGuiHelpers.GlobalScale, scaledFour));
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemInnerSpacing, new Vector2(scaledFour, scaledFour));
+            using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ImGuiHelpers.GlobalScale, scaledFour));
+            style.Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(scaledFour, scaledFour));
 
-            if (results != null && results.Length > 0)
+            if (results is not { Length: > 0 })
+                return;
+
+            using var child = ImRaii.Child("###findAnythingScroller");
+            if (!child)
+                return;
+
+            var childSize = ImGui.GetWindowSize();
+            var selectableSize = new Vector2(childSize.X, textSize.Y);
+
+            var quickSelectModifierKey = Configuration.QuickSelectKey switch
             {
-                if (ImGui.BeginChild("###findAnythingScroller"))
-                {
-                    var childSize = ImGui.GetWindowSize();
-                    var selectableSize = new Vector2(childSize.X, textSize.Y);
-
-                    var quickSelectModifierKey = Configuration.QuickSelectKey switch
-                    {
-                        VirtualKey.CONTROL => ImGuiKey.ModCtrl,
-                        VirtualKey.MENU => ImGuiKey.ModAlt,
-                        VirtualKey.SHIFT => ImGuiKey.ModShift,
-                        _ => ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.QuickSelectKey)
-                    };
+                VirtualKey.CONTROL => ImGuiKey.ModCtrl,
+                VirtualKey.MENU => ImGuiKey.ModAlt,
+                VirtualKey.SHIFT => ImGuiKey.ModShift,
+                _ => ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.QuickSelectKey)
+            };
                     
-                    var isQuickSelect = ImGui.IsKeyDown(quickSelectModifierKey);
-                    var isDown = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN));
-                    var isUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP));
-                    var isPgUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR));
-                    var isPgDn = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.NEXT));
+            var isQuickSelect = ImGui.IsKeyDown(quickSelectModifierKey);
+            var isDown = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN));
+            var isUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP));
+            var isPgUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR));
+            var isPgDn = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.NEXT));
 
-                    var numKeysPressed = new bool[10];
-                    for (var i = 0; i < 9; i++)
-                    {
-                        numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiKey._1 + i);
-                    }
+            var numKeysPressed = new bool[10];
+            for (var i = 0; i < 9; i++)
+            {
+                numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiKey._1 + i);
+            }
 
-                    void CursorDown()
-                    {
-                        if (selectedIndex != results.Length - 1)
-                        {
-                            selectedIndex++;
-                        }
-                        else
-                        {
-                            selectedIndex = 0;
-                        }
+            void CursorDown()
+            {
+                if (selectedIndex != results.Length - 1)
+                {
+                    selectedIndex++;
+                }
+                else
+                {
+                    selectedIndex = 0;
+                }
 
-                        framesSinceLastKbChange = 0;
-                    }
+                framesSinceLastKbChange = 0;
+            }
 
-                    void CursorUp()
-                    {
-                        if (selectedIndex != 0)
-                        {
-                            selectedIndex--;
-                        }
-                        else
-                        {
-                            selectedIndex = results.Length - 1;
-                        }
+            void CursorUp()
+            {
+                if (selectedIndex != 0)
+                {
+                    selectedIndex--;
+                }
+                else
+                {
+                    selectedIndex = results.Length - 1;
+                }
 
-                        framesSinceLastKbChange = 0;
-                    }
+                framesSinceLastKbChange = 0;
+            }
 
-                    var scrollSpeedTicks = Configuration.Speed switch {
-                        Configuration.ScrollSpeed.Slow => 120,
-                        Configuration.ScrollSpeed.Medium => 65,
-                        Configuration.ScrollSpeed.Fast => 30,
-                        _ => throw new ArgumentOutOfRangeException()
-                    };
+            var scrollSpeedTicks = Configuration.Speed switch {
+                Configuration.ScrollSpeed.Slow => 120,
+                Configuration.ScrollSpeed.Medium => 65,
+                Configuration.ScrollSpeed.Fast => 30,
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-                    const int holdTimeout = 120;
-                    var ticks = GetTickCount();
-                    var ticksSinceLast = ticks - lastButtonPressTicks;
-                    if (isDown && !isHeld)
-                    {
+            const int holdTimeout = 120;
+            var ticks = GetTickCount();
+            var ticksSinceLast = ticks - lastButtonPressTicks;
+            if (isDown && !isHeld)
+            {
+                CursorDown();
+                lastButtonPressTicks = ticks;
+                isHeld = true;
+                isHeldTimeout = true;
+            }
+            else if (isDown && isHeld)
+            {
+                switch (isHeldTimeout)
+                {
+                    case true when ticksSinceLast > holdTimeout:
+                        isHeldTimeout = false;
+                        break;
+                    case false when ticksSinceLast > scrollSpeedTicks:
                         CursorDown();
                         lastButtonPressTicks = ticks;
-                        isHeld = true;
-                        isHeldTimeout = true;
-                    }
-                    else if (isDown && isHeld)
-                    {
-                        switch (isHeldTimeout)
-                        {
-                            case true when ticksSinceLast > holdTimeout:
-                                isHeldTimeout = false;
-                                break;
-                            case false when ticksSinceLast > scrollSpeedTicks:
-                                CursorDown();
-                                lastButtonPressTicks = ticks;
-                                break;
-                        }
-                    }
-                    else if (isUp && !isHeld)
-                    {
+                        break;
+                }
+            }
+            else if (isUp && !isHeld)
+            {
+                CursorUp();
+                lastButtonPressTicks = ticks;
+                isHeld = true;
+                isHeldTimeout = true;
+            }
+            else if (isUp && isHeld)
+            {
+                switch (isHeldTimeout)
+                {
+                    case true when ticksSinceLast > holdTimeout:
+                        isHeldTimeout = false;
+                        break;
+                    case false when ticksSinceLast > scrollSpeedTicks:
                         CursorUp();
                         lastButtonPressTicks = ticks;
-                        isHeld = true;
-                        isHeldTimeout = true;
-                    }
-                    else if (isUp && isHeld)
-                    {
-                        switch (isHeldTimeout)
-                        {
-                            case true when ticksSinceLast > holdTimeout:
-                                isHeldTimeout = false;
-                                break;
-                            case false when ticksSinceLast > scrollSpeedTicks:
-                                CursorUp();
-                                lastButtonPressTicks = ticks;
-                                break;
-                        }
-                    }
-                    else if (!isDown && !isUp)
-                    {
-                        isHeld = false;
-                        isHeldTimeout = false;
-                    }
+                        break;
+                }
+            }
+            else if (!isDown && !isUp)
+            {
+                isHeld = false;
+                isHeldTimeout = false;
+            }
 
-                    if (isPgUp && framesSinceLastKbChange > 10)
-                    {
-                        selectedIndex = Math.Max(0, selectedIndex - MAX_ONE_PAGE);
-                        framesSinceLastKbChange = 0;
-                    }
-                    else if (isPgDn && framesSinceLastKbChange > 10)
-                    {
-                        selectedIndex = Math.Min(results.Length - 1, selectedIndex + MAX_ONE_PAGE);
-                        framesSinceLastKbChange = 0;
-                    }
+            if (isPgUp && framesSinceLastKbChange > 10)
+            {
+                selectedIndex = Math.Max(0, selectedIndex - MAX_ONE_PAGE);
+                framesSinceLastKbChange = 0;
+            }
+            else if (isPgDn && framesSinceLastKbChange > 10)
+            {
+                selectedIndex = Math.Min(results.Length - 1, selectedIndex + MAX_ONE_PAGE);
+                framesSinceLastKbChange = 0;
+            }
 
-                    framesSinceLastKbChange++;
-                    var clickedIndex= -1;
-                    var selectedScrollPos = 0f;
+            framesSinceLastKbChange++;
+            var clickedIndex= -1;
+            var selectedScrollPos = 0f;
 
-                    for (var i = 0; i < results.Length; i++)
-                    {
-                        var result = results[i];
+            for (var i = 0; i < results.Length; i++)
+            {
+                var result = results[i];
 
-                        if (i == selectedIndex - SELECTION_SCROLL_OFFSET)
-                        {
-                            selectedScrollPos = ImGui.GetCursorPosY();
-                        }
+                if (i == selectedIndex - SELECTION_SCROLL_OFFSET)
+                {
+                    selectedScrollPos = ImGui.GetCursorPosY();
+                }
 
-                        var selectableFlags = ImGuiSelectableFlags.None;
-                        var disableMouse = Configuration.DisableMouseSelection && !isQuickSelect;
-                        if (disableMouse) {
-                            selectableFlags = ImGuiSelectableFlags.Disabled;
-                            ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
-                        }
+                var selectableFlags = ImGuiSelectableFlags.None;
+                var disableMouse = Configuration.DisableMouseSelection && !isQuickSelect;
+                if (disableMouse) {
+                    selectableFlags = ImGuiSelectableFlags.Disabled;
+                    ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
+                }
 
-                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, selectableFlags, selectableSize))
-                        {
-                            Log.Information("Selectable click");
-                            clickedIndex = i;
-                        }
+                if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, selectableFlags, selectableSize))
+                {
+                    Log.Information("Selectable click");
+                    clickedIndex = i;
+                }
 
-                        if (disableMouse)
-                            ImGui.PopStyleVar();
+                if (disableMouse)
+                    ImGui.PopStyleVar();
 
-                        var thisTextSize = ImGui.CalcTextSize(result.Name);
+                var thisTextSize = ImGui.CalcTextSize(result.Name);
 
-                        ImGui.SameLine(thisTextSize.X + scaledFour);
+                ImGui.SameLine(thisTextSize.X + scaledFour);
 
-                        ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
-                        // ImGui.TextColored(ImGuiColors.DalamudGrey, result.Score.ToString());
+                ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
+                // ImGui.TextColored(ImGuiColors.DalamudGrey, result.Score.ToString());
 
-                        if (i < 9 && Configuration.QuickSelectKey != VirtualKey.NO_KEY)
-                        {
-                            ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
-                            ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
-                        }
+                if (i < 9 && Configuration.QuickSelectKey != VirtualKey.NO_KEY)
+                {
+                    ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
+                    ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
+                }
 
-                        if (result.Icon != null)
-                        {
-                            ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
-                            ImGui.Image(result.Icon.GetWrapOrEmpty().ImGuiHandle, iconSize);
-                        }
-                    }
+                if (result.Icon != null)
+                {
+                    ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
+                    ImGui.Image(result.Icon.GetWrapOrEmpty().ImGuiHandle, iconSize);
+                }
+            }
 
-                    if(isUp || isDown || isPgUp || isPgDn || resetScroll)
-                    {
-                        if (selectedIndex > 0)
-                        {
-                            ImGui.SetScrollY(selectedScrollPos);
-                        }
-                        else
-                        {
-                            ImGui.SetScrollY(0);
-                        }
-                    }
+            if(isUp || isDown || isPgUp || isPgDn || resetScroll)
+            {
+                if (selectedIndex > 0)
+                {
+                    ImGui.SetScrollY(selectedScrollPos);
+                }
+                else
+                {
+                    ImGui.SetScrollY(0);
+                }
+            }
 
-                    if (isQuickSelect && numKeysPressed.Any(x => x))
-                    {
-                        clickedIndex = Array.IndexOf(numKeysPressed, true);
-                    }
+            if (isQuickSelect && numKeysPressed.Any(x => x))
+            {
+                clickedIndex = Array.IndexOf(numKeysPressed, true);
+            }
 
-                    if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || clickedIndex != -1)
-                    {
-                        var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
+            if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || clickedIndex != -1)
+            {
+                var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
                         
-                        if (index < results.Length)
+                if (index < results.Length)
+                {
+                    var result = results[index];
+                    closeFinder = result.CloseFinder;
+                    result.Selected();
+
+                    // results can be null here, as the wiki mode choicer nulls it when selected
+                    if (results != null && searchState.ActualSearchMode == SearchMode.Top)
+                    {
+                        var alreadyInHistory = false;
+                        for (var i = 0; i < history.Count; i++)
                         {
-                            var result = results[index];
-                            closeFinder = result.CloseFinder;
-                            result.Selected();
-
-                            // results can be null here, as the wiki mode choicer nulls it when selected
-                            if (results != null && searchState.ActualSearchMode == SearchMode.Top)
+                            var historyEntry = history[i];
+                            if (result.Equals(historyEntry.Result))
                             {
-                                var alreadyInHistory = false;
-                                for (var i = 0; i < history.Count; i++)
+                                alreadyInHistory = true;
+                                if (i > 0)
                                 {
-                                    var historyEntry = history[i];
-                                    if (result.Equals(historyEntry.Result))
-                                    {
-                                        alreadyInHistory = true;
-                                        if (i > 0)
-                                        {
-                                            // Move entry to top of list
-                                            history.RemoveAt(i);
-                                            history.Insert(0, historyEntry);
-                                        }
-                                        break;
-                                    }
+                                    // Move entry to top of list
+                                    history.RemoveAt(i);
+                                    history.Insert(0, historyEntry);
                                 }
-
-                                if (!alreadyInHistory)
-                                {
-                                    history.Insert(0, new HistoryEntry
-                                    {
-                                        Result = results[index],
-                                        SearchCriteria = searchState.CreateCriteria()
-                                    });
-                                }
-
-                                if (history.Count > HistoryMax)
-                                {
-                                    history.RemoveAt(history.Count - 1);
-                                }
+                                break;
                             }
+                        }
+
+                        if (!alreadyInHistory)
+                        {
+                            history.Insert(0, new HistoryEntry
+                            {
+                                Result = results[index],
+                                SearchCriteria = searchState.CreateCriteria()
+                            });
+                        }
+
+                        if (history.Count > HistoryMax)
+                        {
+                            history.RemoveAt(history.Count - 1);
                         }
                     }
                 }
+            }
+        }
+        
+        private void DrawUI()
+        {
+            if (!finderOpen)
+                return;
 
-                ImGui.EndChild();
+            ImGuiHelpers.ForceNextWindowMainViewport();
+
+            var textSize = ImGui.CalcTextSize("poop");
+            var size = new Vector2(500 * ImGuiHelpers.GlobalScale,
+                textSize.Y + ImGui.GetStyle().FramePadding.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2);
+
+            var mainViewportSize = ImGuiHelpers.MainViewport.Size;
+            var mainViewportMiddle = mainViewportSize / 2;
+            var startPos = ImGuiHelpers.MainViewport.Pos + (mainViewportMiddle - (size / 2));
+
+            startPos.Y -= 200;
+            startPos += Configuration.PositionOffset;
+
+            var scaledFour = 4 * ImGuiHelpers.GlobalScale;
+            var iconSize = textSize with { X = textSize.Y };
+            var scrollbarWidth = ImGui.GetStyle().ScrollbarSize + 2;
+            var windowPadding = ImGui.GetStyle().WindowPadding.X * 2;
+
+            if (results is { Length: > 0 })
+            {
+                size.Y += Math.Min(results.Length, MAX_ONE_PAGE) * (float.Floor(textSize.Y) + float.Floor(scaledFour));
+                size.Y -= float.Floor(scaledFour / 2);
+                size.Y += ImGui.GetStyle().ItemSpacing.Y;
             }
 
-            ImGui.PopStyleVar(2);
+            ImGui.SetNextWindowPos(startPos);
+            ImGui.SetNextWindowSize(size);
+            ImGui.SetNextWindowSizeConstraints(size, new Vector2(size.X, size.Y + (400 * ImGuiHelpers.GlobalScale)));
+
+            var closeFinder = false;
+            if (ImGui.Begin("###findeverything",
+                    ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize |
+                    ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
+            {
+                try
+                {
+                    DrawFinder(size, iconSize, textSize, windowPadding, scrollbarWidth, scaledFour, out closeFinder);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error in DrawFinder");
+
+                    using var color = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
+                    ImGui.Text("Could render Wotsit UI. Please report this error.");
+                }
+            }
 
             ImGui.End();
 

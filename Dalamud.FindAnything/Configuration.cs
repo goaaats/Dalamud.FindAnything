@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.FindAnything.Game;
 using Dalamud.Game.ClientState.Keys;
+using Newtonsoft.Json;
 
 namespace Dalamud.FindAnything
 {
@@ -216,7 +217,11 @@ namespace Dalamud.FindAnything
             SearchSetting.GatheringItems,
         };
 
-        public MatchMode MatchMode { get; set; } = MatchMode.Simple;
+        [JsonProperty("MatchMode")]
+        public MatchMode? MatchModeOld { get; set; } = null;
+
+        [JsonProperty("MatchModeNew")]
+        public MatchMode MatchMode { get; set; } = MatchMode.Fuzzy;
         
         public string MatchSigilSimple { get; set; } = "'";
         
