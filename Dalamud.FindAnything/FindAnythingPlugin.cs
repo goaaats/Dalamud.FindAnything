@@ -223,7 +223,7 @@ namespace Dalamud.FindAnything
                 var name = input.Replace(' ', '_');
                 name = name.Replace('–', '-');
 
-                if (name.StartsWith("_")) // "level sync" icon
+                if (name.StartsWith("_") || name.StartsWith("_")) // "level sync" or "job lock" icon
                     name = name.Substring(2);
 
                 switch (choice)
