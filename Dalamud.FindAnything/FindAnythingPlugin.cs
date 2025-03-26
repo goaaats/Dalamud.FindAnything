@@ -1550,8 +1550,8 @@ namespace Dalamud.FindAnything
             var director = UIState.Instance()->DirectorTodo.Director;
             if (director == null) return false;
 
-            return director->Info.EventId.ContentId is EventHandlerType.GatheringLeveDirector
-                or EventHandlerType.BattleLeveDirector;
+            return director->Info.EventId.ContentId is EventHandlerContent.GatheringLeveDirector
+                or EventHandlerContent.BattleLeveDirector;
         }
 
         private static bool CheckInEvent()
