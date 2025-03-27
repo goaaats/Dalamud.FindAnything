@@ -273,7 +273,7 @@ public class GameWindow : Window
 
             FindAnythingPlugin.Notifications.AddNotification(new Notification
             {
-                IconTextureTask = this.noseTextures[NoseKind.Normal].RentAsync()!,
+                IconTexture = this.noseTextures[NoseKind.Normal],
                 Title = "Earned rested DN!",
                 Content = $"You earned {earnedRestedDn:N0} DN from resting for {numHoursSpent} hours.",
                 InitialDuration = TimeSpan.FromSeconds(10),
