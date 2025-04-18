@@ -1,10 +1,7 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Text;
-using Dalamud.Utility.Signatures;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
+﻿using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using System;
 
 namespace Dalamud.FindAnything;
 

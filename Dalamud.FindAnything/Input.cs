@@ -1,8 +1,8 @@
-﻿using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState.Keys;
+﻿using Dalamud.Game.ClientState.Keys;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using ImGuiNET;
+using System.Runtime.InteropServices;
 
 namespace Dalamud.FindAnything;
 
