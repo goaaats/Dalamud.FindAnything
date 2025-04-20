@@ -150,27 +150,18 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         public string Name { get; }
         public ISharedImmediateTexture? Icon { get; }
         public int Score { get; }
-        public bool CloseFinder { get; }
-
+        public bool CloseFinder => true;
         public void Selected();
     }
 
-    private class WikiSearchResult : ISearchResult, IEquatable<WikiSearchResult>
+    private record WikiSearchResult : ISearchResult
     {
-        public string CatName { get; set; }
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public uint DataKey { get; set; }
-
-        public enum DataCategory
-        {
-            Instance,
-            Quest,
-            Item,
-        }
-
-        public DataCategory DataCat { get; set; }
+        public required int Score { get; set; }
+        public required string CatName { get; set; }
+        public required string Name { get; set; }
+        public required uint DataKey { get; set; }
+        public required DataCategory DataCat { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
 
         public bool CloseFinder => false;
 
@@ -180,31 +171,22 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             SwitchSearchMode(SearchMode.WikiSiteChoicer);
         }
 
-        public bool Equals(WikiSearchResult other)
+        public enum DataCategory
         {
-            return this.DataKey == other.DataKey && this.DataCat == other.DataCat;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((WikiSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(this.DataKey, (int)this.DataCat);
+            Instance,
+            Quest,
+            Item,
         }
     }
 
-    private class WikiSiteChoicerResult : ISearchResult
+    private record WikiSiteChoicerResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required SiteChoice Site { get; set; }
+
         public string CatName => string.Empty;
         public string Name => $"Open on {Site}";
         public ISharedImmediateTexture? Icon => TexCache.WikiIcon;
-        public int Score { get; set; }
 
         public enum SiteChoice
         {
@@ -213,10 +195,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             ConsoleGamesWiki,
             TeamCraft,
         }
-
-        public SiteChoice Site { get; set; }
-
-        public bool CloseFinder => true;
 
         private static void OpenWikiPage(string input, SiteChoice choice)
         {
@@ -307,65 +285,31 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                     break;
             }
         }
-
-        public bool Equals(WikiSiteChoicerResult other)
-        {
-            return this.Site == other.Site;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((WikiSiteChoicerResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)this.Site;
-        }
     }
 
-    private class SearchWikiSearchResult : ISearchResult, IEquatable<SearchWikiSearchResult>
+    private record SearchWikiSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Query { get; set; }
+
         public string CatName => string.Empty;
         public string Name => $"Search for \"{Query}\" in wikis...";
         public ISharedImmediateTexture? Icon => TexCache.WikiIcon;
-        public int Score { get; set; }
-
-        public string Query { get; set; }
-
-        public bool CloseFinder => true;
 
         public void Selected()
         {
             Util.OpenLink($"https://ffxiv.gamerescape.com/w/index.php?search={HttpUtility.UrlEncode(Query)}&title=Special%3ASearch&fulltext=1&useskin=Vector");
         }
-
-        public bool Equals(SearchWikiSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Query == other.Query;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((SearchWikiSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Query.GetHashCode();
-        }
     }
 
-    private class AetheryteSearchResult : ISearchResult, IEquatable<AetheryteSearchResult>
+    private record AetheryteSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required IAetheryteEntry Data { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+        public required string TerriName { get; set; }
+
         public string CatName
         {
             get
@@ -383,15 +327,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                 return name;
             }
         }
-
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public IAetheryteEntry Data { get; set; }
-
-        public string TerriName { get; set; }
-
-        public bool CloseFinder => true;
 
         public void Selected()
         {
@@ -415,26 +350,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                 UserError("To use Aetherytes within Wotsit, you must install the \"Teleporter\" plugin.");
             }
         }
-
-        public bool Equals(AetheryteSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Data.AetheryteId.Equals(other.Data.AetheryteId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((AetheryteSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Data.GetHashCode();
-        }
     }
 
     private static void UserError(string error)
@@ -443,44 +358,34 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         ToastGui.ShowError(error);
     }
 
-    private class MainCommandSearchResult : ISearchResult, IEquatable<MainCommandSearchResult>
+    private record MainCommandSearchResult : ISearchResult
     {
-        public string CatName => "Commands";
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public uint CommandId { get; set; }
+        public required string Name { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+        public required int Score { get; set; }
+        public required uint CommandId { get; set; }
 
-        public bool CloseFinder => true;
+        public string CatName => "Commands";
 
         public unsafe void Selected()
         {
             UIModule.Instance()->ExecuteMainCommand(CommandId);
         }
-
-        public bool Equals(MainCommandSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.CommandId == other.CommandId;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((MainCommandSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)this.CommandId;
-        }
     }
 
-    private class InternalSearchResult : ISearchResult, IEquatable<InternalSearchResult>
+    private record InternalSearchResult : ISearchResult
     {
+        public enum InternalSearchResultKind
+        {
+            Settings,
+            DalamudPlugins,
+            DalamudSettings,
+            WikiMode,
+        }
+
+        public required int Score { get; set; }
+        public required InternalSearchResultKind Kind { get; set; }
+
         public string CatName => Kind switch
         {
             InternalSearchResultKind.Settings => "Wotsit",
@@ -497,18 +402,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             InternalSearchResultKind.WikiMode => TexCache.WikiIcon,
             _ => TexCache.PluginInstallerIcon,
         };
-        
-        public int Score { get; set; }
-
-        public enum InternalSearchResultKind
-        {
-            Settings,
-            DalamudPlugins,
-            DalamudSettings,
-            WikiMode,
-        }
-
-        public InternalSearchResultKind Kind { get; set; }
 
         public bool CloseFinder => Kind != InternalSearchResultKind.WikiMode;
 
@@ -540,26 +433,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        public bool Equals(InternalSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Kind == other.Kind;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((InternalSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)this.Kind;
-        }
     }
 
     private static void SwitchSearchMode(SearchMode newMode)
@@ -570,122 +443,56 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         Log.Information($"Now in mode: {newMode}");
     }
 
-    public class GeneralActionSearchResult : ISearchResult, IEquatable<GeneralActionSearchResult>
+    public record GeneralActionSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required uint Id { get; set; }
+        public required string Name { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+
         public string CatName => "General Actions";
-        public string Name { get; set;  }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
 
-        public bool CloseFinder => true;
-
-        public void Selected()
+        public unsafe void Selected()
         {
-            Command.Instance.SendChatUnsafe($"/gaction \"{Name}\"");
-        }
-
-        public bool Equals(GeneralActionSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Name == other.Name;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((GeneralActionSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Name.GetHashCode();
+            ActionManager.Instance()->UseAction(ActionType.GeneralAction, Id);
         }
     }
 
-    private class PluginSettingsSearchResult : ISearchResult, IEquatable<PluginSettingsSearchResult>
+    private record PluginSettingsSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required DalamudReflector.PluginEntry Plugin { get; set; }
+
         public string CatName => "Other Plugins";
-        public string Name { get; set; }
         public ISharedImmediateTexture? Icon => TexCache.PluginInstallerIcon;
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-        public DalamudReflector.PluginEntry Plugin { get; set; }
 
         public void Selected()
         {
             Plugin.OpenConfigUi();
         }
-
-        public bool Equals(PluginSettingsSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Plugin.Name.Equals(other.Plugin.Name);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((PluginSettingsSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Plugin.GetHashCode();
-        }
     }
 
-    private class PluginInterfaceSearchResult : ISearchResult, IEquatable<PluginInterfaceSearchResult>
+    private record PluginInterfaceSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required DalamudReflector.PluginEntry Plugin { get; set; }
+
         public string CatName => "Other Plugins";
-        public string Name { get; set; }
         public ISharedImmediateTexture? Icon => TexCache.PluginInstallerIcon;
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-        public DalamudReflector.PluginEntry Plugin { get; set; }
 
-        public void Selected()
-        {
-            Plugin.OpenMainUi();
-        }
-
-        public bool Equals(PluginInterfaceSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Plugin.Name.Equals(other.Plugin.Name);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((PluginInterfaceSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Plugin.GetHashCode();
-        }
+        public void Selected() => Plugin.OpenMainUi();
     }
 
-    private class MacroLinkSearchResult : ISearchResult, IEquatable<MacroLinkSearchResult>
+    private record MacroLinkSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required Configuration.MacroEntry Entry { get; init; }
+
         public string CatName => "Macros";
         public string Name => Entry.SearchName.Split(';', StringSplitOptions.TrimEntries).First();
         public ISharedImmediateTexture? Icon => TexCache.GetIcon((uint)Entry.IconId);
-        
-        public int Score { get; set; }
-
-        public bool CloseFinder => true;
-
-        public Configuration.MacroEntry Entry { get; set; }
 
         public unsafe void Selected()
         {
@@ -701,7 +508,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                     RaptureShellModule.Instance()->ExecuteMacro(macro);
                     break;
                 case Configuration.MacroEntry.MacroEntryKind.SingleLine:
-                    if (!Entry.Line.StartsWith("/") || Entry.Line.Length > 100)
+                    if (!Entry.Line.StartsWith('/') || Entry.Line.Length > 100)
                     {
                         Log.Error("Invalid slash command:" + Entry.Line);
                         return;
@@ -713,102 +520,46 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        public bool Equals(MacroLinkSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Entry.Equals(other.Entry);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((MacroLinkSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Entry.GetHashCode();
-        }
     }
 
-    private class DutySearchResult : ISearchResult, IEquatable<DutySearchResult>
+    private record DutySearchResult : ISearchResult
     {
-        public string CatName { get; set; }
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-
-        public uint DataKey { get; set; }
+        public required int Score { get; set; }
+        public required string CatName { get; set; }
+        public required string Name { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+        public required uint DataKey { get; set; }
 
         public unsafe void Selected()
         {
             AgentContentsFinder.Instance()->OpenRegularDuty(DataKey);
         }
-
-        public bool Equals(DutySearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.DataKey == other.DataKey;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((DutySearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)this.DataKey;
-        }
     }
 
-    private class ContentRouletteSearchResult : ISearchResult, IEquatable<ContentRouletteSearchResult>
+    private record ContentRouletteSearchResult : ISearchResult
     {
-        public string CatName => "Duty Roulette";
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon => TexCache.RoulettesIcon;
-        public int Score { get; set; }
-        public bool CloseFinder => true;
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required byte DataKey { get; set; }
 
-        public byte DataKey { get; set; }
+        public string CatName => "Duty Roulette";
+        public ISharedImmediateTexture? Icon => TexCache.RoulettesIcon;
 
         public unsafe void Selected()
         {
             AgentContentsFinder.Instance()->OpenRouletteDuty(DataKey);
         }
-
-        public bool Equals(ContentRouletteSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.DataKey == other.DataKey;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((ContentRouletteSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.DataKey.GetHashCode();
-        }
     }
 
-    private class EmoteSearchResult : ISearchResult, IEquatable<EmoteSearchResult>
+    private record EmoteSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required string SlashCommand { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+
+        public Configuration.EmoteMotionMode MotionMode { get; set; } = Configuration.EmoteMode;
+
         public string CatName
         {
             get
@@ -821,14 +572,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             }
         }
 
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public string SlashCommand { get; set; }
-
         public bool CloseFinder => Configuration.EmoteMode != Configuration.EmoteMotionMode.Ask;
-
-        public Configuration.EmoteMotionMode MotionMode { get; set; } = Configuration.EmoteMode;
 
         public void Selected()
         {
@@ -840,7 +584,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             }
 
             var cmd = SlashCommand;
-            if (!cmd.StartsWith("/"))
+            if (!cmd.StartsWith('/'))
                 throw new Exception($"SlashCommand prop does not actually start with a slash: {SlashCommand}");
 
             if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
@@ -848,30 +592,19 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
             Command.Instance.SendChatUnsafe(cmd);
         }
-
-        public bool Equals(EmoteSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.SlashCommand == other.SlashCommand;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((EmoteSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.SlashCommand.GetHashCode();
-        }
     }
 
     private class EmoteModeChoicerResult : ISearchResult
     {
+        public enum EmoteModeChoice
+        {
+            Default,
+            MotionOnly,
+        }
+
+        public required int Score { get; set; }
+        public required EmoteModeChoice Choice { get; set; }
+
         public string CatName => string.Empty;
 
         public string Name => Choice switch
@@ -882,32 +615,17 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         };
 
         public ISharedImmediateTexture? Icon => TexCache.EmoteIcon;
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-
-        public enum EmoteModeChoice
-        {
-            Default,
-            MotionOnly,
-        }
-
-        public EmoteModeChoice Choice { get; set; }
 
         public void Selected()
         {
             var emoteRes = choicerTempResult as EmoteSearchResult;
 
-            switch (this.Choice)
+            emoteRes.MotionMode = this.Choice switch
             {
-                case EmoteModeChoice.Default:
-                    emoteRes.MotionMode = Configuration.EmoteMotionMode.Default;
-                    break;
-                case EmoteModeChoice.MotionOnly:
-                    emoteRes.MotionMode = Configuration.EmoteMotionMode.AlwaysMotion;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+                EmoteModeChoice.Default => Configuration.EmoteMotionMode.Default,
+                EmoteModeChoice.MotionOnly => Configuration.EmoteMotionMode.AlwaysMotion,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
 
             emoteRes.Selected();
         }
@@ -915,6 +633,10 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
     private class HintResult : ISearchResult
     {
+        public required Configuration.HintKind HintLevel { get; set; }
+
+        public int Score { get; set; }
+
         public string CatName => string.Empty;
 
         public string Name => HintLevel switch
@@ -923,7 +645,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             Configuration.HintKind.HintEnter => "Press enter to select results!",
             Configuration.HintKind.HintUpDown => "Press the up and down buttons to scroll!",
             Configuration.HintKind.HintTeleport => "Search for aetherytes or zone names!",
-            Configuration.HintKind.HintEmoteDuty =>  "Search for emotes or duties!",
+            Configuration.HintKind.HintEmoteDuty => "Search for emotes or duties!",
             Configuration.HintKind.HintGameCmd => "Search for game commands, like timers!",
             Configuration.HintKind.HintChatCmd => "Run chat commands by typing them here!",
             Configuration.HintKind.HintMacroLink => "Link macros to search in \"wotsit settings\"!",
@@ -933,10 +655,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         };
 
         public ISharedImmediateTexture? Icon => TexCache.HintIcon;
-        public int Score { get; set; }
         public bool CloseFinder => false;
-
-        public Configuration.HintKind HintLevel { get; set; }
 
         public void Selected()
         {
@@ -944,78 +663,35 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         }
     }
 
-    private class ChatCommandSearchResult : ISearchResult, IEquatable<ChatCommandSearchResult>
+    private record ChatCommandSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Command { get; set; }
+
         public string CatName => string.Empty;
         public string Name => $"Run chat command \"{Command}\"";
         public ISharedImmediateTexture? Icon => TexCache.ChatIcon;
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-
-        public string Command { get; set; }
 
         public void Selected()
         {
-            if (!Command.StartsWith("/"))
+            if (!Command.StartsWith('/'))
                 throw new Exception("Command in ChatCommandSearchResult didn't start with slash!");
-            
+
             FindAnything.Command.Instance.SendChatUnsafe(Command);
-        }
-
-        public bool Equals(ChatCommandSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Command == other.Command;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((ChatCommandSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Command.GetHashCode();
         }
     }
 
-    private class IpcSearchResult : ISearchResult, IEquatable<IpcSearchResult>
+    private record IpcSearchResult : ISearchResult
     {
-        public string CatName { get; set; }
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-
-        public string Guid { get; set; }
+        public required int Score { get; set; }
+        public required string CatName { get; set; }
+        public required string Name { get; set; }
+        public required string Guid { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
 
         public void Selected()
         {
             Ipc.Invoke(Guid);
-        }
-
-        public bool Equals(IpcSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Guid == other.Guid;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((IpcSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Guid.GetHashCode();
         }
     }
 
@@ -1023,6 +699,11 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
     private class ExpressionResult : ISearchResult
     {
+        public required object? Result { get; set; }
+
+        public int Score { get; set; }
+        public bool HasError { get; set; }
+
         public string CatName => string.Empty;
 
         public string Name
@@ -1038,14 +719,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         }
 
         public ISharedImmediateTexture Icon => TexCache.MathsIcon;
-        
-        public int Score { get; set; }
-
-        public bool CloseFinder => true;
-
-        public object? Result { get; set; }
-
-        public bool HasError { get; set; }
 
         public void Selected()
         {
@@ -1057,115 +730,59 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         }
     }
 
-    private class GearsetSearchResult : ISearchResult, IEquatable<GearsetSearchResult>
+    private record GearsetSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required GameStateCache.Gearset Gearset { get; set; }
+
         public string CatName => "Gearset";
         public string Name => Gearset.Name;
         public ISharedImmediateTexture? Icon => TexCache.ClassJobIcons[Gearset.ClassJob];
-        public int Score { get; set; }
-        public bool CloseFinder => true;
 
-        public GameStateCache.Gearset Gearset { get; set; }
-
-        public void Selected()
+        public unsafe void Selected()
         {
-            Command.Instance.SendChatUnsafe("/gs change " + Gearset.Slot);
-        }
-
-        public bool Equals(GearsetSearchResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Gearset.Slot.Equals(other.Gearset.Slot);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((GearsetSearchResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Gearset.GetHashCode();
+            RaptureGearsetModule.Instance()->EquipGearset(Gearset.Slot);
         }
     }
 
-    private class MountResult : ISearchResult, IEquatable<MountResult>
+    private record MountResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required Mount Mount { get; set; }
+
         public string CatName => "Mount";
         public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular.ToText());
         public ISharedImmediateTexture? Icon => TexCache.GetIcon(Mount.Icon);
-        public int Score { get; set; }
-        public bool CloseFinder => true;
 
-        public Mount Mount { get; set; }
-
-        public void Selected()
+        public unsafe void Selected()
         {
-            Command.Instance.SendChatUnsafe($"/mount \"{Mount.Singular}\"");
-        }
-
-        public bool Equals(MountResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Mount.RowId.Equals(other.Mount.RowId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((MountResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Mount.GetHashCode();
+            ActionManager.Instance()->UseAction(ActionType.Mount, Mount.RowId);
         }
     }
 
-    private class MinionResult : ISearchResult, IEquatable<MinionResult>
+    private record MinionResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required Companion Minion { get; set; }
+
         public string CatName => "Minion";
-        public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular.ToText());
         public ISharedImmediateTexture? Icon => TexCache.GetIcon(Minion.Icon);
-        public int Score { get; set; }
-        public bool CloseFinder => true;
 
-        public Companion Minion { get; set; }
-
-        public void Selected()
+        public unsafe void Selected()
         {
-            Command.Instance.SendChatUnsafe($"/minion \"{Minion.Singular}\"");
-        }
-
-        public bool Equals(MinionResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Minion.RowId.Equals(other.Minion.RowId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((MinionResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Minion.GetHashCode();
+            ActionManager.Instance()->UseAction(ActionType.Companion, Minion.RowId);
         }
     }
 
-    private class CraftingRecipeResult : ISearchResult, IEquatable<CraftingRecipeResult> {
+    private record CraftingRecipeResult : ISearchResult
+    {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+        public required Recipe Recipe { get; set; }
+        public required CraftType? CraftType { get; set; }
+
         public string CatName
         {
             get
@@ -1178,15 +795,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             }
         }
 
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-
-        public Recipe Recipe { get; set; }
-
-        public CraftType? CraftType { get; set; }
-
         public void Selected() {
             if (Configuration.OpenCraftingLogToRecipe) {
                 GameStateCache.OpenRecipe(this.Recipe.RowId);
@@ -1198,143 +806,62 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                 }
             }
         }
-
-        public bool Equals(CraftingRecipeResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Recipe.RowId.Equals(other.Recipe.RowId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((CraftingRecipeResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Recipe.GetHashCode();
-        }
     }
 
-    private class GatheringItemResult : ISearchResult, IEquatable<GatheringItemResult> {
-        public string CatName => "Gathering Item";
-        public string Name { get; set; }
-        public ISharedImmediateTexture? Icon { get; set; }
-        public int Score { get; set; }
-        public bool CloseFinder => true;
+    private record GatheringItemResult : ISearchResult
+    {
+        public required int Score { get; set; }
+        public required string Name { get; set; }
+        public required ISharedImmediateTexture? Icon { get; set; }
+        public required GatheringItem Item { get; set; }
 
-        public GatheringItem Item { get; set; }
+        public string CatName => "Gathering Item";
 
         public void Selected() {
             if (this.Item.Item.RowId > 0) {
-                GameStateCache.SearchForItemByGatheringMethod((ushort) (this.Item.Item.RowId % 500_000));
+                GameStateCache.SearchForItemByGatheringMethod((ushort)(this.Item.Item.RowId % 500_000));
             }
-        }
-
-        public bool Equals(GatheringItemResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Item.RowId.Equals(other.Item.RowId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((GatheringItemResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Item.GetHashCode();
         }
     }
 
-    private class FashionAccessoryResult : ISearchResult, IEquatable<FashionAccessoryResult>
+    private record FashionAccessoryResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required Ornament Ornament { get; set; }
+
         public string CatName => "Fashion Accessory";
         public string Name => Ornament.Singular.ToText();
         public ISharedImmediateTexture? Icon => TexCache.GetIcon(Ornament.Icon);
-        public int Score { get; set; }
-        public bool CloseFinder => true;
 
-        public Ornament Ornament { get; set; }
-
-        public void Selected()
+        public unsafe void Selected()
         {
-            Command.Instance.SendChatUnsafe($"/fashion \"{Ornament.Singular}\"");
-        }
-
-        public bool Equals(FashionAccessoryResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.Ornament.RowId.Equals(other.Ornament.RowId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((FashionAccessoryResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Ornament.GetHashCode();
+            ActionManager.Instance()->UseAction(ActionType.Ornament, Ornament.RowId);
         }
     }
 
-    private class CollectionResult : ISearchResult, IEquatable<CollectionResult>
+    private record CollectionResult : ISearchResult
     {
+        public required int Score { get; set; }
+        public required McGuffin McGuffin { get; set; }
+        public required McGuffinUIData McGuffinUIData { get; set; }
+
         public string CatName => "Collection";
         public string Name => McGuffinUIData.Name.ToText();
         public ISharedImmediateTexture? Icon => TexCache.GetIcon(McGuffinUIData.Icon);
-        public int Score { get; set; }
-        public bool CloseFinder => true;
-        public McGuffin McGuffin { get; set; }
-        public McGuffinUIData McGuffinUIData { get; set; }
 
         public void Selected()
         {
             Interop.Instance.UseMgGuffin(McGuffin.RowId);
         }
-
-        public bool Equals(CollectionResult? other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return this.McGuffin.RowId.Equals(other.McGuffin.RowId);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((CollectionResult)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return this.McGuffin.GetHashCode();
-        }
     }
 
-    private class GameSearchResult : ISearchResult
+    private record GameSearchResult : ISearchResult
     {
+        public required int Score { get; set; }
+
         public string CatName => string.Empty;
         public string Name => "DN Farm";
         public ISharedImmediateTexture? Icon => TexCache.GameIcon;
-        public int Score { get; set; }
-        public bool CloseFinder => true;
 
         public void Selected()
         {
