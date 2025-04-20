@@ -2,6 +2,7 @@ using Dalamud.FindAnything.Game;
 using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Keys;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.Command;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
@@ -15,6 +16,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -34,6 +36,8 @@ using System.Net;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Web;
+
+#pragma warning disable SeStringEvaluator
 
 namespace Dalamud.FindAnything;
 
@@ -56,6 +60,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; }
     [PluginService] public static IPluginLog Log { get; private set; }
     [PluginService] public static INotificationManager Notifications { get; private set; }
+    [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; private set; }
 
     public static TextureCache TexCache { get; private set; }
     private static SearchDatabase SearchDatabase { get; set; }
@@ -514,7 +519,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         return;
                     }
 
-                    Command.Instance.SendChatUnsafe(Entry.Line);
+                    Chat.ExecuteCommand(Entry.Line);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -590,7 +595,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
                 cmd += " motion";
 
-            Command.Instance.SendChatUnsafe(cmd);
+            Chat.ExecuteCommand(cmd);
         }
     }
 
@@ -677,7 +682,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             if (!Command.StartsWith('/'))
                 throw new Exception("Command in ChatCommandSearchResult didn't start with slash!");
 
-            FindAnything.Command.Instance.SendChatUnsafe(Command);
+            Chat.ExecuteCommand(Command);
         }
     }
 
@@ -872,7 +877,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     private static ISearchResult[]? results;
 
     public static ICallGateSubscriber<uint, byte, bool> TeleportIpc { get; private set; }
-    public static ICallGateSubscriber<bool> ShowTeleportChatMessageIpc {get; private set; }
+    public static ICallGateSubscriber<bool> ShowTeleportChatMessageIpc { get; private set; }
 
     public FindAnythingPlugin()
     {
@@ -887,7 +892,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
             Configuration.MatchModeOld = null;
         }
-        
+
         Configuration.Initialize(PluginInterface);
 
         CommandManager.AddHandler(commandName, new CommandInfo(OnCommand)
@@ -1106,7 +1111,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
         var matcher = new FuzzyMatcher(criteria.MatchString, criteria.MatchMode);
         var normalizeKana = criteria.ContainsKana;
-        
+
         var isInDuty = CheckInDuty();
         var isInCombatDuty = isInDuty && !CheckInExplorerMode() && !CheckInLeve();
         var isInEvent = CheckInEvent();
@@ -1153,7 +1158,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                     if (contentType.RowId is not (2 or 4 or 5 or 28))
                                         continue;
 
-                                    var score = matcher.Matches(cfc.Value.Searchable); 
+                                    var score = matcher.Matches(cfc.Value.Searchable);
                                     if (score > 0)
                                     {
                                         cResults.Add(new DutySearchResult
@@ -1184,7 +1189,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                         cResults.Add(new ContentRouletteSearchResult()
                                         {
                                             Score = score * weight,
-                                            DataKey = (byte) contentRoulette.RowId,
+                                            DataKey = (byte)contentRoulette.RowId,
                                             Name = name,
                                         });
                                     }
@@ -1240,7 +1245,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
                                     dummyScore = matcher.Matches("Closest Striking Dummy".ToLowerInvariant());
                                     if (Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.StrikingDummy) &&
-                                        dummyScore > 0 &&  AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
+                                        dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId))
                                     {
                                         strikingDummyResults.Add(aetheryte);
                                     }
@@ -1297,6 +1302,12 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                     // Record ready check, internal ones
                                     if (mainCommand.Key is 79 or 38 or 39 or 40 or 43 or 26)
                                         continue;
+                                    
+                                    unsafe
+                                    {
+                                        if (!UIModule.Instance()->IsMainCommandUnlocked(mainCommand.Key))
+                                            continue;
+                                    }
 
                                     var searchable = mainCommand.Value.Searchable;
                                     if (searchable == "log out")
@@ -1343,6 +1354,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                         if (score > 0)
                                             cResults.Add(new GeneralActionSearchResult
                                             {
+                                                Id = generalAction.Key,
                                                 Score = score * weight,
                                                 Name = generalAction.Value.Display,
                                                 Icon = TexCache.GeneralActionIcons[generalAction.Key]
@@ -1356,6 +1368,12 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                             {
                                 foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && GameStateCache.UnlockedEmoteKeys.Contains(x.RowId)))
                                 {
+                                    unsafe
+                                    {
+                                        if (!AgentEmote.Instance()->CanUseEmote((ushort)emoteRow.RowId))
+                                            continue;
+                                    }
+
                                     var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
                                     var slashCmd = emoteRow.TextCommand.Value!;
 
@@ -1550,6 +1568,13 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                     if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
                                         continue;
 
+                                    unsafe
+                                    {
+                                        // check if mount can be used
+                                        if (ActionManager.Instance()->GetActionStatus(ActionType.Mount, mount.RowId) != 0)
+                                            continue;
+                                    }
+
                                     var score = matcher.Matches(mount.Singular.ToText().Downcase(normalizeKana));
                                     if (score > 0)
                                     {
@@ -1573,12 +1598,21 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                     if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
                                         continue;
 
-                                    var score = matcher.Matches(minion.Singular.ToText().Downcase(normalizeKana));
+                                    unsafe
+                                    {
+                                        // check if minion can be used
+                                        if (ActionManager.Instance()->GetActionStatus(ActionType.Companion, minion.RowId) != 0)
+                                            continue;
+                                    }
+
+                                    var name = SeStringEvaluator.EvaluateObjStr(ObjectKind.Companion, minion.RowId);
+                                    var score = matcher.Matches(name.Downcase(normalizeKana));
                                     if (score > 0)
                                     {
                                         cResults.Add(new MinionResult
                                         {
                                             Score = score * weight,
+                                            Name = name,
                                             Minion = minion,
                                         });
                                     }
@@ -1675,7 +1709,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                 {
                     var expression = new Expression(criteria.CleanString);
 
-                    expression.EvaluateFunction += delegate(string name, FunctionArgs args)
+                    expression.EvaluateFunction += delegate (string name, FunctionArgs args)
                     {
                         switch (name)
                         {
@@ -1726,7 +1760,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         }
                     };
 
-                    expression.EvaluateParameter += delegate(string sender, ParameterArgs args)
+                    expression.EvaluateParameter += delegate (string sender, ParameterArgs args)
                     {
                         if (sender == "ans")
                         {
@@ -1832,7 +1866,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
                 foreach (var quest in SearchDatabase.GetAll<Quest>())
                 {
-                    score = matcher.Matches(quest.Value.Searchable); 
+                    score = matcher.Matches(quest.Value.Searchable);
                     if (score > 0)
                         cResults.Add(new WikiSearchResult
                         {
@@ -1935,7 +1969,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             }
                 break;
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(criteria.SearchMode));
         }
 
         if (!isInCombatDuty && criteria.CleanString.StartsWith("/"))
@@ -1967,7 +2001,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         Framework.Update -= FrameworkOnUpdate;
         CommandManager.RemoveHandler(commandName);
         CommandManager.RemoveHandler("/bountifuldn");
-        
+
         Ipc.Dispose();
     }
 
@@ -1995,28 +2029,26 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         {
             var nextHint = Configuration.HintLevel++;
             Log.Information($"Hint: {nextHint}");
-            results = new ISearchResult[]
-            {
+            results = [
                 new HintResult
                 {
                     HintLevel = nextHint
                 }
-            };
+            ];
             Configuration.Save();
         }
         else if (Configuration.HistoryEnabled && history.Count > 0)
         {
             var historyResults = new List<ISearchResult>();
             var newHistory = new List<HistoryEntry>();
-            
+
             Log.Verbose("{Num} histories:", history.Count);
 
             foreach (var historyEntry in history)
             {
                 var searched = UpdateSearchResults(historyEntry.SearchCriteria);
                 Log.Verbose(" => {Name}, {Type}, {ResultsNow}, {Term}", historyEntry.Result?.CatName, historyEntry.Result?.GetType()?.FullName, searched?.Length, historyEntry.SearchCriteria.MatchString);
-                
-                
+
                 var first = searched?.FirstOrDefault(x => x.Equals(historyEntry.Result));
                 if (first == null)
                 {
@@ -2061,7 +2093,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     private void DrawFinder(Vector2 size, Vector2 iconSize, Vector2 textSize, float windowPadding, float scrollbarWidth, float scaledFour, out bool closeFinder)
     {
         closeFinder = false;
-        
+
         ImGui.PushItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X);
 
         var searchHint = searchState.ActualSearchMode switch
@@ -2124,7 +2156,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             VirtualKey.SHIFT => ImGuiKey.ModShift,
             _ => ImGuiHelpers.VirtualKeyToImGuiKey(Configuration.QuickSelectKey)
         };
-                
+
         var isQuickSelect = ImGui.IsKeyDown(quickSelectModifierKey);
         var isDown = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN));
         var isUp = ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP));
@@ -2233,7 +2265,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         }
 
         framesSinceLastKbChange++;
-        var clickedIndex= -1;
+        var clickedIndex = -1;
         var selectedScrollPos = 0f;
 
         for (var i = 0; i < results.Length; i++)
@@ -2281,7 +2313,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             }
         }
 
-        if(isUp || isDown || isPgUp || isPgDn || resetScroll)
+        if (isUp || isDown || isPgUp || isPgDn || resetScroll)
         {
             if (selectedIndex > 0)
             {
@@ -2301,7 +2333,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || clickedIndex != -1)
         {
             var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
-                    
+
             if (index < results.Length)
             {
                 var result = results[index];
@@ -2345,7 +2377,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
             }
         }
     }
-    
+
     private void DrawUI()
     {
         if (!finderOpen)

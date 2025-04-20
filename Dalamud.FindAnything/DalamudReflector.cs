@@ -37,14 +37,13 @@ public class DalamudReflector
             if (plugin.Name == "Wotsit")
                 continue;
 
-            var entry = new PluginEntry
+            list.Add(new PluginEntry
             {
-                Name =  plugin.Name,
+                Name = plugin.Name,
                 Plugin = plugin,
                 HasConfigUi = plugin.HasConfigUi,
                 HasMainUi = plugin.HasMainUi
-            };
-            list.Add(entry);
+            });
         }
 
         OtherPlugins = list;
