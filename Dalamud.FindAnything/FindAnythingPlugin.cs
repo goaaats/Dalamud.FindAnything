@@ -31,6 +31,8 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Objects.Enums;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 using NCalc;
@@ -578,9 +580,11 @@ namespace Dalamud.FindAnything
 
             public bool CloseFinder => true;
 
-            public void Selected()
+            public uint Id { get; set; }
+
+            public unsafe void Selected()
             {
-                Command.Instance.SendChatUnsafe($"/gaction \"{Name}\"");
+                ActionManager.Instance()->UseAction(ActionType.GeneralAction, Id);
             }
 
             public bool Equals(GeneralActionSearchResult? other)
@@ -706,7 +710,7 @@ namespace Dalamud.FindAnything
                             return;
                         }
 
-                        Command.Instance.SendChatUnsafe(Entry.Line);
+                        Chat.ExecuteCommand(Entry.Line);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -845,7 +849,7 @@ namespace Dalamud.FindAnything
                 if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
                     cmd += " motion";
 
-                Command.Instance.SendChatUnsafe(cmd);
+                Chat.ExecuteCommand(cmd);
             }
 
             public bool Equals(EmoteSearchResult? other)
@@ -958,7 +962,7 @@ namespace Dalamud.FindAnything
                 if (!Command.StartsWith("/"))
                     throw new Exception("Command in ChatCommandSearchResult didn't start with slash!");
                 
-                FindAnything.Command.Instance.SendChatUnsafe(Command);
+                Chat.ExecuteCommand(Command);
             }
 
             public bool Equals(ChatCommandSearchResult? other)
@@ -1066,9 +1070,9 @@ namespace Dalamud.FindAnything
 
             public GameStateCache.Gearset Gearset { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                Command.Instance.SendChatUnsafe("/gs change " + Gearset.Slot);
+                RaptureGearsetModule.Instance()->EquipGearset(Gearset.Slot);
             }
 
             public bool Equals(GearsetSearchResult? other)
@@ -1102,9 +1106,9 @@ namespace Dalamud.FindAnything
 
             public Mount Mount { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                Command.Instance.SendChatUnsafe($"/mount \"{Mount.Singular}\"");
+                ActionManager.Instance()->UseAction(ActionType.Mount, Mount.RowId);
             }
 
             public bool Equals(MountResult? other)
@@ -1138,9 +1142,9 @@ namespace Dalamud.FindAnything
 
             public Companion Minion { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                Command.Instance.SendChatUnsafe($"/minion \"{Minion.Singular}\"");
+                ActionManager.Instance()->UseAction(ActionType.Companion, Minion.RowId);
             }
 
             public bool Equals(MinionResult? other)
@@ -1165,17 +1169,9 @@ namespace Dalamud.FindAnything
         }
 
         private class CraftingRecipeResult : ISearchResult, IEquatable<CraftingRecipeResult> {
-            public string CatName
-            {
-                get
-                {
-                    if (CraftType != null) {
-                        return $"Crafting Recipe ({CraftType?.Name.ToText()})";
-                    }
-
-                    return "Crafting Recipe";
-                }
-            }
+            public string CatName => CraftType != null
+                ? $"Crafting Recipe ({CraftType?.Name.ToText()})"
+                : "Crafting Recipe";
 
             public string Name { get; set; }
             public ISharedImmediateTexture? Icon { get; set; }
@@ -1265,9 +1261,9 @@ namespace Dalamud.FindAnything
 
             public Ornament Ornament { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                Command.Instance.SendChatUnsafe($"/fashion \"{Ornament.Singular}\"");
+                ActionManager.Instance()->UseAction(ActionType.Ornament, Ornament.RowId);
             }
 
             public bool Equals(FashionAccessoryResult? other)
@@ -1817,6 +1813,7 @@ namespace Dalamud.FindAnything
                                             if (score > 0)
                                                 cResults.Add(new GeneralActionSearchResult
                                                 {
+                                                    Id = generalAction.Key,
                                                     Score = score * weight,
                                                     Name = generalAction.Value.Display,
                                                     Icon = TexCache.GeneralActionIcons[generalAction.Key]
