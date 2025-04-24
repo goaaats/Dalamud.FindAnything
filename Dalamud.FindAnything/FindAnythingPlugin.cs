@@ -854,9 +854,9 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         public string Name => McGuffinUIData.Name.ToText();
         public ISharedImmediateTexture? Icon => TexCache.GetIcon(McGuffinUIData.Icon);
 
-        public void Selected()
+        public unsafe void Selected()
         {
-            Interop.Instance.UseMgGuffin(McGuffin.RowId);
+            AgentMcGuffin.Instance()->CanOpenMcGuffin(McGuffin.RowId);
         }
     }
 
