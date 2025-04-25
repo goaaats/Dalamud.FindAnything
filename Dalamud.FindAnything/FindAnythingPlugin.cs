@@ -65,7 +65,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     public static TextureCache TexCache { get; private set; }
     private static SearchDatabase SearchDatabase { get; set; }
     private static AetheryteManager AetheryteManager { get; set; }
-    private static DalamudReflector DalamudReflector { get; set; }
     private static GameStateCache GameStateCache { get; set; }
     private static Input? Input { get; set; }
     private static IpcSystem Ipc { get; set; }
@@ -467,7 +466,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     {
         public required int Score { get; set; }
         public required string Name { get; set; }
-        public required DalamudReflector.PluginEntry Plugin { get; set; }
+        public required IExposedPlugin Plugin { get; set; }
 
         public string CatName => "Other Plugins";
         public ISharedImmediateTexture? Icon => TexCache.PluginInstallerIcon;
@@ -482,7 +481,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     {
         public required int Score { get; set; }
         public required string Name { get; set; }
-        public required DalamudReflector.PluginEntry Plugin { get; set; }
+        public required IExposedPlugin Plugin { get; set; }
 
         public string CatName => "Other Plugins";
         public ISharedImmediateTexture? Icon => TexCache.PluginInstallerIcon;
@@ -931,7 +930,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         windowSystem.AddWindow(gameWindow);
         PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
-        DalamudReflector = DalamudReflector.Load();
         GameStateCache = GameStateCache.Load();
         Input = new Input();
         Ipc = new IpcSystem(PluginInterface, Data, TexCache);
@@ -1390,10 +1388,11 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         case Configuration.SearchSetting.PluginSettings:
                             if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.PluginSettings))
                             {
-                                DalamudReflector.RefreshPlugins();
-
-                                foreach (var plugin in DalamudReflector.OtherPlugins)
+                                foreach (var plugin in PluginInterface.InstalledPlugins)
                                 {
+                                    if (plugin.Name == "Wotsit")
+                                        continue;
+
                                     if (plugin.HasMainUi)
                                     {
                                         var name = $"Open {plugin.Name} Interface";
