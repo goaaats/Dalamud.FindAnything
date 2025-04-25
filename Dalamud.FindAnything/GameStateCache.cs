@@ -1,4 +1,6 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.UI;
+﻿using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
@@ -16,18 +18,17 @@ public unsafe class GameStateCache
         public uint ClassJob { get; set; }
     }
 
-    public IReadOnlyList<uint> UnlockedDutyKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedCollectionKeys { get; set; }
-    public IReadOnlyList<uint> UnlockedFashionAccessoryKeys { get; set; }
+    public IReadOnlyList<ContentFinderCondition> UnlockedDuties { get; private set; }
+    public IReadOnlyList<Emote> UnlockedEmotes { get; private set; }
+    public IReadOnlyList<Mount> UnlockedMounts { get; private set; }
+    public IReadOnlyList<Companion> UnlockedMinions { get; private set; }
+    public IReadOnlyList<Ornament> UnlockedFashionAccessories { get; set; }
+    public IReadOnlyList<McGuffin> UnlockedCollections { get; set; }
+    public IReadOnlyList<MainCommand> UnlockedMainCommands { get; set; }
     public IReadOnlyList<Gearset> Gearsets { get; private set; }
     
-    internal bool IsMinionUnlocked(uint minionId) => UIState.Instance()->IsCompanionUnlocked(minionId);
-
     internal void OpenRecipe(uint recipeId) => AgentRecipeNote.Instance()->OpenRecipeByRecipeId(recipeId);
-    internal void SearchForItemByCraftingMethod(uint itemId) => AgentRecipeNote.Instance()->OpenRecipeByItemId(itemId);
+    internal void SearchForItemByCraftingMethod(uint itemId) => AgentRecipeNote.Instance()->SearchRecipeByItemId(itemId);
 
     internal void SearchForItemByGatheringMethod(ushort itemId) => AgentGatheringNote.Instance()->OpenGatherableByItemId(itemId);
 
@@ -39,25 +40,33 @@ public unsafe class GameStateCache
 
     public void Refresh()
     {
-        UnlockedDutyKeys = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()!.Where(x => UIState.IsInstanceContentUnlocked(x.Content.RowId)).Select(x => x.RowId).ToList();
+        UnlockedDuties = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()!
+            .Where(row => UIState.IsInstanceContentUnlocked(row.Content.RowId))
+            .ToList();
 
-        var emotes = new List<uint>();
-        foreach (var emote in FindAnythingPlugin.Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0))
-        {
-            if (emote.UnlockLink == 0 || UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(emote.UnlockLink))
-            {
-                emotes.Add(emote.RowId);
-            }
-        }
-        UnlockedEmoteKeys = emotes;
+        UnlockedEmotes = FindAnythingPlugin.Data.GetExcelSheet<Emote>()!
+            .Where(row => row.Order != 0 && AgentEmote.Instance()->CanUseEmote((ushort)row.RowId))
+            .ToList();
 
-        UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => PlayerState.Instance()->IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedMounts = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!
+            .Where(row => ActionManager.Instance()->GetActionStatus(ActionType.Mount, row.RowId) != 0)
+            .ToList();
 
-        UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedMinions = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!
+            .Where(row => ActionManager.Instance()->GetActionStatus(ActionType.Companion, row.RowId) != 0)
+            .ToList();
 
-        UnlockedFashionAccessoryKeys = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()!.Where(x => PlayerState.Instance()->IsOrnamentUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedFashionAccessories = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()!
+            .Where(row => PlayerState.Instance()->IsOrnamentUnlocked(row.RowId))
+            .ToList();
 
-        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!.Where(x => x.UIData.Value is { RowId: > 0 } && PlayerState.Instance()->IsMcGuffinUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedCollections = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!
+            .Where(row => row.UIData.Value is { RowId: > 0 } && PlayerState.Instance()->IsMcGuffinUnlocked(row.RowId))
+            .ToList();
+
+        UnlockedMainCommands = FindAnythingPlugin.Data.GetExcelSheet<MainCommand>()!
+            .Where(row => UIModule.Instance()->IsMainCommandUnlocked(row.RowId))
+            .ToList();
         
         var gsEntries = RaptureGearsetModule.Instance()->Entries;
         var gearsets = new List<Gearset>();
@@ -78,8 +87,8 @@ public unsafe class GameStateCache
 
         Gearsets = gearsets;
 
-        FindAnythingPlugin.Log.Verbose($"{UnlockedDutyKeys.Count} duties unlocked.");
-        FindAnythingPlugin.Log.Verbose($"{UnlockedEmoteKeys.Count} emotes unlocked.");
+        FindAnythingPlugin.Log.Verbose($"{UnlockedDuties.Count} duties unlocked.");
+        FindAnythingPlugin.Log.Verbose($"{UnlockedEmotes.Count} emotes unlocked.");
     }
 
     public static GameStateCache Load() => new GameStateCache();

@@ -1132,11 +1132,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                             {
                                 foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                                 {
-                                    if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
-                                        continue;
-
-                                    if (Data.GetExcelSheet<ContentFinderCondition>().GetRowOrDefault(cfc.Key) is not
-                                        { ContentType.ValueNullable: { } contentType } row)
+                                    if (!GameStateCache.UnlockedDuties.TryGetFirst(row => row.RowId == cfc.Key, out var row) || !row.ContentType.IsValid)
                                         continue;
 
                                     /*
@@ -1155,7 +1151,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                     */
 
                                     // Only include dungeon, trials, raids, ultimates
-                                    if (contentType.RowId is not (2 or 4 or 5 or 28))
+                                    if (row.ContentType.RowId is not (2 or 4 or 5 or 28))
                                         continue;
 
                                     var score = matcher.Matches(cfc.Value.Searchable);
@@ -1167,7 +1163,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                             CatName = row.Name.ToText(),
                                             DataKey = cfc.Key,
                                             Name = cfc.Value.Display,
-                                            Icon = TexCache.GetIcon(contentType.Icon),
+                                            Icon = TexCache.GetIcon(row.ContentType.Value.Icon),
                                         });
                                     }
 
@@ -1302,12 +1298,9 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                                     // Record ready check, internal ones
                                     if (mainCommand.Key is 79 or 38 or 39 or 40 or 43 or 26)
                                         continue;
-                                    
-                                    unsafe
-                                    {
-                                        if (!UIModule.Instance()->IsMainCommandUnlocked(mainCommand.Key))
-                                            continue;
-                                    }
+
+                                    if (!GameStateCache.UnlockedMainCommands.Any(row => row.RowId == mainCommand.Key))
+                                        continue;
 
                                     var searchable = mainCommand.Value.Searchable;
                                     if (searchable == "log out")
@@ -1366,14 +1359,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         case Configuration.SearchSetting.Emote:
                             if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Emote) && !isInEvent)
                             {
-                                foreach (var emoteRow in Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0 && GameStateCache.UnlockedEmoteKeys.Contains(x.RowId)))
+                                foreach (var emoteRow in GameStateCache.UnlockedEmotes)
                                 {
-                                    unsafe
-                                    {
-                                        if (!AgentEmote.Instance()->CanUseEmote((ushort)emoteRow.RowId))
-                                            continue;
-                                    }
-
                                     var text = SearchDatabase.GetString<Emote>(emoteRow.RowId);
                                     var slashCmd = emoteRow.TextCommand.Value!;
 
@@ -1563,18 +1550,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
                             if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInNoMountDuty && !isInCombat)
                             {
-                                foreach (var mount in Data.GetExcelSheet<Mount>()!)
+                                foreach (var mount in GameStateCache.UnlockedMounts!)
                                 {
-                                    if (!GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
-                                        continue;
-
-                                    unsafe
-                                    {
-                                        // check if mount can be used
-                                        if (ActionManager.Instance()->GetActionStatus(ActionType.Mount, mount.RowId) != 0)
-                                            continue;
-                                    }
-
                                     var score = matcher.Matches(mount.Singular.ToText().Downcase(normalizeKana));
                                     if (score > 0)
                                     {
@@ -1593,18 +1570,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         case Configuration.SearchSetting.Minions:
                             if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Minions) && !isInCombatDuty && !isInCombat)
                             {
-                                foreach (var minion in Data.GetExcelSheet<Companion>()!)
+                                foreach (var minion in GameStateCache.UnlockedMinions)
                                 {
-                                    if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
-                                        continue;
-
-                                    unsafe
-                                    {
-                                        // check if minion can be used
-                                        if (ActionManager.Instance()->GetActionStatus(ActionType.Companion, minion.RowId) != 0)
-                                            continue;
-                                    }
-
                                     var name = SeStringEvaluator.EvaluateObjStr(ObjectKind.Companion, minion.RowId);
                                     var score = matcher.Matches(name.Downcase(normalizeKana));
                                     if (score > 0)
@@ -1655,11 +1622,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         case Configuration.SearchSetting.FashionAccessories:
                             if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.FashionAccessories))
                             {
-                                foreach (var ornament in Data.GetExcelSheet<Ornament>()!)
+                                foreach (var ornament in GameStateCache.UnlockedFashionAccessories)
                                 {
-                                    if (!GameStateCache.UnlockedFashionAccessoryKeys.Contains(ornament.RowId))
-                                        continue;
-
                                     var score = matcher.Matches(ornament.Singular.ToText().Downcase(normalizeKana));
                                     if (score > 0)
                                     {
@@ -1678,11 +1642,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
                         case Configuration.SearchSetting.Collection:
                             if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Collection))
                             {
-                                foreach (var mcGuffin in Data.GetExcelSheet<McGuffin>()!)
+                                foreach (var mcGuffin in GameStateCache.UnlockedCollections)
                                 {
-                                    if (!GameStateCache.UnlockedCollectionKeys.Contains(mcGuffin.RowId))
-                                        continue;
-
                                     var uiData = mcGuffin.UIData.Value!; // Already checked validity in UnlockedCollectionKeys
                                     var score = matcher.Matches(uiData.Name.ToText().Downcase(normalizeKana));
                                     if (score > 0)
@@ -1845,7 +1806,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
                 foreach (var cfc in SearchDatabase.GetAll<ContentFinderCondition>())
                 {
-                    if (!GameStateCache.UnlockedDutyKeys.Contains(cfc.Key) && Configuration.WikiModeNoSpoilers)
+                    if (!GameStateCache.UnlockedDuties.Any(row => row.RowId == cfc.Key) && Configuration.WikiModeNoSpoilers)
                         continue;
 
                     score = matcher.Matches(cfc.Value.Searchable);
