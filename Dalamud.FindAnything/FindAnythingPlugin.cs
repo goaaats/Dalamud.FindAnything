@@ -24,6 +24,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -1565,6 +1566,21 @@ namespace Dalamud.FindAnything
             return Condition[ConditionFlag.InCombat];
         }
 
+        private static unsafe bool CanTeleport()
+        {
+            return ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 7) == 0; // Teleport
+        }
+
+        private static unsafe bool CanMount()
+        {
+            return ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 9) == 0; // Mount Roulette
+        }
+
+        private static unsafe bool CanSummonMinion()
+        {
+            return ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 10) == 0; // Minion Roulette
+        }
+
         private static ISearchResult[]? UpdateSearchResults(SearchCriteria criteria)
         {
             var searchMode = criteria.SearchMode;
@@ -1668,7 +1684,7 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.Aetheryte:
-                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && CanTeleport())
                                 {
                                     var marketBoardResults = new List<IAetheryteEntry>();
                                     var strikingDummyResults = new List<IAetheryteEntry>();
@@ -2000,23 +2016,7 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.Mounts:
-                                // This is nasty, should just use TerritoryIntendedUse...
-                                var isInNoMountDuty = isInCombatDuty;
-
-                                if (ClientState.TerritoryType != 0)
-                                {
-                                    var currentTerri = Data.GetExcelSheet<TerritoryType>()?
-                                        .GetRow(ClientState.TerritoryType);
-
-                                    if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0)
-                                    {
-                                        var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
-                                        if (type == 26 || type == 29)
-                                            isInNoMountDuty = false;
-                                    }
-                                }
-
-                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && !isInNoMountDuty && !isInCombat)
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Mounts) && CanMount())
                                 {
                                     foreach (var mount in Data.GetExcelSheet<Mount>()!)
                                     {
@@ -2039,8 +2039,7 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.Minions:
-                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Minions) && !isInCombatDuty && !isInCombat)
-                                {
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Minions) && CanSummonMinion()) {
                                     foreach (var minion in Data.GetExcelSheet<Companion>()!)
                                     {
                                         if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
