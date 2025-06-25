@@ -1684,7 +1684,7 @@ namespace Dalamud.FindAnything
                                 }
                                 break;
                             case Configuration.SearchSetting.Aetheryte:
-                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && CanTeleport())
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.Aetheryte) && !isInDuty && !isInCombat)
                                 {
                                     var marketBoardResults = new List<IAetheryteEntry>();
                                     var strikingDummyResults = new List<IAetheryteEntry>();
