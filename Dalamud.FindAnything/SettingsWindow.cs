@@ -10,7 +10,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Utility.Numerics;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Newtonsoft.Json;
 
 namespace Dalamud.FindAnything;
@@ -527,7 +527,7 @@ public class SettingsWindow : Window
                 ImGui.Button($"{macros[macroNumber].SearchName}###b{macroNumber}", size);
 
                 if (ImGui.BeginDragDropSource()) {
-                    ImGui.SetDragDropPayload("MACRO", IntPtr.Zero, 0);
+                    ImGui.SetDragDropPayload("MACRO", ReadOnlySpan<byte>.Empty, 0);
                     ImGui.Button($"{macros[macroNumber].SearchName}###d{macroNumber}", size);
                     dropSource = macroNumber;
                     ImGui.EndDragDropSource();
