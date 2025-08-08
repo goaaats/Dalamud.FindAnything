@@ -2011,7 +2011,7 @@ namespace Dalamud.FindAnything
                                     if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0)
                                     {
                                         var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
-                                        if (type == 26 || type == 29)
+                                        if (type is 26 or 29 or 38) // Eureka, Bozja, Occult Crescent
                                             isInNoMountDuty = false;
                                     }
                                 }
