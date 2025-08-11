@@ -1302,9 +1302,12 @@ namespace Dalamud.FindAnything
             public McGuffin McGuffin { get; set; }
             public McGuffinUIData McGuffinUIData { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                Interop.Instance.UseMgGuffin(McGuffin.RowId);
+                var agent = AgentMcGuffin.Instance();
+                if (agent != null) {
+                    agent->OpenMcGuffin(McGuffin.RowId);
+                }
             }
 
             public bool Equals(CollectionResult? other)
