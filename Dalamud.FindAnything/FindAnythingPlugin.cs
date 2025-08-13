@@ -2411,7 +2411,7 @@ namespace Dalamud.FindAnything
                 }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(criteria.SearchMode));
             }
 
             if (!isInCombatDuty && criteria.CleanString.StartsWith("/"))
@@ -2471,13 +2471,12 @@ namespace Dalamud.FindAnything
             {
                 var nextHint = Configuration.HintLevel++;
                 Log.Information($"Hint: {nextHint}");
-                results = new ISearchResult[]
-                {
+                results = [
                     new HintResult
                     {
                         HintLevel = nextHint
                     }
-                };
+                ];
                 Configuration.Save();
             }
             else if (Configuration.HistoryEnabled && history.Count > 0)
