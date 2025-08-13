@@ -27,7 +27,7 @@ public unsafe class GameStateCache
     internal bool IsMinionUnlocked(uint minionId) => UIState.Instance()->IsCompanionUnlocked(minionId);
 
     internal void OpenRecipe(uint recipeId) => AgentRecipeNote.Instance()->OpenRecipeByRecipeId(recipeId);
-    internal void SearchForItemByCraftingMethod(uint itemId) => AgentRecipeNote.Instance()->OpenRecipeByItemId(itemId);
+    internal void SearchForItemByCraftingMethod(uint itemId) => AgentRecipeNote.Instance()->SearchRecipeByItemId(itemId);
 
     internal void SearchForItemByGatheringMethod(ushort itemId) => AgentGatheringNote.Instance()->OpenGatherableByItemId(itemId);
 

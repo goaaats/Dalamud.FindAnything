@@ -30,7 +30,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
 using NCalc;
@@ -1302,9 +1302,12 @@ namespace Dalamud.FindAnything
             public McGuffin McGuffin { get; set; }
             public McGuffinUIData McGuffinUIData { get; set; }
 
-            public void Selected()
+            public unsafe void Selected()
             {
-                Interop.Instance.UseMgGuffin(McGuffin.RowId);
+                var agent = AgentMcGuffin.Instance();
+                if (agent != null) {
+                    agent->OpenMcGuffin(McGuffin.RowId);
+                }
             }
 
             public bool Equals(CollectionResult? other)
@@ -2011,7 +2014,7 @@ namespace Dalamud.FindAnything
                                     if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0)
                                     {
                                         var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
-                                        if (type == 26 || type == 29)
+                                        if (type is 26 or 29 or 38) // Eureka, Bozja, Occult Crescent
                                             isInNoMountDuty = false;
                                     }
                                 }
@@ -2607,7 +2610,7 @@ namespace Dalamud.FindAnything
             var numKeysPressed = new bool[10];
             for (var i = 0; i < 9; i++)
             {
-                numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiKey._1 + i);
+                numKeysPressed[i] = ImGui.IsKeyPressed(ImGuiKey.Key1 + i);
             }
 
             void CursorDown()
@@ -2750,7 +2753,7 @@ namespace Dalamud.FindAnything
                 if (result.Icon != null)
                 {
                     ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
-                    ImGui.Image(result.Icon.GetWrapOrEmpty().ImGuiHandle, iconSize);
+                    ImGui.Image(result.Icon.GetWrapOrEmpty().Handle, iconSize);
                 }
             }
 

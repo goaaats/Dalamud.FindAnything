@@ -11,7 +11,7 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace Dalamud.FindAnything.Game;
 
@@ -409,11 +409,11 @@ public class GameWindow : Window
         {
             var name = GetLocalPlayerName("adventurer");
 
-            ImGui.Image(sageTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            ImGui.Image(sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
             ImGui.SameLine();
             ImGui.TextWrapped($"\"You did very well, {name}.\nA strange traveler from another world handed me this... Here, it is for you.\"");
 
-            ImGui.Image(goldenTicketTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
+            ImGui.Image(goldenTicketTexture.GetWrapOrEmpty().Handle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
 
             ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
 
@@ -438,7 +438,7 @@ public class GameWindow : Window
 
         ImGui.TextUnformatted($"{state.CurrentDn:N2} DN");
         ImGui.SameLine();
-        ImGui.Image(noseTextures[NoseKind.Normal].GetWrapOrEmpty().ImGuiHandle, new Vector2(16, 16));
+        ImGui.Image(noseTextures[NoseKind.Normal].GetWrapOrEmpty().Handle, new Vector2(16, 16));
         if (ImGui.IsItemClicked())
         {
             state.CurrentDn += 0.1;
@@ -531,7 +531,7 @@ public class GameWindow : Window
 
                             cursorStart.X = windowSize.X - 64 - 30;
                             ImGui.SetCursorPos(cursorStart);
-                            ImGui.Image(noseTextures[kind].GetWrapOrEmpty().ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                            ImGui.Image(noseTextures[kind].GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
 
                             lastHadDn = kind;
 
@@ -580,13 +580,13 @@ public class GameWindow : Window
                 {
                     var name = GetLocalPlayerName("my love");
 
-                    ImGui.Image(this.noseTextures[NoseKind.Magical].GetWrapOrEmpty().ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.noseTextures[NoseKind.Magical].GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"Peace has returned to the DN hills.\nEveryone is living happily.\nYou did it.\nThank you, {name}.\"");
                 }
                 else if (this.thiefActive)
                 {
-                    ImGui.Image(this.thiefTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
                     var timeLeft = this.thiefWillStealAt - DateTimeOffset.Now;
@@ -623,7 +623,7 @@ public class GameWindow : Window
                 }
                 else if (!this.thiefActive && !this.thiefMessageDismissed)
                 {
-                    ImGui.Image(this.thiefTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"Oh no! A thief has robbed your farm and you didn't catch it!\nYou lost {this.thiefStolenDn:N0} DN, that's a lot...");
 
@@ -646,7 +646,7 @@ public class GameWindow : Window
             {
                 if (ImGui.CollapsingHeader("DN Construction Co."))
                 {
-                    ImGui.Image(this.clerkBuilderTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.clerkBuilderTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
                     if (this.state.UpgradePurchased)
@@ -689,7 +689,7 @@ public class GameWindow : Window
 
                 if (ImGui.CollapsingHeader("DN Needs & Utilities"))
                 {
-                    ImGui.Image(this.clerkNeedsTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.clerkNeedsTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"Hi, welcome to DN Needs & Utilities. Here you can buy stuff that your dogs will love.\nWhat can I get you?\"");
 
@@ -721,7 +721,7 @@ public class GameWindow : Window
 
                 if (ImGui.CollapsingHeader("DN Boutique"))
                 {
-                    ImGui.Image(this.clerkBoutiqueTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.clerkBoutiqueTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
                     if (!this.state.GameComplete)
@@ -758,7 +758,7 @@ public class GameWindow : Window
 
                 if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage"))
                 {
-                    ImGui.Image(this.sageTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
 
@@ -790,7 +790,7 @@ public class GameWindow : Window
 
                 if (FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && ImGui.CollapsingHeader("Goat's Golden Ticket"))
                 {
-                    ImGui.Image(this.goldenTicketTexture.GetWrapOrEmpty().ImGuiHandle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(this.goldenTicketTexture.GetWrapOrEmpty().Handle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
 
                     ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
 
