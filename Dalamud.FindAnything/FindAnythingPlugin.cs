@@ -58,6 +58,7 @@ namespace Dalamud.FindAnything
         [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; }
         [PluginService] public static IPluginLog Log { get; private set; }
         [PluginService] public static INotificationManager Notifications { get; private set; }
+        [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; private set; }
 
         public static TextureCache TexCache { get; private set; }
         private static SearchDatabase SearchDatabase { get; set; }
@@ -1135,7 +1136,7 @@ namespace Dalamud.FindAnything
         private class MinionResult : ISearchResult, IEquatable<MinionResult>
         {
             public string CatName => "Minion";
-            public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Minion.Singular.ToText());
+            public required string Name { get; init; }
             public ISharedImmediateTexture? Icon => TexCache.GetIcon(Minion.Icon);
             public int Score { get; set; }
             public bool CloseFinder => true;
@@ -2045,12 +2046,15 @@ namespace Dalamud.FindAnything
                                         if (!GameStateCache.UnlockedMinionKeys.Contains(minion.RowId))
                                             continue;
 
-                                        var score = matcher.Matches(minion.Singular.ToText().Downcase(normalizeKana));
+                                        var name = SeStringEvaluator.EvaluateObjStr(ObjectKind.Companion, minion.RowId,
+                                            ClientState.ClientLanguage);
+                                        var score = matcher.Matches(name.Downcase(normalizeKana));
                                         if (score > 0)
                                         {
                                             cResults.Add(new MinionResult
                                             {
                                                 Score = score * weight,
+                                                Name = name,
                                                 Minion = minion,
                                             });
                                         }
