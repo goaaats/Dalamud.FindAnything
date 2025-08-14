@@ -1188,9 +1188,9 @@ namespace Dalamud.FindAnything
                     AgentRecipeNote.Instance()->OpenRecipeByRecipeId(this.Recipe.RowId);
                 }
                 else {
-                    var id = this.Recipe.ItemResult.ValueNullable?.RowId ?? 0;
+                    var id = ItemUtil.GetBaseId(this.Recipe.ItemResult.ValueNullable?.RowId ?? 0).ItemId;
                     if (id > 0) {
-                        AgentRecipeNote.Instance()->SearchRecipeByItemId(id % 500_000);
+                        AgentRecipeNote.Instance()->SearchRecipeByItemId(id);
                     }
                 }
             }
@@ -1226,8 +1226,9 @@ namespace Dalamud.FindAnything
             public GatheringItem Item { get; set; }
 
             public unsafe void Selected() {
-                if (this.Item.Item.RowId > 0) {
-                    AgentGatheringNote.Instance()->OpenGatherableByItemId((ushort)(this.Item.Item.RowId % 500_000));
+                var id = ItemUtil.GetBaseId(Item.Item.RowId).ItemId;
+                if (id > 0) {
+                    AgentGatheringNote.Instance()->OpenGatherableByItemId((ushort)id);
                 }
             }
 
