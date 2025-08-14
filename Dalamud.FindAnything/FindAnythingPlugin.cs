@@ -1183,14 +1183,14 @@ namespace Dalamud.FindAnything
 
             public CraftType? CraftType { get; set; }
 
-            public void Selected() {
+            public unsafe void Selected() {
                 if (Configuration.OpenCraftingLogToRecipe) {
-                    GameStateCache.OpenRecipe(this.Recipe.RowId);
+                    AgentRecipeNote.Instance()->OpenRecipeByRecipeId(this.Recipe.RowId);
                 }
                 else {
                     var id = this.Recipe.ItemResult.ValueNullable?.RowId ?? 0;
                     if (id > 0) {
-                        GameStateCache.SearchForItemByCraftingMethod(id % 500_000);
+                        AgentRecipeNote.Instance()->SearchRecipeByItemId(id % 500_000);
                     }
                 }
             }
@@ -1225,9 +1225,9 @@ namespace Dalamud.FindAnything
 
             public GatheringItem Item { get; set; }
 
-            public void Selected() {
+            public unsafe void Selected() {
                 if (this.Item.Item.RowId > 0) {
-                    GameStateCache.SearchForItemByGatheringMethod((ushort) (this.Item.Item.RowId % 500_000));
+                    AgentGatheringNote.Instance()->OpenGatherableByItemId((ushort)(this.Item.Item.RowId % 500_000));
                 }
             }
 

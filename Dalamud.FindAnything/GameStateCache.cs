@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
 
@@ -9,27 +8,15 @@ namespace Dalamud.FindAnything;
 
 public unsafe class GameStateCache
 {
-    public struct Gearset
-    {
-        public int Index { get; set; }
-        public string Name { get; set; }
-        public uint ClassJob { get; set; }
-    }
+    public record Gearset(int Index, string Name, uint ClassJob);
 
-    public IReadOnlyList<uint> UnlockedDutyKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedMountKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; }
-    public IReadOnlyList<uint> UnlockedCollectionKeys { get; set; }
-    public IReadOnlyList<uint> UnlockedFashionAccessoryKeys { get; set; }
-    public IReadOnlyList<Gearset> Gearsets { get; private set; }
-    
-    internal bool IsMinionUnlocked(uint minionId) => UIState.Instance()->IsCompanionUnlocked(minionId);
-
-    internal void OpenRecipe(uint recipeId) => AgentRecipeNote.Instance()->OpenRecipeByRecipeId(recipeId);
-    internal void SearchForItemByCraftingMethod(uint itemId) => AgentRecipeNote.Instance()->SearchRecipeByItemId(itemId);
-
-    internal void SearchForItemByGatheringMethod(ushort itemId) => AgentGatheringNote.Instance()->OpenGatherableByItemId(itemId);
+    public IReadOnlyList<uint> UnlockedDutyKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedEmoteKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedMountKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedCollectionKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedFashionAccessoryKeys { get; private set; } = [];
+    public IReadOnlyList<Gearset> Gearsets { get; private set; } = [];
 
     private GameStateCache()
     {
@@ -39,43 +26,50 @@ public unsafe class GameStateCache
 
     public void Refresh()
     {
-        UnlockedDutyKeys = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()!.Where(x => UIState.IsInstanceContentUnlocked(x.Content.RowId)).Select(x => x.RowId).ToList();
+        var playerState = PlayerState.Instance();
+        var uiState = UIState.Instance();
 
-        var emotes = new List<uint>();
-        foreach (var emote in FindAnythingPlugin.Data.GetExcelSheet<Emote>()!.Where(x => x.Order != 0))
-        {
-            if (emote.UnlockLink == 0 || UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(emote.UnlockLink))
-            {
-                emotes.Add(emote.RowId);
-            }
-        }
-        UnlockedEmoteKeys = emotes;
+        UnlockedDutyKeys = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()
+            .Where(x => UIState.IsInstanceContentUnlocked(x.Content.RowId))
+            .Select(x => x.RowId)
+            .ToList();
 
-        UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()!.Where(x => PlayerState.Instance()->IsMountUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedEmoteKeys = FindAnythingPlugin.Data.GetExcelSheet<Emote>()
+            .Where(e =>
+                e.Order != 0
+                && (e.UnlockLink == 0 || uiState->IsUnlockLinkUnlockedOrQuestCompleted(e.UnlockLink)))
+            .Select(emote => emote.RowId)
+            .ToList();
 
-        UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()!.Where(x => IsMinionUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()
+            .Where(x => playerState->IsMountUnlocked(x.RowId))
+            .Select(x => x.RowId)
+            .ToList();
 
-        UnlockedFashionAccessoryKeys = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()!.Where(x => PlayerState.Instance()->IsOrnamentUnlocked(x.RowId)).Select(x => x.RowId).ToList();
+        UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()
+            .Where(x => uiState->IsCompanionUnlocked(x.RowId))
+            .Select(x => x.RowId)
+            .ToList();
 
-        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()!.Where(x => x.UIData.Value is { RowId: > 0 } && PlayerState.Instance()->IsMcGuffinUnlocked(x.RowId)).Select(x => x.RowId).ToList();
-        
+        UnlockedFashionAccessoryKeys = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()
+            .Where(x => playerState->IsOrnamentUnlocked(x.RowId))
+            .Select(x => x.RowId)
+            .ToList();
+
+        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()
+            .Where(x =>
+                x.UIData.ValueNullable is { RowId: > 0 }
+                && playerState->IsMcGuffinUnlocked(x.RowId))
+            .Select(x => x.RowId)
+            .ToList();
+
         var gsEntries = RaptureGearsetModule.Instance()->Entries;
         var gearsets = new List<Gearset>();
-        for (var i = 0; i < gsEntries.Length; i++)
-        {
-            var gs = gsEntries[i];
-
-            if (!gs.Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists))
-                continue;
-
-            gearsets.Add(new Gearset
-            {
-                Index = i,
-                ClassJob = gs.ClassJob,
-                Name = gs.NameString,
-            });
+        for (var i = 0; i < gsEntries.Length; i++) {
+            ref var gs = ref gsEntries[i];
+            if ((gs.Flags & RaptureGearsetModule.GearsetFlag.Exists) != 0)
+                gearsets.Add(new Gearset(i, gs.NameString, gs.ClassJob));
         }
-
         Gearsets = gearsets;
 
         FindAnythingPlugin.Log.Verbose($"{UnlockedDutyKeys.Count} duties unlocked.");
