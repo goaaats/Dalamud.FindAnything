@@ -1073,14 +1073,14 @@ namespace Dalamud.FindAnything
 
             public unsafe void Selected()
             {
-                RaptureGearsetModule.Instance()->EquipGearset(Gearset.Slot);
+                RaptureGearsetModule.Instance()->EquipGearset(Gearset.Index);
             }
 
             public bool Equals(GearsetSearchResult? other)
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
-                return this.Gearset.Slot.Equals(other.Gearset.Slot);
+                return this.Gearset.Index.Equals(other.Gearset.Index);
             }
 
             public override bool Equals(object? obj)

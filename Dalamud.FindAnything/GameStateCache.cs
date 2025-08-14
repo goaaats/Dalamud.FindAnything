@@ -11,7 +11,7 @@ public unsafe class GameStateCache
 {
     public struct Gearset
     {
-        public int Slot { get; set; }
+        public int Index { get; set; }
         public string Name { get; set; }
         public uint ClassJob { get; set; }
     }
@@ -70,7 +70,7 @@ public unsafe class GameStateCache
 
             gearsets.Add(new Gearset
             {
-                Slot = i + 1,
+                Index = i,
                 ClassJob = gs.ClassJob,
                 Name = gs.NameString,
             });
