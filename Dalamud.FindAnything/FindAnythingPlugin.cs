@@ -1642,9 +1642,9 @@ namespace Dalamud.FindAnything
                                             break;
                                     }
 
-                                    foreach (var contentRoulette in Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder)) // Also filter !row 7 + 10 here, but not in Lumina schemas yet
+                                    foreach (var contentRoulette in Data.GetExcelSheet<Lumina.Excel.Sheets.ContentRoulette>()!.Where(x => x.IsInDutyFinder)) // Also filter !row 7 + 10 here, but not in Lumina schemas yet
                                     {
-                                        var text = SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
+                                        var text = SearchDatabase.GetString<Lumina.Excel.Sheets.ContentRoulette>(contentRoulette.RowId);
 
                                         var score = matcher.Matches(text.Searchable);
                                         if (score > 0)
