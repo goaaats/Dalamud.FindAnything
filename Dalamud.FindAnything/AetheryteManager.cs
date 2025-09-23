@@ -23,6 +23,7 @@ namespace Dalamud.FindAnything {
             111, // Kugane
             133, // Crystarium
             182, // Old Sharlayan
+            216, // Tulliyolal
         };
         private readonly uint[] m_StrikingDummyIds = {
             3, // New Gridania
@@ -39,7 +40,10 @@ namespace Dalamud.FindAnything {
             147, // The Ondo Cups
             166, // The Archeion
             169, // Yedlihmad
-            181 // Base Omicron
+            181, // Base Omicron
+            200, // Wachunpelo (Urqopatcha)
+            202, // Ok'hanu (Kozma'uka)
+            213, // Leynode Mnemo (Living Memory)
         };
 
         private AetheryteManager()
