@@ -59,6 +59,7 @@ namespace Dalamud.FindAnything
         [PluginService] public static IPluginLog Log { get; private set; }
         [PluginService] public static INotificationManager Notifications { get; private set; }
         [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; private set; }
+        [PluginService] public static IPlayerState PlayerState { get; private set; }
 
         public static TextureCache TexCache { get; private set; }
         private static SearchDatabase SearchDatabase { get; set; }
@@ -2160,7 +2161,7 @@ namespace Dalamud.FindAnything
                                     if (args.Parameters.Length == 1)
                                     {
                                         var num = (int)args.EvaluateParameters()[0];
-                                        args.Result = MathAux.GetNeededExpForLevel((uint)num);
+                                        args.Result = MathAux.GetNeededExpForLevel((short)num);
                                         args.HasResult = true;
                                         Log.Information($"exp called with {num} was {args.Result}",
                                             Array.Empty<object>());

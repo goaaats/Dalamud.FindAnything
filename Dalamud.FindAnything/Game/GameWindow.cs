@@ -812,8 +812,8 @@ public class GameWindow : Window
     private string GetLocalPlayerName(string fallback)
     {
         var name = fallback;
-        if (FindAnythingPlugin.ClientState.LocalPlayer != null)
-            name = FindAnythingPlugin.ClientState.LocalPlayer.Name.TextValue.Split()[0];
+        if (FindAnythingPlugin.PlayerState.IsLoaded)
+            name = FindAnythingPlugin.PlayerState.CharacterName.Split()[0];
 
         return name;
     }
