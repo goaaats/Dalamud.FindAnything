@@ -2463,7 +2463,7 @@ namespace Dalamud.FindAnything
         private void OpenFinder()
         {
 #if !DEBUG
-            if (ClientState.LocalPlayer == null)
+            if (!ClientState.IsLoggedIn)
                 return;
 #endif
             if (this.finderOpen == true)
