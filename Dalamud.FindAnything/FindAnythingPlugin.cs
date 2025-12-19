@@ -482,6 +482,41 @@ namespace Dalamud.FindAnything
             }
         }
 
+        private class ExtraCommandSearchResult : ISearchResult, IEquatable<ExtraCommandSearchResult>
+        {
+            public string CatName => "Extras";
+            public string Name { get; set; }
+            public ISharedImmediateTexture? Icon { get; set; }
+            public int Score { get; set; }
+            public uint CommandId { get; set; }
+
+            public bool CloseFinder => true;
+
+            public unsafe void Selected() {
+                UIModule.Instance()->GetExtraCommandHelper()->ExecuteExtraCommand((int)CommandId);
+            }
+
+            public bool Equals(ExtraCommandSearchResult? other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return this.CommandId == other.CommandId;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((ExtraCommandSearchResult)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return (int)this.CommandId;
+            }
+        }
+
         private class InternalSearchResult : ISearchResult, IEquatable<InternalSearchResult>
         {
             public string CatName => Kind switch
@@ -1784,6 +1819,29 @@ namespace Dalamud.FindAnything
                                                 CommandId = mainCommand.Key,
                                                 Name = mainCommand.Value.Display,
                                                 Icon = TexCache.MainCommandIcons[mainCommand.Key]
+                                            });
+
+                                            if (cResults.Count > MAX_TO_SEARCH)
+                                                break;
+                                        }
+                                    }
+                                }
+                                break;
+                            case Configuration.SearchSetting.ExtraCommand:
+                                if (Configuration.ToSearchV3.HasFlag(Configuration.SearchSetting.ExtraCommand) && !isInEvent)
+                                {
+                                    foreach (var extraCommand in SearchDatabase.GetAll<ExtraCommand>())
+                                    {
+                                        var score = matcher.Matches(extraCommand.Value.Searchable);
+                                        if (score > 0)
+                                        {
+
+                                            cResults.Add(new ExtraCommandSearchResult
+                                            {
+                                                Score = score * weight,
+                                                CommandId = extraCommand.Key,
+                                                Name = extraCommand.Value.Display,
+                                                Icon = TexCache.ExtraCommandIcons[extraCommand.Key]
                                             });
 
                                             if (cResults.Count > MAX_TO_SEARCH)

@@ -25,6 +25,7 @@ namespace Dalamud.FindAnything
          */
 
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> MainCommandIcons { get; }
+        public IReadOnlyDictionary<uint, ISharedImmediateTexture> ExtraCommandIcons { get; }
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> GeneralActionIcons { get; }
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> ClassJobIcons { get; }
 
@@ -134,6 +135,13 @@ namespace Dalamud.FindAnything
                 mainCommands.Add(mainCommand.RowId, GetIcon((uint) mainCommand.Icon)!);
             }
             MainCommandIcons = mainCommands;
+
+            var extraCommands = new Dictionary<uint, ISharedImmediateTexture>();
+            foreach (var extraCommand in data.GetExcelSheet<ExtraCommand>()!)
+            {
+                extraCommands.Add(extraCommand.RowId, GetIcon((uint) extraCommand.Icon)!);
+            }
+            ExtraCommandIcons = extraCommands;
             
             var generalActions = new Dictionary<uint, ISharedImmediateTexture>();
             foreach (var action in data.GetExcelSheet<GeneralAction>()!)

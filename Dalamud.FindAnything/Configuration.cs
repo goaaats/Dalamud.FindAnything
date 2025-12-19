@@ -19,7 +19,7 @@ namespace Dalamud.FindAnything
             SearchSetting.Emote | SearchSetting.PluginSettings | SearchSetting.Gearsets | SearchSetting.CraftingRecipes |
             SearchSetting.GatheringItems | SearchSetting.Mounts | SearchSetting.Minions | SearchSetting.MacroLinks |
             SearchSetting.Internal | SearchSetting.Maths | SearchSetting.FashionAccessories | SearchSetting.Collection |
-            SearchSetting.Reserved10 | SearchSetting.Reserved11 | SearchSetting.Reserved12 | SearchSetting.Reserved13 |
+            SearchSetting.ExtraCommand | SearchSetting.Reserved11 | SearchSetting.Reserved12 | SearchSetting.Reserved13 |
             SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16 | SearchSetting.Reserved17 |
             SearchSetting.Reserved18 | SearchSetting.Reserved19 | SearchSetting.Reserved20 | SearchSetting.Reserved21 |
             SearchSetting.Reserved22 | SearchSetting.Reserved23 | SearchSetting.Reserved24;
@@ -77,7 +77,7 @@ namespace Dalamud.FindAnything
             Maths = 1 << 13,
             FashionAccessories = 1 << 14,
             Collection = 1 << 15,
-            Reserved10 = 1 << 16,
+            ExtraCommand = 1 << 16,
             Reserved11 = 1 << 17,
             Reserved12 = 1 << 18,
             Reserved13 = 1 << 19,
@@ -207,6 +207,7 @@ namespace Dalamud.FindAnything
             SearchSetting.Mounts,
             SearchSetting.Minions,
             SearchSetting.MainCommand,
+            SearchSetting.ExtraCommand,
             SearchSetting.GeneralAction,
             SearchSetting.PluginSettings,
             SearchSetting.Emote,

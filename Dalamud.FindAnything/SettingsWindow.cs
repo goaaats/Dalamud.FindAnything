@@ -319,6 +319,7 @@ public class SettingsWindow : Window
                         Configuration.SearchSetting.Duty => "Duties",
                         Configuration.SearchSetting.Aetheryte => "Aetherytes",
                         Configuration.SearchSetting.MainCommand => "Commands",
+                        Configuration.SearchSetting.ExtraCommand => "Extras",
                         Configuration.SearchSetting.GeneralAction => "General Actions",
                         Configuration.SearchSetting.Emote => "Emotes",
                         Configuration.SearchSetting.PluginSettings => "other plugins",
