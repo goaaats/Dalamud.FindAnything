@@ -229,8 +229,8 @@ public class GameWindow : Window
 
     private static ISharedImmediateTexture LoadImage(string fileName)
     {
-        var file = new FileInfo(Path.Combine(FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", fileName));
-        return FindAnythingPlugin.TextureProvider.GetFromFile(file)!;
+        var file = new FileInfo(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", fileName));
+        return Service.TextureProvider.GetFromFile(file)!;
     }
     
     public void Load()
@@ -258,20 +258,20 @@ public class GameWindow : Window
         this.thiefMessageDismissed = true;
 
         FindAnythingPlugin.Configuration.SimulationState = state;
-        FindAnythingPlugin.Configuration.Save();
+        FindAnythingPlugin.ConfigManager.Save();
     }
 
     private void EarnRestedDn()
     {
         var timeSinceSave = DateTimeOffset.Now - state.LastSaved;
         var numHoursSpent = Math.Floor(timeSinceSave.TotalHours);
-        FindAnythingPlugin.Log.Verbose($"{numHoursSpent} hours since last save");
+        Service.Log.Verbose($"{numHoursSpent} hours since last save");
         if (numHoursSpent > 0 && this.state.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs))
         {
             var earnedRestedDn = (ETERNITY_DN_PER_HOUR * numHoursSpent) * numEternityDogs;
             this.state.CurrentDn += earnedRestedDn;
 
-            FindAnythingPlugin.Notifications.AddNotification(new Notification
+            Service.Notifications.AddNotification(new Notification
             {
                 IconTexture = this.noseTextures[NoseKind.Normal],
                 Title = "Earned rested DN!",
@@ -384,12 +384,12 @@ public class GameWindow : Window
                 this.thiefActive = true;
                 this.thiefMessageDismissed = false;
                 this.thiefWillStealAt = DateTimeOffset.Now.AddSeconds(random.Next(8, 15));
-                FindAnythingPlugin.Log.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
+                Service.Log.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
             }
 
             this.state.LastSaved = DateTimeOffset.Now;
             FindAnythingPlugin.Configuration.SimulationState = state;
-            FindAnythingPlugin.Configuration.Save();
+            FindAnythingPlugin.ConfigManager.Save();
         }
     }
 
@@ -495,7 +495,7 @@ public class GameWindow : Window
                             {
                                 if (ImGui.Button(buyText))
                                 {
-                                    if (FindAnythingPlugin.Keys[VirtualKey.SHIFT])
+                                    if (Service.Keys[VirtualKey.SHIFT])
                                     {
                                         for (var i = 0; i < 10; i++)
                                         {
@@ -767,7 +767,7 @@ public class GameWindow : Window
                         if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && this.state.TotalEarned > 100_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber))
                         {
                             FindAnythingPlugin.Configuration.GoldenTicketNumber = ticketNumber;
-                            FindAnythingPlugin.Configuration.Save();
+                            FindAnythingPlugin.ConfigManager.Save();
 
                             this.justGotGoldenTicket = true;
                         }
@@ -812,8 +812,8 @@ public class GameWindow : Window
     private string GetLocalPlayerName(string fallback)
     {
         var name = fallback;
-        if (FindAnythingPlugin.PlayerState.IsLoaded)
-            name = FindAnythingPlugin.PlayerState.CharacterName.Split()[0];
+        if (Service.PlayerState.IsLoaded)
+            name = Service.PlayerState.CharacterName.Split()[0];
 
         return name;
     }

@@ -192,7 +192,7 @@ namespace Dalamud.FindAnything
                 cjIcons.Add(classJob.RowId, icon);
             }
             ClassJobIcons = cjIcons;
-            FindAnythingPlugin.Log.Information(ClassJobIcons.Count + " class jobs loaded.");
+            Service.Log.Information(ClassJobIcons.Count + " class jobs loaded.");
 
             AetheryteIcon = GetIcon(066417);
             WikiIcon = GetIcon(066404);
@@ -206,7 +206,7 @@ namespace Dalamud.FindAnything
             RoulettesIcon = GetIcon(data.GetExcelSheet<ContentType>()!.GetRow(1)!.Icon);
 
             var gameIconPath = new FileInfo(Path.Combine(
-                FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "Normal.png"));
+                Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "Normal.png"));
             GameIcon = textureProvider.GetFromFile(gameIconPath);
         }
         

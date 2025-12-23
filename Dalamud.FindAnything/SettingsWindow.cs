@@ -11,6 +11,8 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Utility.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.FindAnything.Lookup;
+using Dalamud.FindAnything.Modules;
 using Newtonsoft.Json;
 
 namespace Dalamud.FindAnything;
@@ -374,10 +376,10 @@ public class SettingsWindow : Window
                     ImGui.NextColumn();
 
                     ImGui.PushItemWidth(120);
-                    var weight = searchWeights.GetValueOrDefault(search, FindAnythingPlugin.DefaultWeight);
-                    if (ImGui.InputInt($"##{search}-weight", ref weight, FindAnythingPlugin.DefaultWeight / 10, FindAnythingPlugin.DefaultWeight)) {
-                        if (weight is > 0 and < FindAnythingPlugin.DefaultWeight * 1000) {
-                            if (weight == FindAnythingPlugin.DefaultWeight) {
+                    var weight = searchWeights.GetValueOrDefault(search, SearchModule.DefaultWeight);
+                    if (ImGui.InputInt($"##{search}-weight", ref weight, SearchModule.DefaultWeight / 10, SearchModule.DefaultWeight)) {
+                        if (weight is > 0 and < SearchModule.DefaultWeight * 1000) {
+                            if (weight == SearchModule.DefaultWeight) {
                                 searchWeights.Remove(search);
                             }
                             else {
@@ -487,7 +489,7 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MatchSigilFuzzy = this.matchSigilFuzzy;
             FindAnythingPlugin.Configuration.MatchSigilFuzzyParts = this.matchSigilFuzzyParts;
 
-            FindAnythingPlugin.Configuration.Save();
+            FindAnythingPlugin.ConfigManager.SaveAndNotify();
         }
 
         ImGui.SameLine();

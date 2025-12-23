@@ -1,0 +1,71 @@
+using Dalamud.FindAnything.Lookup;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Dalamud.FindAnything;
+
+public class History
+{
+    private const int HistoryMax = 5;
+
+    private readonly SearchResultComparer comparer = new();
+    private List<HistoryEntry> history = new(HistoryMax);
+
+    private struct HistoryEntry
+    {
+        public LookupType LookupType;
+        public SearchCriteria SearchCriteria;
+        public ISearchResult Result;
+    }
+
+    private List<ISearchResult> Replay(HistoryEntry entry) {
+        return FindAnythingPlugin.Finder.RootLookup.GetLookupForType(entry.LookupType)
+            .Lookup(entry.SearchCriteria)
+            .Results;
+    }
+
+    public List<ISearchResult> GetHistory() {
+        if (!FindAnythingPlugin.Configuration.HistoryEnabled || history.Count == 0) {
+            return [];
+        }
+
+        var newHistory = new List<HistoryEntry>();
+        var results = new List<ISearchResult>();
+
+        Service.Log.Verbose("{Num} histories:", history.Count);
+
+        foreach (var entry in history) {
+            if (Replay(entry).Contains(entry.Result, comparer)) {
+                newHistory.Add(entry);
+                results.Add(entry.Result);
+            } else {
+                Service.Log.Verbose("Couldn't find {Term} anymore, removing from history", entry.SearchCriteria.MatchString);
+            }
+        }
+
+        history = newHistory;
+        return results;
+    }
+
+    public void Add(LookupType lookupType, SearchCriteria searchCriteria, ISearchResult result) {
+        var index = history.FindIndex(h => comparer.Equals(result, h.Result));
+        if (index >= 0) {
+            if (index > 0) {
+                // Move entry to the top of the list
+                var historyEntry = history[index];
+                history.RemoveAt(index);
+                history.Insert(0, historyEntry);
+            }
+        } else {
+            history.Insert(0, new HistoryEntry {
+                LookupType = lookupType,
+                SearchCriteria = searchCriteria,
+                Result = result,
+            });
+        }
+
+        if (history.Count > HistoryMax) {
+            history.RemoveAt(history.Count - 1);
+        }
+    }
+}

@@ -1,15 +1,16 @@
-﻿namespace Dalamud.FindAnything;
+﻿using Dalamud.FindAnything.Lookup;
 
-internal class SearchState
+namespace Dalamud.FindAnything;
+
+public class SearchState
 {
-    private SearchMode BaseSearchMode { get; set; } = SearchMode.Top;
-    public SearchMode ActualSearchMode { get; private set; } = SearchMode.Top;
+    public LookupType? OverrideLookupType { get; private set; }
     private MatchMode MatchMode { get; set; } = MatchMode.Simple;
     public string RawString { get; private set; } = string.Empty;
     private string CleanString { get; set; } = string.Empty;
     private string SemanticString { get; set; } = string.Empty;
     private string MatchString { get; set; } = string.Empty;
-    private bool ContainsKana { get; set; } = false;
+    private bool ContainsKana { get; set; }
 
     private readonly Configuration config;
     private readonly Normalizer normalizer;
@@ -22,8 +23,7 @@ internal class SearchState
 
     public void Reset()
     {
-        BaseSearchMode = SearchMode.Top;
-        ActualSearchMode = SearchMode.Top;
+        OverrideLookupType = null;
         MatchMode = config.MatchMode;
         RawString = string.Empty;
         CleanString = string.Empty;
@@ -32,31 +32,12 @@ internal class SearchState
         ContainsKana = false;
     }
 
-    public void SetBaseSearchModeAndTerm(SearchMode searchMode, string term)
+    public void Set(LookupType currentLookupType, string term)
     {
-        if (searchMode != BaseSearchMode)
-        {
-            BaseSearchMode = searchMode;
-            SetTerm(term);
-        }
-    }
-
-    public void SetBaseSearchMode(SearchMode searchMode)
-    {
-        if (searchMode != BaseSearchMode)
-        {
-            BaseSearchMode = searchMode;
-            SetTerm(RawString);
-        }
-    }
-
-    public void SetTerm(string term)
-    {
-        ActualSearchMode = BaseSearchMode;
-
         if (term.Length == 0)
         {
             // Skip more complex initialization if we know the term is empty
+            OverrideLookupType = null;
             MatchMode = config.MatchMode;
             RawString = string.Empty;
             CleanString = string.Empty;
@@ -71,11 +52,13 @@ internal class SearchState
         term = term.Trim();
         CleanString = term;
 
-        // Only recognize the wiki sigil when we're in top mode.
-        if (BaseSearchMode == SearchMode.Top && term.StartsWith(FindAnythingPlugin.ModeSigilWiki))
+        // Only recognize the wiki sigil when we're in module mode.
+        if (currentLookupType == LookupType.Module && term.StartsWith(FindAnythingPlugin.ModeSigilWiki))
         {
             term = term[1..];
-            ActualSearchMode = SearchMode.Wiki;
+            OverrideLookupType = LookupType.Wiki;
+        } else {
+            OverrideLookupType = null;
         }
 
         var matchMode = config.MatchMode;
@@ -105,9 +88,9 @@ internal class SearchState
         MatchMode = matchMode;
     }
 
-    public SearchCriteria CreateCriteria()
+    public SearchCriteria Criteria()
     {
-        return new SearchCriteria(ActualSearchMode, MatchMode, CleanString, SemanticString, MatchString, ContainsKana);
+        return new SearchCriteria(OverrideLookupType, MatchMode, CleanString, SemanticString, MatchString, ContainsKana);
     }
 }
 
@@ -121,17 +104,17 @@ public enum SearchMode
 
 public class SearchCriteria
 {
-    public SearchMode SearchMode { get; }
+    public LookupType? OverrideLookupType { get; }
     public MatchMode MatchMode { get; }
     public string CleanString { get; }
     public string SemanticString { get; }
     public string MatchString { get; }
     public bool ContainsKana { get; }
 
-    public SearchCriteria(SearchMode searchMode, MatchMode matchMode, string cleanString, string semanticString,
+    public SearchCriteria(LookupType? overrideLookupType, MatchMode matchMode, string cleanString, string semanticString,
         string matchString, bool containsKana)
     {
-        SearchMode = searchMode;
+        OverrideLookupType = overrideLookupType;
         MatchMode = matchMode;
         CleanString = cleanString;
         SemanticString = semanticString;

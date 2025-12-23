@@ -7,24 +7,22 @@ namespace Dalamud.FindAnything;
 
 public class Normalizer
 {
-    private readonly ClientLanguage lang;
     private readonly Sanitizer sanitizer;
     private readonly bool normalizeKana;
 
-    public Normalizer(ClientLanguage lang) {
-        this.lang = lang;
+    public Normalizer() {
+        var lang = Service.ClientState.ClientLanguage;
         sanitizer = new Sanitizer(lang);
         normalizeKana = lang == ClientLanguage.Japanese;
     }
 
-    private Normalizer(ClientLanguage lang, Sanitizer sanitizer, bool hasKana) {
-        this.lang = lang;
+    private Normalizer(Sanitizer sanitizer, bool hasKana) {
         this.sanitizer = sanitizer;
         normalizeKana = hasKana;
     }
 
     public Normalizer WithKana(bool hasKana) {
-        return new Normalizer(lang, sanitizer, hasKana);
+        return new Normalizer(sanitizer, hasKana);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -42,6 +40,7 @@ public class Normalizer
         return input.ToText().ToLowerInvariant();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string SearchableAscii(string input) {
         return input.ToLowerInvariant();
     }

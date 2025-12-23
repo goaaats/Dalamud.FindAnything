@@ -29,34 +29,34 @@ public unsafe class GameStateCache
         var playerState = PlayerState.Instance();
         var uiState = UIState.Instance();
 
-        UnlockedDutyKeys = FindAnythingPlugin.Data.GetExcelSheet<ContentFinderCondition>()
+        UnlockedDutyKeys = Service.Data.GetExcelSheet<ContentFinderCondition>()
             .Where(x => UIState.IsInstanceContentUnlocked(x.Content.RowId))
             .Select(x => x.RowId)
             .ToList();
 
-        UnlockedEmoteKeys = FindAnythingPlugin.Data.GetExcelSheet<Emote>()
+        UnlockedEmoteKeys = Service.Data.GetExcelSheet<Emote>()
             .Where(e =>
                 e.Order != 0
                 && (e.UnlockLink == 0 || uiState->IsUnlockLinkUnlockedOrQuestCompleted(e.UnlockLink)))
             .Select(emote => emote.RowId)
             .ToList();
 
-        UnlockedMountKeys = FindAnythingPlugin.Data.GetExcelSheet<Mount>()
+        UnlockedMountKeys = Service.Data.GetExcelSheet<Mount>()
             .Where(x => playerState->IsMountUnlocked(x.RowId))
             .Select(x => x.RowId)
             .ToList();
 
-        UnlockedMinionKeys = FindAnythingPlugin.Data.GetExcelSheet<Companion>()
+        UnlockedMinionKeys = Service.Data.GetExcelSheet<Companion>()
             .Where(x => uiState->IsCompanionUnlocked(x.RowId))
             .Select(x => x.RowId)
             .ToList();
 
-        UnlockedFashionAccessoryKeys = FindAnythingPlugin.Data.GetExcelSheet<Ornament>()
+        UnlockedFashionAccessoryKeys = Service.Data.GetExcelSheet<Ornament>()
             .Where(x => playerState->IsOrnamentUnlocked(x.RowId))
             .Select(x => x.RowId)
             .ToList();
 
-        UnlockedCollectionKeys = FindAnythingPlugin.Data.GetExcelSheet<McGuffin>()
+        UnlockedCollectionKeys = Service.Data.GetExcelSheet<McGuffin>()
             .Where(x =>
                 x.UIData.ValueNullable is { RowId: > 0 }
                 && playerState->IsMcGuffinUnlocked(x.RowId))
@@ -72,8 +72,8 @@ public unsafe class GameStateCache
         }
         Gearsets = gearsets;
 
-        FindAnythingPlugin.Log.Verbose($"{UnlockedDutyKeys.Count} duties unlocked.");
-        FindAnythingPlugin.Log.Verbose($"{UnlockedEmoteKeys.Count} emotes unlocked.");
+        Service.Log.Verbose($"{UnlockedDutyKeys.Count} duties unlocked.");
+        Service.Log.Verbose($"{UnlockedEmoteKeys.Count} emotes unlocked.");
     }
 
     public static GameStateCache Load() => new GameStateCache();

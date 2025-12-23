@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dalamud.Game;
+using System;
 using System.Collections.Generic;
 using Dalamud.Utility;
 using Lumina.Excel;
@@ -7,7 +8,7 @@ using Lumina.Text.ReadOnly;
 
 namespace Dalamud.FindAnything
 {
-    internal class SearchDatabase
+    public class SearchDatabase
     {
         public struct SearchEntry
         {
@@ -44,7 +45,7 @@ namespace Dalamud.FindAnything
                 return itemResult.Value.Name;
             });
 
-            var item = FindAnythingPlugin.Data.GetExcelSheet<Item>()!;
+            var item = Service.Data.GetExcelSheet<Item>()!;
 
             InitData<GatheringItem>(ref data, r =>
             {
@@ -63,7 +64,7 @@ namespace Dalamud.FindAnything
         private void InitData<T>(ref Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> searchDb, Func<T, ReadOnlySeString?> rowToFind) where T : struct, IExcelRow<T>
         {
             var data = new Dictionary<uint, SearchEntry>();
-            foreach (var excelRow in FindAnythingPlugin.Data.GetExcelSheet<T>())
+            foreach (var excelRow in Service.Data.GetExcelSheet<T>())
             {
                 if (rowToFind.Invoke(excelRow) is { } result)
                 {
@@ -77,10 +78,12 @@ namespace Dalamud.FindAnything
                             if (macroText.StartsWith("<if([gnum75>0")) {
                                 textVal = macroText.Split(")")[0].Split(",")[2] + textVal;
                             }
+                            // NOTE: Above can be replaced with below, but then it needs to be on the main thread...
+                            // textVal = Service.SeStringEvaluator.EvaluateActStr(ActionKind.MainCommand, excelRow.RowId, Service.ClientState.ClientLanguage);
                         }
                     }
                     catch (Exception e) {
-                        FindAnythingPlugin.Log.Warning(e, "Failed to parse (assumed) Controller/Gamepad Settings main command");
+                        Service.Log.Warning(e, "Failed to parse (assumed) Controller/Gamepad Settings main command");
                     }
 
                     data.Add(excelRow.RowId, new SearchEntry

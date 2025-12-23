@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Services;
 
@@ -9,8 +8,6 @@ namespace Dalamud.FindAnything;
 
 public class IpcSystem : IDisposable
 {
-    private readonly IDataManager data;
-    private readonly TextureCache texCache;
     private readonly ICallGateProvider<string, string, uint, string> cgRegister;
     private readonly ICallGateProvider<string, string, string, uint, string> cgRegisterWithSearch;
     private readonly ICallGateProvider<string, string, bool> cgUnregisterOne;
@@ -29,16 +26,14 @@ public class IpcSystem : IDisposable
         public string Guid { get; set; }
     }
 
-    public IpcSystem(IDalamudPluginInterface pluginInterface, IDataManager data, TextureCache texCache)
+    public IpcSystem()
     {
-        this.data = data;
-        this.texCache = texCache;
-        this.cgRegister = pluginInterface.GetIpcProvider<string, string, uint, string>("FA.Register");
-        this.cgRegisterWithSearch = pluginInterface.GetIpcProvider<string, string, string, uint, string>("FA.RegisterWithSearch");
-        this.cgUnregisterOne = pluginInterface.GetIpcProvider<string, string, bool>("FA.UnregisterOne");
-        this.cgUnregisterAll = pluginInterface.GetIpcProvider<string, bool>("FA.UnregisterAll");
-        this.cgInvoke = pluginInterface.GetIpcProvider<string, bool>("FA.Invoke");
-        this.cgIsAvailable = pluginInterface.GetIpcProvider<bool>("FA.IsAvailable");
+        this.cgRegister = Service.PluginInterface.GetIpcProvider<string, string, uint, string>("FA.Register");
+        this.cgRegisterWithSearch = Service.PluginInterface.GetIpcProvider<string, string, string, uint, string>("FA.RegisterWithSearch");
+        this.cgUnregisterOne = Service.PluginInterface.GetIpcProvider<string, string, bool>("FA.UnregisterOne");
+        this.cgUnregisterAll = Service.PluginInterface.GetIpcProvider<string, bool>("FA.UnregisterAll");
+        this.cgInvoke = Service.PluginInterface.GetIpcProvider<string, bool>("FA.Invoke");
+        this.cgIsAvailable = Service.PluginInterface.GetIpcProvider<bool>("FA.IsAvailable");
         
         this.cgRegister.RegisterFunc(Register);
         this.cgRegisterWithSearch.RegisterFunc(Register);
@@ -48,8 +43,8 @@ public class IpcSystem : IDisposable
 
         this.TrackedIpcs = new Dictionary<string, List<IpcBinding>>();
 
-        FindAnythingPlugin.Log.Verbose("[IPC] Firing FA.Available.");
-        var cgAvailable = pluginInterface.GetIpcProvider<bool>("FA.Available");
+        Service.Log.Verbose("[IPC] Firing FA.Available.");
+        var cgAvailable = Service.PluginInterface.GetIpcProvider<bool>("FA.Available");
         cgAvailable.SendMessage();
         isReady = true;
     }
@@ -58,7 +53,6 @@ public class IpcSystem : IDisposable
     {
         return isReady;
     }
-
 
     public void Invoke(string guid)
     {
@@ -84,8 +78,8 @@ public class IpcSystem : IDisposable
         if (this.TrackedIpcs.ContainsKey(pluginInternalName))
         {
             this.TrackedIpcs.Remove(pluginInternalName);
-            
-            FindAnythingPlugin.Log.Verbose($"[IPC] All IPCs unregistered: {pluginInternalName}");
+
+            Service.Log.Verbose($"[IPC] All IPCs unregistered: {pluginInternalName}");
             return true;
         }
 
@@ -115,7 +109,7 @@ public class IpcSystem : IDisposable
             Search = searchValue.Downcase(normalizeKana: true)
         });
         
-        FindAnythingPlugin.Log.Verbose($"[IPC] Registered: {pluginInternalName} - {searchDisplayName} - {guid}");
+        Service.Log.Verbose($"[IPC] Registered: {pluginInternalName} - {searchDisplayName} - {guid}");
         
         return guid;
     }

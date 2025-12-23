@@ -57,7 +57,7 @@ public static class GameRewards
             var tmpFolder = Path.Combine(Path.GetTempPath(), "Noses");
             Directory.CreateDirectory(tmpFolder);
 
-            var noses = Directory.GetFiles(Path.Combine(FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses"), "*.png");
+            var noses = Directory.GetFiles(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses"), "*.png");
             foreach (var nose in noses)
             {
                 File.Copy(nose, Path.Combine(tmpFolder, Path.GetFileName(nose)), true);
@@ -141,8 +141,8 @@ public static class GameRewards
         {
             try
             {
-                Wallpaper.Set(Path.Combine(FindAnythingPlugin.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "wallpaper.jpg"), Wallpaper.Style.Fill);
-                FindAnythingPlugin.Notifications.AddNotification(new Notification
+                Wallpaper.Set(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "wallpaper.jpg"), Wallpaper.Style.Fill);
+                Service.Notifications.AddNotification(new Notification
                 {
                     Title = "Wallpaper bought!",
                     Content = "Congrats!",
@@ -150,7 +150,7 @@ public static class GameRewards
             }
             catch (Exception ex)
             {
-                FindAnythingPlugin.Log.Error(ex, "Could not set Desktop Wallpaper.");
+                Service.Log.Error(ex, "Could not set Desktop Wallpaper.");
             }
         }
     }
