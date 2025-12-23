@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Dalamud.Game;
 using Dalamud.Utility;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -17,12 +16,12 @@ namespace Dalamud.FindAnything
         }
 
         private IReadOnlyDictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> SearchData { get; init; }
-        private bool NormalizeKana { get; }
+        private readonly Normalizer normalizer;
 
-        private SearchDatabase(ClientLanguage lang)
+        private SearchDatabase(Normalizer normalizer)
         {
-            NormalizeKana = lang == ClientLanguage.Japanese;
-            
+            this.normalizer = normalizer;
+
             var data = new Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>>();
             InitData<ContentFinderCondition>(ref data, (r) => r.Name);
             InitData<ContentRoulette>(ref data, (r) => r.Name);
@@ -63,7 +62,6 @@ namespace Dalamud.FindAnything
 
         private void InitData<T>(ref Dictionary<Type, IReadOnlyDictionary<uint, SearchEntry>> searchDb, Func<T, ReadOnlySeString?> rowToFind) where T : struct, IExcelRow<T>
         {
-            var normalizeKana = NormalizeKana;
             var data = new Dictionary<uint, SearchEntry>();
             foreach (var excelRow in FindAnythingPlugin.Data.GetExcelSheet<T>())
             {
@@ -75,7 +73,7 @@ namespace Dalamud.FindAnything
 
                     try {
                         if (excelRow is MainCommand && textVal.StartsWith(" ")) {
-                            var macroText = result.ToString(); // Using ToString on purpose to grab macro details below
+                            var macroText = result.ToMacroString(); // Using ToMacroString on purpose to grab macro details below
                             if (macroText.StartsWith("<if([gnum75>0")) {
                                 textVal = macroText.Split(")")[0].Split(",")[2] + textVal;
                             }
@@ -88,7 +86,7 @@ namespace Dalamud.FindAnything
                     data.Add(excelRow.RowId, new SearchEntry
                     {
                         Display = textVal,
-                        Searchable = GetSearchableText(textVal, normalizeKana)
+                        Searchable = normalizer.Searchable(textVal),
                     });
                 }
 
@@ -103,6 +101,6 @@ namespace Dalamud.FindAnything
 
         public IReadOnlyDictionary<uint, SearchEntry> GetAll<T>() where T : struct, IExcelRow<T> => SearchData[typeof(T)];
 
-        public static SearchDatabase Load(ClientLanguage lang) => new(lang);
+        public static SearchDatabase Load(Normalizer normalizer) => new(normalizer);
     }
 }

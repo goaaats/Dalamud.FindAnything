@@ -12,10 +12,12 @@ internal class SearchState
     private bool ContainsKana { get; set; } = false;
 
     private readonly Configuration config;
+    private readonly Normalizer normalizer;
 
-    public SearchState(Configuration configuration)
+    public SearchState(Configuration config, Normalizer normalizer)
     {
-        config = configuration;
+        this.config = config;
+        this.normalizer = normalizer;
     }
 
     public void Reset()
@@ -95,18 +97,9 @@ internal class SearchState
 
         SemanticString = term;
 
-        term = term.ToLower().Replace("'", string.Empty);
-        if (term.ContainsKana())
-        {
-            term = term.Downcase(normalizeKana: true).Replace("'", string.Empty);
-            ContainsKana = true;
-        }
-        else
-        {
-            term = term.ToLowerInvariant().Replace("'", string.Empty);
-            ContainsKana = false;
-        }
-        
+        ContainsKana = term.ContainsKana();
+        term = normalizer.WithKana(ContainsKana).Searchable(term);
+
         MatchString = term;
 
         MatchMode = matchMode;
