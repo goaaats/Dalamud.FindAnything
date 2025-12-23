@@ -108,7 +108,7 @@ public readonly ref struct FuzzyMatcher
             return total;
         }
 
-        return 8;
+        throw new Exception($"Invalid match mode: {mode}");
     }
 
     public int MatchesAny(params string[] values)
