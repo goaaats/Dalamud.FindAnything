@@ -18,7 +18,6 @@ public class Service
     [PluginService] public static ICondition Condition { get; set; }
     [PluginService] public static IAetheryteList Aetherytes { get; set; }
     [PluginService] public static ITextureProvider TextureProvider { get; set; }
-    [PluginService] public static IGameInteropProvider GameInteropProvider { get; set; }
     [PluginService] public static IPluginLog Log { get; set; }
     [PluginService] public static INotificationManager Notifications { get; set; }
     [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; set; }

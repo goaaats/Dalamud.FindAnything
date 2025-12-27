@@ -23,25 +23,18 @@ public sealed class Finder : IDisposable
 
     public readonly SearchState SearchState;
     public readonly RootLookup RootLookup;
+    public bool IsOpen { get; private set; }
 
     private readonly CursorController cursorControl;
     private ISearchResult[] results = [];
-
-    private bool finderOpen;
     private int selectedIndex;
-
-    private int framesSinceLastKbChange = 0;
-    private long lastButtonPressTicks = 0;
-    private bool isHeldTimeout = false;
-    private bool isHeld = false;
-
-    public bool IsOpen => finderOpen;
 
     public Finder() {
         Instance = this;
 
         SearchState = new SearchState(FindAnythingPlugin.Configuration, FindAnythingPlugin.Normalizer);
         RootLookup = new RootLookup();
+
         cursorControl = new CursorController(this);
 
         Service.PluginInterface.UiBuilder.Draw += Draw;
@@ -56,32 +49,27 @@ public sealed class Finder : IDisposable
         if (!Service.ClientState.IsLoggedIn)
             return;
 #endif
-        if (finderOpen)
+        if (IsOpen)
             return;
 
         if (openToWiki || FindAnythingPlugin.Configuration.OnlyWikiMode) {
-            SetLookupType(LookupType.Wiki);
+            RootLookup.SetType(LookupType.Wiki);
         } else {
-            SetLookupType(LookupType.Module);
+            RootLookup.SetType(LookupType.Module);
         }
 
         FindAnythingPlugin.GameStateCache.Refresh();
 
         RootLookup.OnOpen();
         UpdateSearch("");
-        finderOpen = true;
+        IsOpen = true;
     }
 
     public void Close() {
-        finderOpen = false;
-        isHeld = false;
+        IsOpen = false;
         selectedIndex = 0;
         SearchState.Reset();
         results = [];
-    }
-
-    private void SetLookupType(LookupType type) {
-        RootLookup.SetType(type);
     }
 
     private void UpdateSearch(string term) {
@@ -106,7 +94,7 @@ public sealed class Finder : IDisposable
     }
 
     private void Draw() {
-        if (!finderOpen)
+        if (!IsOpen)
             return;
 
         ImGuiHelpers.ForceNextWindowMainViewport();
@@ -163,14 +151,10 @@ public sealed class Finder : IDisposable
 
         ImGui.PushItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X);
 
-        var resetScroll = false;
-
         var searchInput = SearchState.RawString;
         if (ImGui.InputTextWithHint("###findeverythinginput", RootLookup.GetPlaceholder(), ref searchInput, 1000,
                 ImGuiInputTextFlags.NoUndoRedo)) {
             UpdateSearch(searchInput);
-            framesSinceLastKbChange = 0;
-            resetScroll = true;
         }
 
         ImGui.PopItemWidth();
