@@ -1,12 +1,16 @@
 ﻿using Dalamud.Interface.Textures;
 using System;
+using System.Linq;
 
 namespace Dalamud.FindAnything;
 
-public class HintProvider
+public static class HintProvider
 {
+    private static readonly Configuration.HintKind StartHintLevel = Enum.GetValues<Configuration.HintKind>().First();
+    private static readonly Configuration.HintKind NoHintLevel = Enum.GetValues<Configuration.HintKind>().Last() + 1;
+
     public static HintResult? NextHint() {
-        if (FindAnythingPlugin.Configuration.HintLevel == Configuration.HintKind.HintMath + 1)
+        if (FindAnythingPlugin.Configuration.HintLevel == NoHintLevel)
             return null;
 
         var nextHint = FindAnythingPlugin.Configuration.HintLevel++;
@@ -19,7 +23,7 @@ public class HintProvider
     }
 
     public static void ResetHints() {
-        FindAnythingPlugin.Configuration.HintLevel = Configuration.HintKind.HintTyping;
+        FindAnythingPlugin.Configuration.HintLevel = StartHintLevel;
         FindAnythingPlugin.ConfigManager.Save();
     }
 
