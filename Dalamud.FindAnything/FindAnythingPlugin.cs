@@ -39,7 +39,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         TexCache = TextureCache.Load(Service.Data, Service.TextureProvider);
         SearchDatabase = SearchDatabase.Load(Normalizer);
         GameStateCache = GameStateCache.Load();
-        Ipc = new IpcSystem();
+        Ipc = new IpcSystem(Normalizer);
 
         RootLookup = new RootLookup();
 

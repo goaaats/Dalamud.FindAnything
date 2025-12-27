@@ -4,7 +4,7 @@ namespace Dalamud.FindAnything;
 
 public class ConfigManager
 {
-    public Configuration Config;
+    public readonly Configuration Config;
     public event Action<Configuration>? OnChange;
 
     public ConfigManager() {

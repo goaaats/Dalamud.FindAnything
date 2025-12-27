@@ -2,11 +2,16 @@
 
 namespace Dalamud.FindAnything;
 
+// Notes on the various string fields:
+// - RawString: the actual contents of the ImGui search box buffer
+// - CleanString: the above but with whitespace stripped
+// - SemanticString: the above but with any sigils removed
+// - MatchString: the above but in lower case and with kana and some special characters normalized
 public class SearchState
 {
-    public const string ModeSigilWiki = "?";
+    private const string ModeSigilWiki = "?";
 
-    public LookupType? OverrideLookupType { get; private set; }
+    private LookupType? OverrideLookupType { get; set; }
     private MatchMode MatchMode { get; set; } = MatchMode.Simple;
     public string RawString { get; private set; } = string.Empty;
     private string CleanString { get; set; } = string.Empty;
@@ -17,14 +22,12 @@ public class SearchState
     private readonly Configuration config;
     private readonly Normalizer normalizer;
 
-    public SearchState(Configuration config, Normalizer normalizer)
-    {
+    public SearchState(Configuration config, Normalizer normalizer) {
         this.config = config;
         this.normalizer = normalizer;
     }
 
-    public void Reset()
-    {
+    public void Reset() {
         OverrideLookupType = null;
         MatchMode = config.MatchMode;
         RawString = string.Empty;
@@ -34,10 +37,8 @@ public class SearchState
         ContainsKana = false;
     }
 
-    public void Set(LookupType currentLookupType, string term)
-    {
-        if (term.Length == 0)
-        {
+    public void Set(LookupType currentLookupType, string term) {
+        if (term.Length == 0) {
             // Skip more complex initialization if we know the term is empty
             OverrideLookupType = null;
             MatchMode = config.MatchMode;
@@ -55,8 +56,7 @@ public class SearchState
         CleanString = term;
 
         // Only recognize the wiki sigil when we're in module mode.
-        if (currentLookupType == LookupType.Module && term.StartsWith(ModeSigilWiki))
-        {
+        if (currentLookupType == LookupType.Module && term.StartsWith(ModeSigilWiki)) {
             term = term[1..];
             OverrideLookupType = LookupType.Wiki;
         } else {
@@ -64,18 +64,13 @@ public class SearchState
         }
 
         var matchMode = config.MatchMode;
-        if (!string.IsNullOrWhiteSpace(config.MatchSigilFuzzyParts) && term.StartsWith(config.MatchSigilFuzzyParts))
-        {
+        if (!string.IsNullOrWhiteSpace(config.MatchSigilFuzzyParts) && term.StartsWith(config.MatchSigilFuzzyParts)) {
             matchMode = MatchMode.FuzzyParts;
             term = term[1..];
-        }
-        else if (!string.IsNullOrWhiteSpace(config.MatchSigilFuzzy) && term.StartsWith(config.MatchSigilFuzzy))
-        {
+        } else if (!string.IsNullOrWhiteSpace(config.MatchSigilFuzzy) && term.StartsWith(config.MatchSigilFuzzy)) {
             matchMode = MatchMode.Fuzzy;
             term = term[1..];
-        }
-        else if (!string.IsNullOrWhiteSpace(config.MatchSigilSimple) && term.StartsWith(config.MatchSigilSimple))
-        {
+        } else if (!string.IsNullOrWhiteSpace(config.MatchSigilSimple) && term.StartsWith(config.MatchSigilSimple)) {
             matchMode = MatchMode.Simple;
             term = term[1..];
         }
@@ -90,42 +85,20 @@ public class SearchState
         MatchMode = matchMode;
     }
 
-    public SearchCriteria Criteria()
-    {
+    public SearchCriteria Criteria() {
         return new SearchCriteria(OverrideLookupType, MatchMode, CleanString, SemanticString, MatchString, ContainsKana);
     }
 }
 
-public enum SearchMode
+public record SearchCriteria(
+    LookupType? OverrideLookupType,
+    MatchMode MatchMode,
+    string CleanString,
+    string SemanticString,
+    string MatchString,
+    bool ContainsKana)
 {
-    Top,
-    Wiki,
-    WikiSiteChoicer,
-    EmoteModeChoicer
-}
-
-public class SearchCriteria
-{
-    public LookupType? OverrideLookupType { get; }
-    public MatchMode MatchMode { get; }
-    public string CleanString { get; }
-    public string SemanticString { get; }
-    public string MatchString { get; }
-    public bool ContainsKana { get; }
-
-    public SearchCriteria(LookupType? overrideLookupType, MatchMode matchMode, string cleanString, string semanticString,
-        string matchString, bool containsKana)
-    {
-        OverrideLookupType = overrideLookupType;
-        MatchMode = matchMode;
-        CleanString = cleanString;
-        SemanticString = semanticString;
-        MatchString = matchString;
-        ContainsKana = containsKana;
-    }
-
-    public bool HasMatchString()
-    {
+    public bool HasMatchString() {
         return MatchString.Length != 0;
     }
 }

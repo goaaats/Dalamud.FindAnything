@@ -8,7 +8,7 @@ namespace Dalamud.FindAnything;
 
 public readonly ref struct FuzzyMatcher
 {
-    private static readonly (int, int)[] EmptySegArray = Array.Empty<(int, int)>();
+    private static readonly (int, int)[] EmptySegArray = [];
 
     private readonly string needleString = string.Empty;
     private readonly ReadOnlySpan<char> needleSpan = ReadOnlySpan<char>.Empty;
