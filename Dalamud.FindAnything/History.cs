@@ -19,7 +19,7 @@ public class History
     }
 
     private List<ISearchResult> Replay(HistoryEntry entry) {
-        return FindAnythingPlugin.Finder.RootLookup.GetLookupForType(entry.LookupType)
+        return FindAnythingPlugin.RootLookup.GetLookupForType(entry.LookupType)
             .Lookup(entry.SearchCriteria)
             .Results;
     }

@@ -4,6 +4,8 @@ namespace Dalamud.FindAnything;
 
 public class SearchState
 {
+    public const string ModeSigilWiki = "?";
+
     public LookupType? OverrideLookupType { get; private set; }
     private MatchMode MatchMode { get; set; } = MatchMode.Simple;
     public string RawString { get; private set; } = string.Empty;
@@ -53,7 +55,7 @@ public class SearchState
         CleanString = term;
 
         // Only recognize the wiki sigil when we're in module mode.
-        if (currentLookupType == LookupType.Module && term.StartsWith(FindAnythingPlugin.ModeSigilWiki))
+        if (currentLookupType == LookupType.Module && term.StartsWith(ModeSigilWiki))
         {
             term = term[1..];
             OverrideLookupType = LookupType.Wiki;

@@ -114,7 +114,7 @@ public class WikiLookup : ILookup
 
         public void Selected() {
             WikiSiteLookup.SetBaseResult(this);
-            FindAnythingPlugin.Finder.SwitchLookupType(LookupType.WikiSite);
+            FindAnythingPlugin.Instance.SwitchLookupType(LookupType.WikiSite);
         }
     }
 

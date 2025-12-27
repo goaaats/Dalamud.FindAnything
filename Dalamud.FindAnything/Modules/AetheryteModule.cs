@@ -262,7 +262,7 @@ internal class Teleporter(AetheryteManager aetheryteManager)
 
     private void ShowTeleportResult(IAetheryteEntry entry, TeleportResult result, bool showSuccessMessage) {
         if (result != TeleportResult.Success) {
-            FindAnythingPlugin.UserError(result switch {
+            FindAnythingPlugin.Instance.UserError(result switch {
                 TeleportResult.BadState => "Cannot teleport in this situation.",
                 TeleportResult.BadDestination => "Cannot teleport to that destination.",
                 _ => "Teleport failed.",

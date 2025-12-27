@@ -49,7 +49,7 @@ public sealed class InternalModule : SearchModule
                     Service.CommandManager.ProcessCommand("/xlsettings");
                     break;
                 case InternalSearchResultKind.WikiMode:
-                    FindAnythingPlugin.Finder.SwitchLookupType(LookupType.Wiki);
+                    FindAnythingPlugin.Instance.SwitchLookupType(LookupType.Wiki);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

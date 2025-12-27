@@ -5,7 +5,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.System.Input;
 using Serilog;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -19,22 +18,17 @@ public sealed class Finder : IDisposable
     private const int MaxOnePage = 10;
     private const int SelectionScrollOffset = 1;
 
-    public static Finder Instance { get; private set; } = null!;
-
-    public readonly SearchState SearchState;
-    public readonly RootLookup RootLookup;
     public bool IsOpen { get; private set; }
 
+    private readonly RootLookup rootLookup;
+    private readonly SearchState searchState;
     private readonly CursorController cursorControl;
     private ISearchResult[] results = [];
     private int selectedIndex;
 
-    public Finder() {
-        Instance = this;
-
-        SearchState = new SearchState(FindAnythingPlugin.Configuration, FindAnythingPlugin.Normalizer);
-        RootLookup = new RootLookup();
-
+    public Finder(RootLookup rootLookup, Normalizer normalizer) {
+        this.rootLookup = rootLookup;
+        searchState = new SearchState(FindAnythingPlugin.Configuration, normalizer);
         cursorControl = new CursorController(this);
 
         Service.PluginInterface.UiBuilder.Draw += Draw;
@@ -53,14 +47,14 @@ public sealed class Finder : IDisposable
             return;
 
         if (openToWiki || FindAnythingPlugin.Configuration.OnlyWikiMode) {
-            RootLookup.SetType(LookupType.Wiki);
+            rootLookup.SetBase(LookupType.Wiki);
         } else {
-            RootLookup.SetType(LookupType.Module);
+            rootLookup.SetBase(LookupType.Module);
         }
 
         FindAnythingPlugin.GameStateCache.Refresh();
 
-        RootLookup.OnOpen();
+        rootLookup.OnOpen();
         UpdateSearch("");
         IsOpen = true;
     }
@@ -68,24 +62,32 @@ public sealed class Finder : IDisposable
     public void Close() {
         IsOpen = false;
         selectedIndex = 0;
-        SearchState.Reset();
+        searchState.Reset();
         results = [];
     }
 
     private void UpdateSearch(string term) {
         selectedIndex = 0;
-        SearchState.Set(RootLookup.CurrentType(), term);
-        results = GetResults(SearchState.Criteria());
+        searchState.Set(rootLookup.GetBase(), term);
+
+        var criteria = searchState.Criteria();
+        if (criteria.OverrideLookupType is { } overrideType) {
+            rootLookup.SetOverride(overrideType);
+        } else {
+            rootLookup.ClearOverride();
+        }
+
+        results = GetResults(searchState.Criteria());
     }
 
-    public void SwitchLookupType(LookupType newType) {
-        RootLookup.SetType(newType);
+    public void SwitchLookupType(LookupType type) {
+        rootLookup.SetBase(type);
         UpdateSearch("");
-        Service.Log.Information($"{nameof(SwitchLookupType)}: {newType}");
+        Service.Log.Information($"{nameof(SwitchLookupType)}: {type}");
     }
 
     private ISearchResult[] GetResults(SearchCriteria criteria) {
-        var lookupResult = RootLookup.Lookup(criteria);
+        var lookupResult = rootLookup.Lookup(criteria);
         if (criteria.MatchMode != MatchMode.Simple && lookupResult.AllowSort) {
             return lookupResult.Results.OrderByDescending(r => r.Score).ToArray();
         }
@@ -149,22 +151,20 @@ public sealed class Finder : IDisposable
     private void DrawFinder(Vector2 size, Vector2 iconSize, Vector2 textSize, float windowPadding, float scrollbarWidth, float scaledFour, out bool closeFinder) {
         closeFinder = false;
 
-        ImGui.PushItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X);
-
-        var searchInput = SearchState.RawString;
-        if (ImGui.InputTextWithHint("###findeverythinginput", RootLookup.GetPlaceholder(), ref searchInput, 1000,
-                ImGuiInputTextFlags.NoUndoRedo)) {
-            UpdateSearch(searchInput);
+        using (ImRaii.ItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X)) {
+            var searchInput = searchState.RawString;
+            if (ImGui.InputTextWithHint("###findeverythinginput", rootLookup.GetPlaceholder(), ref searchInput, 1000,
+                    ImGuiInputTextFlags.NoUndoRedo)) {
+                UpdateSearch(searchInput);
+            }
         }
-
-        ImGui.PopItemWidth();
 
         if (ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && !ImGui.IsAnyItemActive() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left))
             ImGui.SetKeyboardFocusHere(-1);
 
         ImGui.SameLine();
 
-        using (var _ = ImRaii.PushFont(UiBuilder.IconFont)) {
+        using (ImRaii.PushFont(UiBuilder.IconFont)) {
             ImGui.Text(FontAwesomeIcon.Search.ToIconString());
         }
 
@@ -173,10 +173,11 @@ public sealed class Finder : IDisposable
             closeFinder = true;
         }
 
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ImGuiHelpers.GlobalScale, scaledFour));
-        style.Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(scaledFour, scaledFour));
+        using var style = new ImRaii.Style()
+            .Push(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ImGuiHelpers.GlobalScale, scaledFour))
+            .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(scaledFour, scaledFour));
 
-        if (results is not { Length: > 0 })
+        if (results.Length == 0)
             return;
 
         using var child = ImRaii.Child("###findAnythingScroller");
@@ -190,7 +191,7 @@ public sealed class Finder : IDisposable
             VirtualKey.CONTROL => ImGuiKey.ModCtrl,
             VirtualKey.MENU => ImGuiKey.ModAlt,
             VirtualKey.SHIFT => ImGuiKey.ModShift,
-            _ => ImGuiHelpers.VirtualKeyToImGuiKey(FindAnythingPlugin.Configuration.QuickSelectKey)
+            _ => ImGuiHelpers.VirtualKeyToImGuiKey(FindAnythingPlugin.Configuration.QuickSelectKey),
         };
         var isQuickSelect = ImGui.IsKeyDown(quickSelectModifierKey);
 
@@ -261,7 +262,7 @@ public sealed class Finder : IDisposable
                 var result = results[index];
                 closeFinder = result.CloseFinder;
                 result.Selected();
-                RootLookup.OnSelected(SearchState.Criteria(), result);
+                rootLookup.OnSelected(searchState.Criteria(), result);
             }
         }
     }

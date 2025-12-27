@@ -1,4 +1,5 @@
 using Dalamud.FindAnything.Game;
+using Dalamud.FindAnything.Lookup;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
@@ -20,8 +21,9 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     public static GameStateCache GameStateCache { get; private set; } = null!;
     public static IpcSystem Ipc { get; private set; } = null!;
     public static Normalizer Normalizer { get; private set; } = null!;
-    public static Finder Finder { get; private set; } = null!;
+    public static RootLookup RootLookup { get; private set; } = null!;
 
+    private Finder Finder { get; }
     private FinderActivator FinderActivator { get; }
     private WindowSystem WindowSystem { get; }
     private SettingsWindow SettingsWindow { get; }
@@ -39,8 +41,12 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         GameStateCache = GameStateCache.Load();
         Ipc = new IpcSystem();
 
-        Finder = new Finder();
-        FinderActivator = new FinderActivator();
+        RootLookup = new RootLookup();
+
+        // Finder
+
+        Finder = new Finder(RootLookup, Normalizer);
+        FinderActivator = new FinderActivator(Finder);
 
         // UI
 
@@ -96,10 +102,12 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         GameWindow.IsOpen = true;
     }
 
-    public static void UserError(string error) {
+    public void SwitchLookupType(LookupType type) {
+        Finder.SwitchLookupType(type);
+    }
+
+    public void UserError(string error) {
         Service.ChatGui.PrintError(error);
         Service.ToastGui.ShowError(error);
     }
-
-    public const string ModeSigilWiki = "?";
 }

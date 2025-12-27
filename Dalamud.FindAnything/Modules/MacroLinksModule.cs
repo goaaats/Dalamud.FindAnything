@@ -51,19 +51,19 @@ public sealed class MacroLinksModule : SearchModule
                     var macro = RaptureMacroModule.Instance()->GetMacro(Entry.Shared ? 1u : 0u, (uint)Entry.Id);
                     // Service.Log.Debug($"Macro: 0x{(IntPtr)macro:X} / name[{macro->Name}] iconId[{macro->IconId}] iconRowId[{macro->MacroIconRowId}]");
                     if (macro->IconId == 0 && macro->MacroIconRowId == 0) {
-                        FindAnythingPlugin.UserError($"Invalid macro: {Entry.Id} ({(Entry.Shared ? "Shared" : "Individual")})");
+                        FindAnythingPlugin.Instance.UserError($"Invalid macro: {Entry.Id} ({(Entry.Shared ? "Shared" : "Individual")})");
                         return;
                     }
                     RaptureShellModule.Instance()->ExecuteMacro(macro);
                     break;
                 case Configuration.MacroEntry.MacroEntryKind.SingleLine:
                     if (!Entry.Line.StartsWith('/')) {
-                        FindAnythingPlugin.UserError("Invalid slash command:" + Entry.Line);
+                        FindAnythingPlugin.Instance.UserError("Invalid slash command:" + Entry.Line);
                         return;
                     }
 
                     if (Entry.Line.Length > 100) {
-                        FindAnythingPlugin.UserError("Slash command too long:" + Entry.Line);
+                        FindAnythingPlugin.Instance.UserError("Slash command too long:" + Entry.Line);
                         return;
                     }
 

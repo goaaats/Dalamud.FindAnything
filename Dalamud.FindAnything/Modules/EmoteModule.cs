@@ -65,7 +65,7 @@ public sealed class EmoteModule : SearchModule
         public void Selected() {
             if (MotionMode == Configuration.EmoteMotionMode.Ask) {
                 EmoteModeLookup.SetBaseResult(this);
-                FindAnythingPlugin.Finder.SwitchLookupType(LookupType.EmoteMode);
+                FindAnythingPlugin.Instance.SwitchLookupType(LookupType.EmoteMode);
                 return;
             }
 

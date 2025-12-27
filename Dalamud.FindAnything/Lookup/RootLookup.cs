@@ -10,12 +10,11 @@ public sealed class RootLookup : ILookup
     private WikiSiteLookup WikiSiteLookup { get; } = new();
     private EmoteModeLookup EmoteModeLookup { get; } = new();
 
-    private ILookup activeLookup;
-    private LookupType activeType;
+    private LookupSetting baseSetting;
+    private LookupSetting? overrideSetting;
 
     public RootLookup() {
-        activeLookup = ModuleLookup;
-        activeType = LookupType.Module;
+        baseSetting = new LookupSetting(LookupType.Module, ModuleLookup);
     }
 
     public ILookup GetLookupForType(LookupType lookupType) {
@@ -28,15 +27,22 @@ public sealed class RootLookup : ILookup
         };
     }
 
-    public void SetType(LookupType lookupType) {
-        activeLookup = GetLookupForType(lookupType);
-        activeType = lookupType;
+    public void SetBase(LookupType lookupType) {
+        baseSetting = new LookupSetting(lookupType, GetLookupForType(lookupType));
     }
 
-    public LookupType CurrentType() => activeType;
+    public void SetOverride(LookupType lookupType) {
+        overrideSetting = new LookupSetting(lookupType, GetLookupForType(lookupType));
+    }
+
+    public void ClearOverride() {
+        overrideSetting = null;
+    }
+
+    public LookupType GetBase() => baseSetting.Type;
 
     private ILookup GetActiveLookup() {
-        return FindAnythingPlugin.Finder.SearchState.OverrideLookupType == LookupType.Wiki ? WikiLookup : activeLookup;
+        return overrideSetting != null ? overrideSetting.Lookup : baseSetting.Lookup;
     }
 
     public string GetPlaceholder() {
@@ -71,3 +77,5 @@ public enum LookupType
     WikiSite,
     EmoteMode,
 }
+
+public record LookupSetting(LookupType Type, ILookup Lookup);

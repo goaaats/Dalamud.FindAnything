@@ -8,10 +8,12 @@ namespace Dalamud.FindAnything;
 
 public sealed class FinderActivator : IDisposable
 {
+    private readonly Finder finder;
     private readonly Input input;
     private IDoubleTapTrigger doubleTapTrigger;
 
-    public FinderActivator() {
+    public FinderActivator(Finder finder) {
+        this.finder = finder;
         input = new Input();
 
         Configure(FindAnythingPlugin.Configuration);
@@ -29,7 +31,7 @@ public sealed class FinderActivator : IDisposable
         Service.Log.Debug($"Configuring {nameof(FinderActivator)}");
 
         var delay = FindAnythingPlugin.Configuration.ShiftShiftDelay;
-        var openAction = () => FindAnythingPlugin.Finder.Open();
+        var openAction = () => finder.Open();
 
         doubleTapTrigger = FindAnythingPlugin.Configuration.ShiftShiftUnit switch {
             Configuration.DoubleTapUnit.Frames => new FrameBasedDoubleTapTrigger(delay, openAction),
@@ -48,9 +50,9 @@ public sealed class FinderActivator : IDisposable
         input.Update();
 
         if (input.IsDown(VirtualKey.ESCAPE)) {
-            FindAnythingPlugin.Finder.Close();
+            finder.Close();
         } else {
-            if (FindAnythingPlugin.Finder.IsOpen)
+            if (finder.IsOpen)
                 return;
 
             switch (FindAnythingPlugin.Configuration.Open) {
@@ -77,9 +79,9 @@ public sealed class FinderActivator : IDisposable
 
         if (mod && mod2 && key) {
             if (wiki) {
-                FindAnythingPlugin.Finder.Open(openToWiki: true);
+                finder.Open(openToWiki: true);
             } else {
-                FindAnythingPlugin.Finder.Open();
+                finder.Open();
             }
 
             // We do not skip these even if finderOpen is true since we need to cancel keys still held after open
