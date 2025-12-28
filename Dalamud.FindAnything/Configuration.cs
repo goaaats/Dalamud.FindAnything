@@ -100,7 +100,7 @@ public class Configuration : IPluginConfiguration
         public bool Shared { get; set; }
         public int Id { get; set; }
         public string Line { get; set; } = string.Empty;
-        public string SearchName { get; set; }
+        public string SearchName { get; set; } = string.Empty;
         public int IconId { get; set; }
         public MacroEntryKind Kind { get; set; }
 
@@ -122,7 +122,7 @@ public class Configuration : IPluginConfiguration
         }
     }
 
-    public List<MacroEntry> MacroLinks { get; set; } = new();
+    public List<MacroEntry> MacroLinks { get; set; } = [];
 
     public enum MacroSearchDirection
     {
@@ -161,7 +161,7 @@ public class Configuration : IPluginConfiguration
 
     public bool OnlyWikiMode { get; set; } = false;
 
-    public List<SearchSetting> Order { get; set; } = new();
+    public List<SearchSetting> Order { get; set; } = [];
 
     public bool NotInCombat { get; set; } = false;
 
@@ -197,7 +197,7 @@ public class Configuration : IPluginConfiguration
 
     public ScrollSpeed Speed { get; set; } = ScrollSpeed.Medium;
 
-    private static readonly List<SearchSetting> DefaultOrder = new() {
+    private static readonly List<SearchSetting> DefaultOrder = [
         SearchSetting.MacroLinks,
         SearchSetting.Gearsets,
         SearchSetting.Aetheryte,
@@ -214,9 +214,9 @@ public class Configuration : IPluginConfiguration
         SearchSetting.FashionAccessories,
         SearchSetting.CraftingRecipes,
         SearchSetting.GatheringItems,
-    };
+    ];
 
-    [JsonProperty("MatchMode")] public MatchMode? MatchModeOld { get; set; } = null;
+    [JsonProperty("MatchMode")] public MatchMode? MatchModeOld { get; set; }
 
     [JsonProperty("MatchModeNew")] public MatchMode MatchMode { get; set; } = MatchMode.Fuzzy;
 

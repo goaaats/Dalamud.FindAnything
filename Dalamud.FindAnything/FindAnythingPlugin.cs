@@ -56,7 +56,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
         WindowSystem = new WindowSystem("wotsit");
 
-        SettingsWindow = new SettingsWindow(this) { IsOpen = false };
+        SettingsWindow = new SettingsWindow { IsOpen = false };
         WindowSystem.AddWindow(SettingsWindow);
 
         GameWindow = new GameWindow { IsOpen = false };

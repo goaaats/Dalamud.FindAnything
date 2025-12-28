@@ -19,7 +19,6 @@ namespace Dalamud.FindAnything;
 
 public class SettingsWindow : Window
 {
-    private readonly FindAnythingPlugin plugin;
     private uint flags;
     private Configuration.OpenMode openMode;
     private VirtualKey shiftShiftKey;
@@ -30,7 +29,7 @@ public class SettingsWindow : Window
     private VirtualKey comboKey;
     private VirtualKey wikiComboKey;
     private bool preventPassthrough;
-    private List<Configuration.MacroEntry> macros = new();
+    private List<Configuration.MacroEntry> macros = [];
     private Configuration.MacroSearchDirection macroLinksSearch;
     private bool aetheryteGilCost;
     private bool marketBoardShortcut;
@@ -44,7 +43,7 @@ public class SettingsWindow : Window
     private Vector2 posOffset;
     private bool onlyWiki;
     private VirtualKey quickSelectKey;
-    private List<Configuration.SearchSetting> order = new();
+    private List<Configuration.SearchSetting> order = [];
     private Dictionary<Configuration.SearchSetting, int> searchWeights = new();
     private Configuration.ScrollSpeed speed;
     private bool notInCombat;
@@ -53,31 +52,26 @@ public class SettingsWindow : Window
     private bool disableMouseSelection;
     private bool openCraftingLogToRecipe;
     private MatchMode matchMode;
-    private string matchSigilSimple;
-    private string matchSigilFuzzy;
-    private string matchSigilFuzzyParts;
+    private string matchSigilSimple = "'";
+    private string matchSigilFuzzy = "`";
+    private string matchSigilFuzzyParts = "~";
 
     private DateTime? windowOffsetChangeTime;
     private bool macroRearrangeMode;
     private const int SaveDiscardOffset = -40;
 
-    public SettingsWindow(FindAnythingPlugin plugin) : base("Wotsit Settings")
-    {
-        this.plugin = plugin;
-
-        this.SizeConstraints = new WindowSizeConstraints
-        {
+    public SettingsWindow() : base("Wotsit Settings") {
+        this.SizeConstraints = new WindowSizeConstraints {
             MinimumSize = new Vector2(860, 660),
             MaximumSize = new Vector2(10000, 10000),
         };
     }
 
-    public override void OnOpen()
-    {
-        this.flags = (uint) FindAnythingPlugin.Configuration.ToSearchV3;
+    public override void OnOpen() {
+        this.flags = (uint)FindAnythingPlugin.Configuration.ToSearchV3;
         this.openMode = FindAnythingPlugin.Configuration.Open;
         this.shiftShiftKey = FindAnythingPlugin.Configuration.ShiftShiftKey;
-        this.shiftShiftDelay = (int) FindAnythingPlugin.Configuration.ShiftShiftDelay;
+        this.shiftShiftDelay = (int)FindAnythingPlugin.Configuration.ShiftShiftDelay;
         this.shiftShiftUnit = FindAnythingPlugin.Configuration.ShiftShiftUnit;
         this.comboKey = FindAnythingPlugin.Configuration.ComboKey;
         this.comboModifierKey = FindAnythingPlugin.Configuration.ComboModifier;
@@ -113,8 +107,7 @@ public class SettingsWindow : Window
         base.OnOpen();
     }
 
-    public override void Draw()
-    {
+    public override void Draw() {
         if (ImGui.BeginTabBar("##find-anything-tabs")) {
             if (ImGui.BeginTabItem("General")) {
                 ImGui.BeginChild("ScrollingOthers", ImGuiHelpers.ScaledVector2(0, SaveDiscardOffset), true,
@@ -234,8 +227,7 @@ public class SettingsWindow : Window
                 ImGui.Checkbox("Show \"Striking Dummy\" shortcut to teleport to the closest striking dummy location",
                     ref this.strikingDummyShortcut);
                 ImGui.Checkbox("Show \"Inn Room\" shortcut to teleport to the closest inn room", ref this.innRoomShortcut);
-                if (this.innRoomShortcut)
-                {
+                if (this.innRoomShortcut) {
                     ImGui.Checkbox("Don't consider Limsa a valid Inn Room location", ref this.innRoomShortcutNoLimsa);
                 }
 
@@ -316,8 +308,7 @@ public class SettingsWindow : Window
                 for (var i = 0; i < this.order.Count; i++) {
                     var search = this.order[i];
 
-                    var name = search switch
-                    {
+                    var name = search switch {
                         Configuration.SearchSetting.Duty => "Duties",
                         Configuration.SearchSetting.Aetheryte => "Aetherytes",
                         Configuration.SearchSetting.MainCommand => "Commands",
@@ -368,8 +359,7 @@ public class SettingsWindow : Window
                         ImGui.PushStyleColor(ImGuiCol.CheckMark, ImGuiColors.ParsedGrey);
                         ImGui.Checkbox($"Search in {name}", ref locked);
                         ImGui.PopStyleColor(4);
-                    }
-                    else {
+                    } else {
                         ImGui.CheckboxFlags($"Search in {name}", ref this.flags, (uint)search);
                     }
 
@@ -381,8 +371,7 @@ public class SettingsWindow : Window
                         if (weight is > 0 and < SearchModule.DefaultWeight * 1000) {
                             if (weight == SearchModule.DefaultWeight) {
                                 searchWeights.Remove(search);
-                            }
-                            else {
+                            } else {
                                 searchWeights[search] = weight;
                             }
                         }
@@ -442,15 +431,14 @@ public class SettingsWindow : Window
         ImGui.SameLine();
         var saveAndClose = ImGui.Button("Save and Close");
 
-        if (save || saveAndClose)
-        {
-            FindAnythingPlugin.Configuration.ToSearchV3 = (Configuration.SearchSetting) this.flags;
+        if (save || saveAndClose) {
+            FindAnythingPlugin.Configuration.ToSearchV3 = (Configuration.SearchSetting)this.flags;
             FindAnythingPlugin.Configuration.Order = this.order;
             FindAnythingPlugin.Configuration.SearchWeights = this.searchWeights;
 
             FindAnythingPlugin.Configuration.Open = openMode;
             FindAnythingPlugin.Configuration.ShiftShiftKey = shiftShiftKey;
-            FindAnythingPlugin.Configuration.ShiftShiftDelay = (uint) shiftShiftDelay;
+            FindAnythingPlugin.Configuration.ShiftShiftDelay = (uint)shiftShiftDelay;
             FindAnythingPlugin.Configuration.ShiftShiftUnit = shiftShiftUnit;
 
             FindAnythingPlugin.Configuration.ComboKey = comboKey;
@@ -463,14 +451,14 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MacroLinksSearchDirection = this.macroLinksSearch;
 
             FindAnythingPlugin.Configuration.DoAetheryteGilCost = this.aetheryteGilCost;
-            
+
             var aetheryteShortcuts = Configuration.AetheryteAdditionalShortcut.None;
             if (this.marketBoardShortcut) aetheryteShortcuts |= Configuration.AetheryteAdditionalShortcut.MarketBoard;
             if (this.strikingDummyShortcut) aetheryteShortcuts |= Configuration.AetheryteAdditionalShortcut.StrikingDummy;
             if (this.innRoomShortcut) aetheryteShortcuts |= Configuration.AetheryteAdditionalShortcut.InnRoom;
             FindAnythingPlugin.Configuration.AetheryteShortcuts = aetheryteShortcuts;
             FindAnythingPlugin.Configuration.AetheryteInnRoomShortcutExcludeLimsa = this.innRoomShortcutNoLimsa;
-            
+
             FindAnythingPlugin.Configuration.EmoteMode = this.emoteMotionMode;
             FindAnythingPlugin.Configuration.ShowEmoteCommand = this.showEmoteCommand;
             FindAnythingPlugin.Configuration.WikiModeNoSpoilers = this.wikiModeNoSpoilers;
@@ -494,8 +482,7 @@ public class SettingsWindow : Window
 
         ImGui.SameLine();
 
-        if (ImGui.Button("Discard") || saveAndClose)
-        {
+        if (ImGui.Button("Discard") || saveAndClose) {
             IsOpen = false;
             windowOffsetChangeTime = null;
         }
@@ -518,8 +505,7 @@ public class SettingsWindow : Window
 
     private int dropSource = -1;
 
-    private void DrawMacrosSection()
-    {
+    private void DrawMacrosSection() {
         if (macroRearrangeMode) {
             ImGui.TextWrapped("Use arrows or drag and drop macros to change the order.");
 
@@ -601,9 +587,7 @@ public class SettingsWindow : Window
             if (ImGui.Button("Reverse all")) {
                 macros.Reverse();
             }
-
-        }
-        else {
+        } else {
             ImGui.TextWrapped(
                 "Use this menu to tie search results to macros.\nClick \"Add Macro\", enter the text you want to access it under, select whether or not it is a shared macro and enter its ID.\nUse the ';' character to add search text for a macro, only the first part text will be shown, e.g. \"SGE;sage;healer\".");
 
@@ -662,8 +646,7 @@ public class SettingsWindow : Window
                     if (ImGui.Checkbox($"###macroSh", ref isShared)) {
                         macro.Shared = isShared;
                     }
-                }
-                else {
+                } else {
                     ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.ParsedGrey);
                     ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ImGuiColors.ParsedGrey);
                     ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ImGuiColors.ParsedGrey);
@@ -743,8 +726,7 @@ public class SettingsWindow : Window
             ImGui.NextColumn();
 
             if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus)) {
-                this.macros.Insert(0, new Configuration.MacroEntry
-                {
+                this.macros.Insert(0, new Configuration.MacroEntry {
                     Id = 0,
                     SearchName = "New Macro",
                     Shared = false,
@@ -793,8 +775,7 @@ public class SettingsWindow : Window
     private string tempConstantName = string.Empty;
     private float tempConstantValue = 0;
 
-    private void DrawConstantsSection()
-    {
+    private void DrawConstantsSection() {
         ImGui.Columns(3);
         ImGui.SetColumnWidth(0, 200 + 5 * ImGuiHelpers.GlobalScale);
         ImGui.SetColumnWidth(1, 200 + 5 * ImGuiHelpers.GlobalScale);
@@ -849,14 +830,10 @@ public class SettingsWindow : Window
 
         ImGui.PushID("constbtns");
 
-        if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus))
-        {
-            if (constants.ContainsKey(tempConstantName))
-            {
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.Plus)) {
+            if (constants.ContainsKey(tempConstantName)) {
                 constants[tempConstantName] = tempConstantValue;
-            }
-            else
-            {
+            } else {
                 constants.Add(tempConstantName, tempConstantValue);
             }
 
@@ -864,33 +841,28 @@ public class SettingsWindow : Window
             this.tempConstantValue = 0;
         }
 
-        if (ImGui.IsItemHovered())
-        {
+        if (ImGui.IsItemHovered()) {
             ImGui.SetTooltip("Add new constant");
         }
 
         ImGui.SameLine();
 
-        if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy))
-        {
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.Copy)) {
             var json = JsonConvert.SerializeObject(this.constants);
             ImGui.SetClipboardText("WC1" + json);
         }
 
-        if (ImGui.IsItemHovered())
-        {
+        if (ImGui.IsItemHovered()) {
             ImGui.SetTooltip("Copy constants to clipboard");
         }
 
         ImGui.SameLine();
 
-        if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport))
-        {
+        if (ImGuiComponents.IconButton(FontAwesomeIcon.FileImport)) {
             ImportConstants(ImGui.GetClipboardText());
         }
 
-        if (ImGui.IsItemHovered())
-        {
+        if (ImGui.IsItemHovered()) {
             ImGui.SetTooltip("Import constants from clipboard");
         }
 
@@ -901,8 +873,7 @@ public class SettingsWindow : Window
         ImGui.Columns(1);
     }
 
-    private void ImportMacros(string contents)
-    {
+    private void ImportMacros(string contents) {
         if (!contents.StartsWith("WM1"))
             return;
 
@@ -914,30 +885,23 @@ public class SettingsWindow : Window
         this.macros.InsertRange(0, data);
     }
 
-    private void ImportConstants(string contents)
-    {
+    private void ImportConstants(string contents) {
         if (!contents.StartsWith("WC1"))
             return;
 
         var data = JsonConvert.DeserializeObject<Dictionary<string, float>>(contents.Substring(3));
 
-        data?.ToList().ForEach(x =>
-        {
-            if (!this.constants.ContainsKey(x.Key))
-            {
+        data?.ToList().ForEach(x => {
+            if (!this.constants.ContainsKey(x.Key)) {
                 this.constants.Add(x.Key, x.Value);
             }
         });
     }
 
-    private void VirtualKeySelect(string text, ref VirtualKey chosen)
-    {
-        if (ImGui.BeginCombo(text, chosen.GetFancyName()))
-        {
-            foreach (var key in Enum.GetValues<VirtualKey>().Where(x => x != VirtualKey.LBUTTON))
-            {
-                if (ImGui.Selectable(key.GetFancyName(), key == chosen))
-                {
+    private void VirtualKeySelect(string text, ref VirtualKey chosen) {
+        if (ImGui.BeginCombo(text, chosen.GetFancyName())) {
+            foreach (var key in Enum.GetValues<VirtualKey>().Where(x => x != VirtualKey.LBUTTON)) {
+                if (ImGui.Selectable(key.GetFancyName(), key == chosen)) {
                     chosen = key;
                 }
             }
@@ -946,8 +910,7 @@ public class SettingsWindow : Window
         }
     }
 
-    private static bool IconButtonEnabledWhen(bool enabled, FontAwesomeIcon icon, string id)
-    {
+    private static bool IconButtonEnabledWhen(bool enabled, FontAwesomeIcon icon, string id) {
         if (!enabled)
             ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 0.5f);
         var result = ImGuiComponents.IconButton(id, icon);
