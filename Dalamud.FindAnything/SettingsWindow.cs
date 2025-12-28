@@ -1,19 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+﻿using Dalamud.Bindings.ImGui;
+using Dalamud.FindAnything.Modules;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
 using Dalamud.Utility.Numerics;
-using Dalamud.Bindings.ImGui;
-using Dalamud.FindAnything.Lookup;
-using Dalamud.FindAnything.Modules;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
 namespace Dalamud.FindAnything;
 
@@ -45,7 +44,6 @@ public class SettingsWindow : Window
     private VirtualKey quickSelectKey;
     private List<Configuration.SearchSetting> order = [];
     private Dictionary<Configuration.SearchSetting, int> searchWeights = new();
-    private Configuration.ScrollSpeed speed;
     private bool notInCombat;
     private bool tcForceBrowser;
     private bool historyEnabled;
@@ -55,6 +53,11 @@ public class SettingsWindow : Window
     private string matchSigilSimple = "'";
     private string matchSigilFuzzy = "`";
     private string matchSigilFuzzyParts = "~";
+    private Configuration.CursorControlType cursorControl;
+    private int lineScrollRepeatDelay;
+    private int lineScrollRepeatInterval;
+    private int pageScrollRepeatDelay;
+    private int pageScrollRepeatInterval;
 
     private DateTime? windowOffsetChangeTime;
     private bool macroRearrangeMode;
@@ -92,7 +95,6 @@ public class SettingsWindow : Window
         this.quickSelectKey = FindAnythingPlugin.Configuration.QuickSelectKey;
         this.order = FindAnythingPlugin.Configuration.Order.ToList();
         this.searchWeights = new Dictionary<Configuration.SearchSetting, int>(FindAnythingPlugin.Configuration.SearchWeights);
-        this.speed = FindAnythingPlugin.Configuration.Speed;
         this.notInCombat = FindAnythingPlugin.Configuration.NotInCombat;
         this.tcForceBrowser = FindAnythingPlugin.Configuration.TeamCraftForceBrowser;
         this.historyEnabled = FindAnythingPlugin.Configuration.HistoryEnabled;
@@ -102,6 +104,12 @@ public class SettingsWindow : Window
         this.matchSigilSimple = FindAnythingPlugin.Configuration.MatchSigilSimple;
         this.matchSigilFuzzy = FindAnythingPlugin.Configuration.MatchSigilFuzzy;
         this.matchSigilFuzzyParts = FindAnythingPlugin.Configuration.MatchSigilFuzzyParts;
+
+        this.cursorControl = FindAnythingPlugin.Configuration.CursorControl;
+        this.lineScrollRepeatDelay = FindAnythingPlugin.Configuration.CursorLineRepeatDelay;
+        this.lineScrollRepeatInterval = FindAnythingPlugin.Configuration.CursorLineRepeatInterval;
+        this.pageScrollRepeatDelay = FindAnythingPlugin.Configuration.CursorPageRepeatDelay;
+        this.pageScrollRepeatInterval = FindAnythingPlugin.Configuration.CursorPageRepeatInterval;
 
         this.macroRearrangeMode = false;
         base.OnOpen();
@@ -218,6 +226,54 @@ public class SettingsWindow : Window
                 ImGui.Separator();
                 ImGuiHelpers.ScaledDummy(15);
 
+                using (ImRaii.ItemWidth(ImGui.GetWindowWidth() * 0.3f)) {
+                    ImGui.TextColored(ImGuiColors.DalamudGrey, "Scrolling");
+                    ImGui.TextWrapped("When using the keyboard to scroll through results, customise the scroll delay and speed.");
+                    using (var scrollCombo = ImRaii.Combo("Scroll style", cursorControl.ToString())) {
+                        if (scrollCombo) {
+                            foreach (var key in Enum.GetValues<Configuration.CursorControlType>()) {
+                                if (ImGui.Selectable(key.ToString(), key == cursorControl)) cursorControl = key;
+                            }
+                        }
+                    }
+                    ImGuiComponents.HelpMarker(
+                        "- The \"System\" scroll style matches the key repeat rate and delays from your operating system.\n" +
+                        "- The \"Custom\" scroll style lets you customize these settings for Wotsit.");
+                }
+
+                if (cursorControl == Configuration.CursorControlType.Custom) {
+                    using (ImRaii.ItemWidth(ImGui.GetWindowWidth() * 0.2f)) {
+                        {
+                            var val = lineScrollRepeatDelay;
+                            if (ImGui.SliderInt("Line scroll repeat delay", ref val, 10, 500))
+                                lineScrollRepeatDelay = Math.Clamp(val, 1, 10_000);
+                            ImGuiComponents.HelpMarker("The number of milliseconds after to wait after pressing and holding Up/Down before the movement begins to repeat.\n\nControl-click the slider to enter a custom value. Default: 120.");
+                        }
+                        {
+                            var val = lineScrollRepeatInterval;
+                            if (ImGui.SliderInt("Line scroll repeat interval", ref val, 10, 500))
+                                lineScrollRepeatInterval = Math.Clamp(val, 1, 10_000);
+                            ImGuiComponents.HelpMarker("The number of milliseconds between each repeated line movement. Smaller numbers will repeat faster.\n\nIn the old system, \"Slow\" was 120, \"Medium\" was 65, and \"Fast\" was 30.\n\nControl-click the slider to enter a custom value. Default: 65.");
+                        }
+                        {
+                            var val = pageScrollRepeatDelay;
+                            if (ImGui.SliderInt("Page scroll repeat delay", ref val, 10, 500))
+                                pageScrollRepeatDelay = Math.Clamp(val, 0, 10_000);
+                            ImGuiComponents.HelpMarker("The number of milliseconds after to wait after pressing and holding Pgp/PgD before the movement begins to repeat.\n\nControl-click the slider to enter a custom value. Default: 200.");
+                        }
+                        {
+                            var val = pageScrollRepeatInterval;
+                            if (ImGui.SliderInt("Page scroll repeat interval", ref val, 10, 500))
+                                pageScrollRepeatInterval = Math.Clamp(val, 0, 10_000);
+                            ImGuiComponents.HelpMarker("The number of milliseconds between each repeated page movement. Smaller numbers will repeat faster.\n\nControl-click the slider to enter a custom value. Default: 200.");
+                        }
+                    }
+                }
+
+                ImGuiHelpers.ScaledDummy(15);
+                ImGui.Separator();
+                ImGuiHelpers.ScaledDummy(15);
+
                 ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
 
                 ImGui.Checkbox("Enable Search History", ref this.historyEnabled);
@@ -246,15 +302,6 @@ public class SettingsWindow : Window
                 ImGui.Checkbox("Directly go to wiki mode when opening search", ref this.onlyWiki);
                 if (ImGui.SliderFloat2("Search window position offset", ref this.posOffset, -800, 800)) {
                     this.windowOffsetChangeTime = DateTime.UtcNow;
-                }
-                if (ImGui.BeginCombo("Scroll Speed", this.speed.ToString())) {
-                    foreach (var key in Enum.GetValues<Configuration.ScrollSpeed>()) {
-                        if (ImGui.Selectable(key.ToString(), key == this.speed)) {
-                            this.speed = key;
-                        }
-                    }
-
-                    ImGui.EndCombo();
                 }
 
                 ImGui.Checkbox("Don't open Wotsit in combat", ref this.notInCombat);
@@ -429,8 +476,8 @@ public class SettingsWindow : Window
 
         var save = ImGui.Button("Save");
         ImGui.SameLine();
-        var saveAndClose = ImGui.Button("Save and Close");
 
+        var saveAndClose = ImGui.Button("Save and Close");
         if (save || saveAndClose) {
             FindAnythingPlugin.Configuration.ToSearchV3 = (Configuration.SearchSetting)this.flags;
             FindAnythingPlugin.Configuration.Order = this.order;
@@ -465,7 +512,6 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.PositionOffset = this.posOffset;
             FindAnythingPlugin.Configuration.OnlyWikiMode = this.onlyWiki;
             FindAnythingPlugin.Configuration.QuickSelectKey = this.quickSelectKey;
-            FindAnythingPlugin.Configuration.Speed = this.speed;
             FindAnythingPlugin.Configuration.NotInCombat = this.notInCombat;
             FindAnythingPlugin.Configuration.TeamCraftForceBrowser = this.tcForceBrowser;
             FindAnythingPlugin.Configuration.HistoryEnabled = this.historyEnabled;
@@ -476,6 +522,12 @@ public class SettingsWindow : Window
             FindAnythingPlugin.Configuration.MatchSigilSimple = this.matchSigilSimple;
             FindAnythingPlugin.Configuration.MatchSigilFuzzy = this.matchSigilFuzzy;
             FindAnythingPlugin.Configuration.MatchSigilFuzzyParts = this.matchSigilFuzzyParts;
+
+            FindAnythingPlugin.Configuration.CursorControl = this.cursorControl;
+            FindAnythingPlugin.Configuration.CursorLineRepeatDelay = this.lineScrollRepeatDelay;
+            FindAnythingPlugin.Configuration.CursorLineRepeatInterval = this.lineScrollRepeatInterval;
+            FindAnythingPlugin.Configuration.CursorPageRepeatDelay = this.pageScrollRepeatDelay;
+            FindAnythingPlugin.Configuration.CursorPageRepeatInterval = this.pageScrollRepeatInterval;
 
             FindAnythingPlugin.ConfigManager.SaveAndNotify();
         }

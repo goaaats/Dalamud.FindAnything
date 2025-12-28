@@ -285,6 +285,7 @@ public sealed class Finder : IDisposable
     private class CursorController
     {
         private readonly Finder finder;
+        private Configuration.CursorControlType controlType;
         private ActionRepeater up;
         private ActionRepeater dn;
         private ActionRepeater pgUp;
@@ -297,20 +298,14 @@ public sealed class Finder : IDisposable
             FindAnythingPlugin.ConfigManager.OnChange += Configure;
         }
 
-        [MemberNotNull(nameof(up), nameof(dn), nameof(pgUp), nameof(pgDn))]
+        [MemberNotNull(nameof(controlType), nameof(up), nameof(dn), nameof(pgUp), nameof(pgDn))]
         private void Configure(Configuration config) {
             Service.Log.Debug($"Configuring {nameof(CursorController)}");
 
-            const int fastScrollWaitTicks = 120;
-            var scrollSpeedTicks = config.Speed switch {
-                Configuration.ScrollSpeed.Slow => 120,
-                Configuration.ScrollSpeed.Medium => 65,
-                Configuration.ScrollSpeed.Fast => 30,
-                _ => throw new ArgumentOutOfRangeException($"Unknown ScrollSpeed: {config.Speed}"),
-            };
+            controlType = config.CursorControl;
 
-            var linePolicy = new RepeatPolicy(fastScrollWaitTicks, scrollSpeedTicks);
-            var pagePolicy = new RepeatPolicy(200, 200);
+            var linePolicy = new RepeatPolicy(config.CursorLineRepeatDelay, config.CursorLineRepeatInterval);
+            var pagePolicy = new RepeatPolicy(config.CursorPageRepeatDelay, config.CursorPageRepeatInterval);
             up = new ActionRepeater(linePolicy, CursorUp);
             dn = new ActionRepeater(linePolicy, CursorDown);
             pgUp = new ActionRepeater(pagePolicy, PageUp);
@@ -318,11 +313,18 @@ public sealed class Finder : IDisposable
         }
 
         public void ProcessInput() {
-            var ticks = Environment.TickCount;
-            up.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP)), ticks);
-            dn.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN)), ticks);
-            pgUp.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR)), ticks);
-            pgDn.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.NEXT)), ticks);
+            if (controlType == Configuration.CursorControlType.System) {
+                if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP))) CursorUp();
+                if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN))) CursorDown();
+                if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR))) PageUp();
+                if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.NEXT))) PageDown();
+            } else {
+                var ticks = Environment.TickCount;
+                up.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.UP)), ticks);
+                dn.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.DOWN)), ticks);
+                pgUp.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.PRIOR)), ticks);
+                pgDn.Update(ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.NEXT)), ticks);
+            }
         }
 
         private void CursorDown() {

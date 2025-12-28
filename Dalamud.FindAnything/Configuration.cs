@@ -195,7 +195,7 @@ public class Configuration : IPluginConfiguration
         Fast,
     }
 
-    public ScrollSpeed Speed { get; set; } = ScrollSpeed.Medium;
+    public ScrollSpeed? Speed { get; set; } = ScrollSpeed.Medium;
 
     private static readonly List<SearchSetting> DefaultOrder = [
         SearchSetting.MacroLinks,
@@ -226,6 +226,22 @@ public class Configuration : IPluginConfiguration
 
     public string MatchSigilFuzzyParts { get; set; } = "~";
 
+    public enum CursorControlType
+    {
+        System,
+        Custom,
+    }
+
+    public CursorControlType CursorControl { get; set; } = CursorControlType.System;
+
+    public int CursorLineRepeatDelay = 120;
+
+    public int CursorLineRepeatInterval = 65;
+
+    public int CursorPageRepeatDelay = 200;
+
+    public int CursorPageRepeatInterval = 200;
+
     public GameWindow.SimulationState? SimulationState { get; set; } = null;
 
     public int? GoldenTicketNumber { get; set; } = null;
@@ -241,6 +257,16 @@ public class Configuration : IPluginConfiguration
         if (MatchModeOld.HasValue) {
             MatchMode = MatchModeOld.Value == MatchMode.Simple ? MatchMode.Fuzzy : MatchModeOld.Value;
             MatchModeOld = null;
+        }
+
+        if (Speed.HasValue) {
+            CursorLineRepeatInterval = Speed switch {
+                ScrollSpeed.Slow => 120,
+                ScrollSpeed.Medium => 65,
+                ScrollSpeed.Fast => 30,
+                _ => 65,
+            };
+            Speed = null;
         }
     }
 }
