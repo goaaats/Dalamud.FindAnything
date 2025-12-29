@@ -35,6 +35,7 @@ public sealed class Finder : IDisposable
             field = value;
         }
     }
+
     private bool resetScroll;
 
     public Finder(RootLookup rootLookup, Normalizer normalizer) {
@@ -231,20 +232,23 @@ public sealed class Finder : IDisposable
                 ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
             }
 
+            var nameTextSize = ImGui.CalcTextSize(result.Name).X;
+
+            // Debug scores
+            // var scoreText = result.Score.ToString();
+            // ImGui.TextColored(ImGuiColors.HealerGreen, scoreText);
+            // nameTextSize += ImGui.CalcTextSize(scoreText).X + scaledFour * 2;
+            // ImGui.SameLine();
+
             if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {
-                Log.Information("Selectable click");
                 clickedIndex = i;
             }
 
             if (disableMouse)
                 ImGui.PopStyleVar();
 
-            var thisTextSize = ImGui.CalcTextSize(result.Name);
-
-            ImGui.SameLine(thisTextSize.X + scaledFour);
-
+            ImGui.SameLine(nameTextSize + scaledFour);
             ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
-            // ImGui.TextColored(ImGuiColors.DalamudGrey, result.Score.ToString());
 
             if (i < 9 && FindAnythingPlugin.Configuration.QuickSelectKey != VirtualKey.NO_KEY) {
                 ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
