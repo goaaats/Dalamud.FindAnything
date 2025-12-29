@@ -23,8 +23,19 @@ public sealed class Finder : IDisposable
     private readonly RootLookup rootLookup;
     private readonly SearchState searchState;
     private readonly CursorController cursorControl;
+
     private ISearchResult[] results = [];
-    private int selectedIndex;
+
+    private int SelectedIndex {
+        get;
+        set {
+            if (field != value) {
+                resetScroll = true;
+            }
+            field = value;
+        }
+    }
+    private bool resetScroll;
 
     public Finder(RootLookup rootLookup, Normalizer normalizer) {
         this.rootLookup = rootLookup;
@@ -55,19 +66,20 @@ public sealed class Finder : IDisposable
         FindAnythingPlugin.GameStateCache.Refresh();
 
         rootLookup.OnOpen();
+        resetScroll = true;
         UpdateSearch("");
         IsOpen = true;
     }
 
     public void Close() {
         IsOpen = false;
-        selectedIndex = 0;
+        SelectedIndex = 0;
         searchState.Reset();
         results = [];
     }
 
     private void UpdateSearch(string term) {
-        selectedIndex = 0;
+        SelectedIndex = 0;
         searchState.Set(rootLookup.GetBase(), term);
 
         var criteria = searchState.Criteria();
@@ -208,7 +220,7 @@ public sealed class Finder : IDisposable
         for (var i = 0; i < results.Length; i++) {
             var result = results[i];
 
-            if (i == selectedIndex - SelectionScrollOffset) {
+            if (i == SelectedIndex - SelectionScrollOffset) {
                 selectedScrollPos = ImGui.GetCursorPosY();
             }
 
@@ -219,7 +231,7 @@ public sealed class Finder : IDisposable
                 ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
             }
 
-            if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == selectedIndex, selectableFlags, selectableSize)) {
+            if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {
                 Log.Information("Selectable click");
                 clickedIndex = i;
             }
@@ -245,10 +257,13 @@ public sealed class Finder : IDisposable
             }
         }
 
-        if (selectedIndex > 0) {
-            ImGui.SetScrollY(selectedScrollPos);
-        } else {
-            ImGui.SetScrollY(0);
+        if (resetScroll) {
+            if (SelectedIndex > 0) {
+                ImGui.SetScrollY(selectedScrollPos);
+            } else {
+                ImGui.SetScrollY(0);
+            }
+            resetScroll = false;
         }
 
         if (isQuickSelect && numKeysPressed.Any(x => x)) {
@@ -256,7 +271,7 @@ public sealed class Finder : IDisposable
         }
 
         if (ImGui.IsKeyPressed(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.RETURN)) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter) || clickedIndex != -1) {
-            var index = clickedIndex == -1 ? selectedIndex : clickedIndex;
+            var index = clickedIndex == -1 ? SelectedIndex : clickedIndex;
 
             if (index < results.Length) {
                 var result = results[index];
@@ -311,27 +326,27 @@ public sealed class Finder : IDisposable
         }
 
         private void CursorDown() {
-            if (finder.selectedIndex != finder.results.Length - 1) {
-                finder.selectedIndex++;
+            if (finder.SelectedIndex != finder.results.Length - 1) {
+                finder.SelectedIndex++;
             } else {
-                finder.selectedIndex = 0;
+                finder.SelectedIndex = 0;
             }
         }
 
         private void CursorUp() {
-            if (finder.selectedIndex != 0) {
-                finder.selectedIndex--;
+            if (finder.SelectedIndex != 0) {
+                finder.SelectedIndex--;
             } else {
-                finder.selectedIndex = finder.results.Length - 1;
+                finder.SelectedIndex = finder.results.Length - 1;
             }
         }
 
         private void PageUp() {
-            finder.selectedIndex = Math.Max(0, finder.selectedIndex - MaxOnePage);
+            finder.SelectedIndex = Math.Max(0, finder.SelectedIndex - MaxOnePage);
         }
 
         private void PageDown() {
-            finder.selectedIndex = Math.Min(finder.results.Length - 1, finder.selectedIndex + MaxOnePage);
+            finder.SelectedIndex = Math.Min(finder.results.Length - 1, finder.SelectedIndex + MaxOnePage);
         }
     }
 }
