@@ -8,6 +8,7 @@ using System.Text;
 using Dalamud.Interface.ImGuiNotification;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using System.Net.Http;
 
 namespace Dalamud.FindAnything.Game;
 
@@ -32,10 +33,16 @@ public static class GameRewards
 
     public static bool TryGetGoldenTicket(out int ticketNumber)
     {
-        using var client = new WebClient();
+        using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(20);
+
         var url = Encoding.UTF8.GetString(Convert.FromBase64String("aHR0cHM6Ly9nb2xkZW50aWNrZXRzLmhlcm9rdWFwcC5jb20vZG5mYXJtL2dldFRpY2tldD9kbl9jb3VudD0="));
 
-        var text = client.DownloadString(url + Encoding.UTF8.GetString(Convert.FromBase64String("MTAwMDAwMDA=")));
+        var text = client
+            .GetStringAsync(url + Encoding.UTF8.GetString(Convert.FromBase64String("MTAwMDAwMDA=")))
+            .GetAwaiter()
+            .GetResult();
+
         var response = JsonConvert.DeserializeObject<GoldenTicketResponse>(text);
 
         if (response is { HasTicketsLeft: true })
