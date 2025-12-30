@@ -55,7 +55,6 @@ public class ActionRepeater(RepeatPolicy policy, Action action) : RepeatEngine(p
     }
 }
 
-
 public class DoubleTapEngine(long maxDelay)
 {
     private enum Phase
@@ -106,23 +105,21 @@ public class DoubleTapEngine(long maxDelay)
     }
 }
 
-public interface IDoubleTapTrigger
+public interface IDoubleTapDetector
 {
-    void Update(bool isDown);
+    bool Update(bool isDown);
 }
 
-public class TimeBasedDoubleTapTrigger(long maxDelay, Action action) : DoubleTapEngine(maxDelay), IDoubleTapTrigger
+public class TimeBasedDoubleTapDetector(long maxDelay) : DoubleTapEngine(maxDelay), IDoubleTapDetector
 {
-    public void Update(bool isDown) {
-        if (base.Update(isDown, Environment.TickCount64))
-            action();
+    public bool Update(bool isDown) {
+        return base.Update(isDown, Environment.TickCount64);
     }
 }
 
-public class FrameBasedDoubleTapTrigger(long maxDelay, Action action) : DoubleTapEngine(maxDelay), IDoubleTapTrigger
+public class FrameBasedDoubleTapDetector(long maxDelay) : DoubleTapEngine(maxDelay), IDoubleTapDetector
 {
-    public unsafe void Update(bool isDown) {
-        if (base.Update(isDown, Framework.Instance()->FrameCounter))
-            action();
+    public unsafe bool Update(bool isDown) {
+        return base.Update(isDown, Framework.Instance()->FrameCounter);
     }
 }

@@ -7,7 +7,7 @@ using Dalamud.Bindings.ImGui;
 namespace Dalamud.FindAnything;
 
 // Most of this is stolen from QoLBar
-public unsafe class Input
+public static unsafe class Input
 {
     private static bool IsGameFocused => !Framework.Instance()->WindowInactive;
     private static bool IsGameTextInputActive => RaptureAtkModule.Instance()->AtkModule.IsTextInputActive();
@@ -17,12 +17,12 @@ public unsafe class Input
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetKeyboardState(byte[] lpKeyState);
-    private static readonly byte[] keyboardState = new byte[256];
+    private static readonly byte[] KeyboardState = new byte[256];
 
-    public void Update()
+    public static void Update()
     {
-        GetKeyboardState(keyboardState);
+        GetKeyboardState(KeyboardState);
     }
 
-    public bool IsDown(VirtualKey key) => (keyboardState[(int)key] & 0x80) != 0;
+    public static bool IsDown(VirtualKey key) => (KeyboardState[(int)key] & 0x80) != 0;
 }
