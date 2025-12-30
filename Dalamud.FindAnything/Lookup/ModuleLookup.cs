@@ -6,8 +6,9 @@ namespace Dalamud.FindAnything.Lookup;
 
 public sealed class ModuleLookup : ILookup
 {
-    private readonly SearchModule[] configurableModules;
-    private readonly SearchModule[] fixedModules;
+    private readonly SearchModule[] orderedModules;
+    private readonly SearchModule[] fixedPositionModules;
+    private readonly SearchModule[] constantModules;
     private readonly SearchModule[] allModules;
     private readonly History history = new();
 
@@ -15,7 +16,7 @@ public sealed class ModuleLookup : ILookup
     private ISearchResult? currentHint;
 
     public ModuleLookup() {
-        configurableModules = [
+        orderedModules = [
             new DutyModule(),
             new AetheryteModule(),
             new MainCommandModule(),
@@ -32,14 +33,20 @@ public sealed class ModuleLookup : ILookup
             new CollectionModule(),
             new MacroLinksModule(),
             new InternalModule(),
+        ];
+
+        fixedPositionModules = [
             new MathsModule(),
         ];
 
-        fixedModules = [
+        constantModules = [
             new ChatCommandModule(),
         ];
 
-        allModules = configurableModules.Concat(fixedModules).ToArray();
+        allModules = orderedModules
+            .Concat(fixedPositionModules)
+            .Concat(constantModules)
+            .ToArray();
 
         Configure(FindAnythingPlugin.Configuration);
         FindAnythingPlugin.ConfigManager.OnChange += Configure;
@@ -52,10 +59,11 @@ public sealed class ModuleLookup : ILookup
             module.Configure(config);
         }
 
-        activeModules = new List<SearchModule>(configurableModules)
+        activeModules = new List<SearchModule>(orderedModules)
             .Where(x => config.Order.Contains(x.SearchSetting))
             .OrderBy(x => config.Order.IndexOf(x.SearchSetting))
-            .Concat(fixedModules)
+            .Concat(fixedPositionModules.Where(x => config.ToSearchV3.HasFlag(x.SearchSetting)))
+            .Concat(constantModules)
             .ToArray();
     }
 
