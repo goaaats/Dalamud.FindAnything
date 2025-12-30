@@ -88,7 +88,7 @@ public sealed class MathsModule : SearchModule
                 var result = expression.Evaluate();
                 if (result is not 0)
                     ctx.AddResult(ExpressionResult.Value(this, result));
-            } catch (ArgumentException ex) {
+            } catch (ArgumentException) {
                 // Serilog.Log.Verbose(ex, "Expression evaluate error", []);
                 if (ctx.Criteria.CleanString.Any(x => x is >= '0' and <= '9'))
                     ctx.AddResult(ExpressionResult.Error());
