@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -122,12 +123,13 @@ public class WikiSiteLookup : ILookup
                 return;
             }
 
-            Task.Run(() => {
+            Task.Run(async () => {
                 try {
-                    var wr = WebRequest.CreateHttp($"http://localhost:14500/db/en/item/{id}");
-                    wr.Timeout = 500;
-                    wr.Method = "GET";
-                    wr.GetResponse().Close();
+                    using var client = new HttpClient();
+                    client.Timeout = TimeSpan.FromMilliseconds(500);
+
+                    using var response = await client.GetAsync($"http://localhost:14500/db/en/item/{id}");
+                    response.EnsureSuccessStatusCode();
                 } catch {
                     try {
                         if (Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ffxiv-teamcraft"))) {
