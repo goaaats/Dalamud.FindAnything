@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
@@ -11,7 +7,12 @@ using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
-using Dalamud.Bindings.ImGui;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
+using System.Numerics;
 
 namespace Dalamud.FindAnything.Game;
 
@@ -188,9 +189,9 @@ public class GameWindow : Window
         public double CurrentDn { get; set; }
         public double TotalEarned { get; set; }
 
-        public Dictionary<NoseKind, ulong> NumNoses { get; set; }
-        public List<uint> RewardsGained { get; set; }
-        public List<uint> BonusesGained { get; set; }
+        public required Dictionary<NoseKind, ulong> NumNoses { get; set; }
+        public required List<uint> RewardsGained { get; set; }
+        public required List<uint> BonusesGained { get; set; }
 
         public FarmUpgrade FarmUpgrade { get; set; }
         public bool UpgradePurchased { get; set; }
@@ -232,7 +233,8 @@ public class GameWindow : Window
         var file = new FileInfo(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", fileName));
         return Service.TextureProvider.GetFromFile(file)!;
     }
-    
+
+    [MemberNotNull(nameof(state))]
     public void Load()
     {
         if (FindAnythingPlugin.Configuration.SimulationState == null)
@@ -245,14 +247,16 @@ public class GameWindow : Window
         }
     }
 
+    [MemberNotNull(nameof(state))]
     public void NewGame()
     {
-        state = new SimulationState();
-        state.NumNoses = new Dictionary<NoseKind, ulong>();
-        state.RewardsGained = new List<uint>();
-        state.BonusesGained = new List<uint>();
-        state.CurrentDn = 15;
-        state.FarmUpgrade = FarmUpgrade.Base;
+        state = new SimulationState {
+            NumNoses = new Dictionary<NoseKind, ulong>(),
+            RewardsGained = [],
+            BonusesGained = [],
+            CurrentDn = 15,
+            FarmUpgrade = FarmUpgrade.Base,
+        };
 
         this.thiefActive = false;
         this.thiefMessageDismissed = true;

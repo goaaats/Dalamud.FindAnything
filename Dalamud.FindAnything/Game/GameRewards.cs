@@ -1,14 +1,13 @@
+using Dalamud.Interface.ImGuiNotification;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
-using Dalamud.Interface.ImGuiNotification;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using System.Net.Http;
 
 namespace Dalamud.FindAnything.Game;
 
@@ -92,7 +91,7 @@ public static class GameRewards
             [DllImport("user32.dll", CharSet = CharSet.Auto)]
             static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
 
-            public enum Style : int
+            public enum Style
             {
                 Tile,
                 Center,
@@ -104,7 +103,15 @@ public static class GameRewards
 
             public static void Set(string path, Style style)
             {
-                RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
+                if (Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true) is not { } key) {
+                    Service.Notifications.AddNotification(new Notification {
+                        Title = "Failed to set wallpaper.",
+                        Content = "Failed to set wallpaper as the registry key could not found.",
+                        Type = NotificationType.Error,
+                    });
+                    return;
+                }
+
                 if (style == Style.Fill)
                 {
                     key.SetValue(@"WallpaperStyle", 10.ToString());
