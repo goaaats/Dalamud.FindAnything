@@ -144,7 +144,7 @@ public class SettingsWindow : Window
                         // ImGui.PushItemWidth(200);
                         ImGui.PushItemWidth(ImGui.GetWindowWidth() * 0.2f);
 
-                        if (ImGui.InputInt("", ref shiftShiftDelay)) {
+                        if (ImGui.InputInt("##shift-shift-delay", ref shiftShiftDelay)) {
                             shiftShiftDelay = Math.Max(shiftShiftDelay, 0);
                         }
 
