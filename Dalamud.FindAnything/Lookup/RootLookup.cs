@@ -39,11 +39,11 @@ public sealed class RootLookup : ILookup
         overrideSetting = null;
     }
 
-    public LookupType GetBase() => baseSetting.Type;
+    public LookupType GetBaseType() => baseSetting.Type;
 
-    private ILookup GetActiveLookup() {
-        return overrideSetting != null ? overrideSetting.Lookup : baseSetting.Lookup;
-    }
+    public LookupType GetActiveType() => overrideSetting?.Type ?? baseSetting.Type;
+
+    private ILookup GetActiveLookup() => overrideSetting?.Lookup ?? baseSetting.Lookup;
 
     public string GetPlaceholder() {
         return GetActiveLookup().GetPlaceholder();

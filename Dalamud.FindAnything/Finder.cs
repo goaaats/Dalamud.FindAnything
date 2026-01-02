@@ -81,7 +81,7 @@ public sealed class Finder : IDisposable
 
     private void UpdateSearch(string term) {
         SelectedIndex = 0;
-        searchState.Set(rootLookup.GetBase(), term);
+        searchState.Set(rootLookup.GetBaseType(), term);
 
         var criteria = searchState.Criteria();
         if (criteria.OverrideLookupType is { } overrideType) {
@@ -178,7 +178,14 @@ public sealed class Finder : IDisposable
         ImGui.SameLine();
 
         using (ImRaii.PushFont(UiBuilder.IconFont)) {
-            ImGui.Text(FontAwesomeIcon.Search.ToIconString());
+            var icon = rootLookup.GetActiveType() switch {
+                LookupType.Module => FontAwesomeIcon.Search,
+                LookupType.Wiki => FontAwesomeIcon.PuzzlePiece,
+                LookupType.WikiSite => FontAwesomeIcon.PuzzlePiece,
+                LookupType.EmoteMode => FontAwesomeIcon.HandsClapping,
+                _ => FontAwesomeIcon.Star,
+            };
+            ImGui.Text(icon.ToIconString());
         }
 
         if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.ESCAPE))) {
