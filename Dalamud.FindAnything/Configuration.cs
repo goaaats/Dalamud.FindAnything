@@ -107,7 +107,7 @@ public class Configuration : IPluginConfiguration
         public enum MacroEntryKind
         {
             Id,
-            SingleLine
+            SingleLine,
         }
 
         public MacroEntry() { }
