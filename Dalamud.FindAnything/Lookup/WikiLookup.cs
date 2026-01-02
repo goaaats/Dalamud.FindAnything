@@ -15,6 +15,10 @@ public class WikiLookup : ILookup
     public string GetPlaceholder() => "Search in wikis...";
 
     public LookupResult Lookup(SearchCriteria criteria) {
+        if (!criteria.HasMatchString()) {
+            return LookupResult.List(history.GetHistory());
+        }
+
         var ctx = new SearchContext(criteria);
         var matcher = new FuzzyMatcher(criteria.MatchString, criteria.MatchMode);
 

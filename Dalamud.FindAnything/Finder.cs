@@ -280,8 +280,8 @@ public sealed class Finder : IDisposable
             if (index < results.Length) {
                 var result = results[index];
                 closeFinder = result.CloseFinder;
-                result.Selected();
                 rootLookup.OnSelected(searchState.Criteria(), result);
+                result.Selected();
             }
         }
     }
