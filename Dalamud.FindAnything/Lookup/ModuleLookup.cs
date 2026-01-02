@@ -59,12 +59,16 @@ public sealed class ModuleLookup : ILookup
             module.Configure(config);
         }
 
-        activeModules = new List<SearchModule>(orderedModules)
-            .Where(x => config.Order.Contains(x.SearchSetting))
-            .OrderBy(x => config.Order.IndexOf(x.SearchSetting))
-            .Concat(fixedPositionModules.Where(x => config.ToSearchV3.HasFlag(x.SearchSetting)))
+        activeModules = new List<SearchModule>()
+            .Concat(orderedModules.OrderBy(x => config.Order.IndexOf(x.SearchSetting)))
+            .Concat(fixedPositionModules)
+            .Where(x => config.ToSearchV3.HasFlag(x.SearchSetting))
             .Concat(constantModules)
             .ToArray();
+
+        // foreach (var activeModule in activeModules) {
+        //     Service.Log.Debug($"  {activeModule.GetType().Name} ({activeModule.SearchSetting})");
+        // }
     }
 
     public void OnOpen() {
