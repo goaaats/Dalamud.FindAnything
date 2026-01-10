@@ -58,6 +58,7 @@ public partial class SettingsWindow
             var name = search switch {
                 Configuration.SearchSetting.Duty => "Duties",
                 Configuration.SearchSetting.Aetheryte => "Aetherytes",
+                Configuration.SearchSetting.Coordinates => "Coordinates",
                 Configuration.SearchSetting.MainCommand => "Commands",
                 Configuration.SearchSetting.ExtraCommand => "Extras",
                 Configuration.SearchSetting.GeneralAction => "General Actions",

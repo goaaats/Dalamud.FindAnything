@@ -17,6 +17,10 @@ public class SearchContext
         Results.Add(result);
     }
 
+    public void AddResultRange(IEnumerable<ISearchResult> result) {
+        Results.AddRange(result);
+    }
+
     public int ResultCount => Results.Count;
 
     public bool OverLimit() {

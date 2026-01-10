@@ -41,6 +41,7 @@ public sealed class ModuleLookup : ILookup
         ];
 
         constantModules = [
+            new CoordinatesModule(),
             new ChatCommandModule(),
         ];
 

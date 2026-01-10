@@ -18,7 +18,7 @@ public class Configuration : IPluginConfiguration
         SearchSetting.Emote | SearchSetting.PluginSettings | SearchSetting.Gearsets | SearchSetting.CraftingRecipes |
         SearchSetting.GatheringItems | SearchSetting.Mounts | SearchSetting.Minions | SearchSetting.MacroLinks |
         SearchSetting.Internal | SearchSetting.Maths | SearchSetting.FashionAccessories | SearchSetting.Collection |
-        SearchSetting.ExtraCommand | SearchSetting.Facewear | SearchSetting.Reserved12 | SearchSetting.Reserved13 |
+        SearchSetting.ExtraCommand | SearchSetting.Facewear | SearchSetting.Coordinates | SearchSetting.Reserved13 |
         SearchSetting.Reserved14 | SearchSetting.Reserved15 | SearchSetting.Reserved16 | SearchSetting.Reserved17 |
         SearchSetting.Reserved18 | SearchSetting.Reserved19 | SearchSetting.Reserved20 | SearchSetting.Reserved21 |
         SearchSetting.Reserved22 | SearchSetting.Reserved23 | SearchSetting.Reserved24;
@@ -80,7 +80,7 @@ public class Configuration : IPluginConfiguration
         Collection = 1 << 15,
         ExtraCommand = 1 << 16,
         Facewear = 1 << 17,
-        Reserved12 = 1 << 18,
+        Coordinates = 1 << 18,
         Reserved13 = 1 << 19,
         Reserved14 = 1 << 20,
         Reserved15 = 1 << 21,
@@ -201,6 +201,7 @@ public class Configuration : IPluginConfiguration
         SearchSetting.MacroLinks,
         SearchSetting.Gearsets,
         SearchSetting.Aetheryte,
+        SearchSetting.Coordinates,
         SearchSetting.Duty,
         SearchSetting.Mounts,
         SearchSetting.Minions,

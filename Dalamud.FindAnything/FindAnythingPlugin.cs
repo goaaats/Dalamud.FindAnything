@@ -21,6 +21,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
     public static SearchDatabase SearchDatabase { get; private set; } = null!;
     public static GameStateCache GameStateCache { get; private set; } = null!;
     public static IpcSystem Ipc { get; private set; } = null!;
+    public static AetheryteManager AetheryteManager { get; set; } = null!;
     public static Normalizer Normalizer { get; private set; } = null!;
     public static RootLookup RootLookup { get; private set; } = null!;
 
@@ -41,6 +42,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         SearchDatabase = SearchDatabase.Load(Normalizer);
         GameStateCache = GameStateCache.Load();
         Ipc = new IpcSystem(Normalizer);
+
+        AetheryteManager = new AetheryteManager();
 
         RootLookup = new RootLookup();
 

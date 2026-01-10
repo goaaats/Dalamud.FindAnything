@@ -8,6 +8,7 @@ public sealed class RootLookup : ILookup {
     private WikiSiteLookup WikiSiteLookup { get; } = new();
     private EmoteModeLookup EmoteModeLookup { get; } = new();
     private FacewearLookup FacewearLookup { get; } = new();
+    private CoordinateActionLookup CoordinateActionLookup { get; } = new();
 
     private LookupSetting baseSetting;
     private LookupSetting? overrideSetting;
@@ -23,6 +24,7 @@ public sealed class RootLookup : ILookup {
             LookupType.WikiSite => WikiSiteLookup,
             LookupType.EmoteMode => EmoteModeLookup,
             LookupType.Facewear => FacewearLookup,
+            LookupType.CoordinateAction => CoordinateActionLookup,
             _ => throw new ArgumentOutOfRangeException($"Unknown lookup ty[e: {lookupType}"),
         };
     }
@@ -76,6 +78,7 @@ public enum LookupType {
     WikiSite,
     EmoteMode,
     Facewear,
+    CoordinateAction,
 }
 
 public record LookupSetting(LookupType Type, ILookup Lookup);

@@ -13,6 +13,7 @@ public class Service
     [PluginService] public static IDataManager Data { get; set; }
     [PluginService] public static IKeyState Keys { get; set; }
     [PluginService] public static IClientState ClientState { get; set; }
+    [PluginService] public static IGameGui GameGui { get; set; }
     [PluginService] public static IChatGui ChatGui { get; set; }
     [PluginService] public static IToastGui ToastGui { get; set; }
     [PluginService] public static ICondition Condition { get; set; }
