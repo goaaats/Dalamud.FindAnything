@@ -17,6 +17,8 @@ public interface ISearchResult
 
 public sealed class SearchResultComparer : IEqualityComparer<ISearchResult>
 {
+    public static SearchResultComparer Instance { get; } = new();
+
     public bool Equals(ISearchResult? a, ISearchResult? b) {
         if (ReferenceEquals(a, b)) return true;
         return a is not null

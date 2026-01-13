@@ -8,7 +8,6 @@ public class History
 {
     private const int HistoryMax = 5;
 
-    private readonly SearchResultComparer comparer = new();
     private List<HistoryEntry> history = new(HistoryMax);
 
     private struct HistoryEntry
@@ -35,7 +34,7 @@ public class History
         Service.Log.Verbose("{Num} histories:", history.Count);
 
         foreach (var entry in history) {
-            if (Replay(entry).Contains(entry.Result, comparer)) {
+            if (Replay(entry).Contains(entry.Result, SearchResultComparer.Instance)) {
                 newHistory.Add(entry);
                 results.Add(entry.Result);
             } else {
@@ -48,7 +47,7 @@ public class History
     }
 
     public void Add(LookupType lookupType, SearchCriteria searchCriteria, ISearchResult result) {
-        var index = history.FindIndex(h => comparer.Equals(result, h.Result));
+        var index = history.FindIndex(h => SearchResultComparer.Instance.Equals(result, h.Result));
         if (index >= 0) {
             if (index > 0) {
                 // Move entry to the top of the list
