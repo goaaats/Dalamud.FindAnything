@@ -16,6 +16,8 @@ public unsafe class GameStateCache
     public IReadOnlyList<uint> UnlockedMinionKeys { get; private set; } = [];
     public IReadOnlyList<uint> UnlockedCollectionKeys { get; private set; } = [];
     public IReadOnlyList<uint> UnlockedFashionAccessoryKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedFacewearKeys { get; private set; } = [];
+    public IReadOnlyList<uint> UnlockedFacewearStyleKeys { get; private set; } = [];
     public IReadOnlyList<Gearset> Gearsets { get; private set; } = [];
 
     private GameStateCache()
@@ -52,8 +54,20 @@ public unsafe class GameStateCache
             .ToList();
 
         UnlockedFashionAccessoryKeys = Service.Data.GetExcelSheet<Ornament>()
+            .Where(x => x.Icon is not (0 or 786)) // 786 is the invalid icon used for accessories which became glasses
             .Where(x => playerState->IsOrnamentUnlocked(x.RowId))
             .Select(x => x.RowId)
+            .ToList();
+
+        UnlockedFacewearKeys = Service.Data.GetExcelSheet<Glasses>()
+            .Where(x => playerState->IsGlassesUnlocked((ushort)x.RowId))
+            .Select(x => x.RowId)
+            .ToList();
+
+        UnlockedFacewearStyleKeys = Service.Data.GetExcelSheet<Glasses>()
+            .Where(x => playerState->IsGlassesUnlocked((ushort)x.RowId))
+            .Select(x => x.Style.RowId)
+            .Distinct()
             .ToList();
 
         UnlockedCollectionKeys = Service.Data.GetExcelSheet<McGuffin>()

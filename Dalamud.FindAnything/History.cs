@@ -8,6 +8,8 @@ public class History
 {
     private const int HistoryMax = 5;
 
+    private static bool _inReplay;
+
     private List<HistoryEntry> history = new(HistoryMax);
 
     private struct HistoryEntry
@@ -18,15 +20,22 @@ public class History
     }
 
     private List<ISearchResult> Replay(HistoryEntry entry) {
-        return FindAnythingPlugin.RootLookup.GetLookupForType(entry.LookupType)
-            .Lookup(entry.SearchCriteria)
-            .Results;
+        try {
+            _inReplay = true;
+            return FindAnythingPlugin.RootLookup.GetLookupForType(entry.LookupType)
+                .Lookup(entry.SearchCriteria)
+                .Results;
+        } finally {
+            _inReplay = false;
+        }
     }
 
     public List<ISearchResult> GetHistory() {
-        if (!FindAnythingPlugin.Configuration.HistoryEnabled || history.Count == 0) {
+        if (_inReplay)
             return [];
-        }
+
+        if (!FindAnythingPlugin.Configuration.HistoryEnabled || history.Count == 0)
+            return [];
 
         var newHistory = new List<HistoryEntry>();
         var results = new List<ISearchResult>();
@@ -48,13 +57,12 @@ public class History
 
     public void Add(LookupType lookupType, SearchCriteria searchCriteria, ISearchResult result) {
         var index = history.FindIndex(h => SearchResultComparer.Instance.Equals(result, h.Result));
-        if (index >= 0) {
-            if (index > 0) {
-                // Move entry to the top of the list
-                var historyEntry = history[index];
-                history.RemoveAt(index);
-                history.Insert(0, historyEntry);
-            }
+        if (index != -1) {
+            var oldEntry = history[index];
+            history.RemoveAt(index);
+            history.Insert(0, oldEntry with {
+                Result = result, // We update just the result in case it was altered by a lookup
+            });
         } else {
             history.Insert(0, new HistoryEntry {
                 LookupType = lookupType,

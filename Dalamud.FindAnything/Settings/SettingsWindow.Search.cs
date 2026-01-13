@@ -71,6 +71,7 @@ public partial class SettingsWindow
                 Configuration.SearchSetting.MacroLinks => "Macro Links",
                 Configuration.SearchSetting.Internal => "Wotsit",
                 Configuration.SearchSetting.FashionAccessories => "Fashion Accessories",
+                Configuration.SearchSetting.Facewear => "Facewear",
                 Configuration.SearchSetting.Collection => "Collection",
                 _ => null,
             };

@@ -30,6 +30,7 @@ public sealed class ModuleLookup : ILookup
             new MountsModule(),
             new MinionsModule(),
             new FashionAccessoriesModule(),
+            new FacewearModule(),
             new CollectionModule(),
             new MacroLinksModule(),
             new InternalModule(),

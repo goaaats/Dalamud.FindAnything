@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Dalamud.FindAnything.Lookup;
 
-public sealed class RootLookup : ILookup
-{
+public sealed class RootLookup : ILookup {
     private ModuleLookup ModuleLookup { get; } = new();
     private WikiLookup WikiLookup { get; } = new();
     private WikiSiteLookup WikiSiteLookup { get; } = new();
     private EmoteModeLookup EmoteModeLookup { get; } = new();
+    private FacewearLookup FacewearLookup { get; } = new();
 
     private LookupSetting baseSetting;
     private LookupSetting? overrideSetting;
@@ -23,6 +22,7 @@ public sealed class RootLookup : ILookup
             LookupType.Wiki => WikiLookup,
             LookupType.WikiSite => WikiSiteLookup,
             LookupType.EmoteMode => EmoteModeLookup,
+            LookupType.Facewear => FacewearLookup,
             _ => throw new ArgumentOutOfRangeException($"Unknown lookup ty[e: {lookupType}"),
         };
     }
@@ -70,12 +70,12 @@ public sealed class RootLookup : ILookup
     }
 }
 
-public enum LookupType
-{
+public enum LookupType {
     Module,
     Wiki,
     WikiSite,
     EmoteMode,
+    Facewear,
 }
 
 public record LookupSetting(LookupType Type, ILookup Lookup);

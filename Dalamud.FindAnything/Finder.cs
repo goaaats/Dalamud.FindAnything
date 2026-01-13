@@ -183,6 +183,7 @@ public sealed class Finder : IDisposable
                 LookupType.Wiki => FontAwesomeIcon.PuzzlePiece,
                 LookupType.WikiSite => FontAwesomeIcon.PuzzlePiece,
                 LookupType.EmoteMode => FontAwesomeIcon.HandsClapping,
+                LookupType.Facewear => FontAwesomeIcon.Glasses,
                 _ => FontAwesomeIcon.Star,
             };
             ImGui.Text(icon.ToIconString());
