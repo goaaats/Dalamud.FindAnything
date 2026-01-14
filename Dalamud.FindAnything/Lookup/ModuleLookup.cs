@@ -19,6 +19,7 @@ public sealed class ModuleLookup : ILookup
         orderedModules = [
             new DutyModule(),
             new AetheryteModule(),
+            new CoordinatesModule(),
             new MainCommandModule(),
             new ExtraCommandModule(),
             new GeneralActionModule(),
@@ -41,7 +42,6 @@ public sealed class ModuleLookup : ILookup
         ];
 
         constantModules = [
-            new CoordinatesModule(),
             new ChatCommandModule(),
         ];
 

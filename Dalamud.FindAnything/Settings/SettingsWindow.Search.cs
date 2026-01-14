@@ -60,7 +60,7 @@ public partial class SettingsWindow
                 Configuration.SearchSetting.Aetheryte => "Aetherytes",
                 Configuration.SearchSetting.Coordinates => "Coordinates",
                 Configuration.SearchSetting.MainCommand => "Commands",
-                Configuration.SearchSetting.ExtraCommand => "Extras",
+                Configuration.SearchSetting.ExtraCommand => "Extra Commands",
                 Configuration.SearchSetting.GeneralAction => "General Actions",
                 Configuration.SearchSetting.Emote => "Emotes",
                 Configuration.SearchSetting.PluginSettings => "other plugins",

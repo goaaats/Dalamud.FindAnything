@@ -28,7 +28,7 @@ public sealed class ExtraCommandModule : SearchModule
 
     private class ExtraCommandSearchResult : ISearchResult
     {
-        public string CatName => "Extras";
+        public string CatName => "Extra Commands";
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }
         public required int Score { get; init; }
