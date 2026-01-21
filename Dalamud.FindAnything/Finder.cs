@@ -58,13 +58,13 @@ public sealed class Finder : IDisposable
         if (IsOpen)
             return;
 
+        FindAnythingPlugin.GameStateCache.Refresh();
+
         if (openToWiki || FindAnythingPlugin.Configuration.OnlyWikiMode) {
             rootLookup.SetBase(LookupType.Wiki);
         } else {
             rootLookup.SetBase(LookupType.Module);
         }
-
-        FindAnythingPlugin.GameStateCache.Refresh();
 
         rootLookup.OnOpen();
         resetScroll = true;

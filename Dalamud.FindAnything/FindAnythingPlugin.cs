@@ -40,7 +40,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
 
         TexCache = TextureCache.Load(Service.Data, Service.TextureProvider);
         SearchDatabase = SearchDatabase.Load(Normalizer);
-        GameStateCache = GameStateCache.Load();
+        GameStateCache = new GameStateCache();
         Ipc = new IpcSystem(Normalizer);
 
         AetheryteManager = new AetheryteManager();
@@ -85,9 +85,11 @@ public sealed class FindAnythingPlugin : IDalamudPlugin
         Service.CommandManager.RemoveHandler(CommandName);
         Service.CommandManager.RemoveHandler("/bountifuldn");
 
-        Ipc.Dispose();
         FinderActivator.Dispose();
         Finder.Dispose();
+
+        GameStateCache.Dispose();
+        Ipc.Dispose();
     }
 
     private void OnCommand(string command, string args) {

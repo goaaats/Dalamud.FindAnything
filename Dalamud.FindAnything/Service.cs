@@ -5,8 +5,7 @@ using Dalamud.Plugin.Services;
 namespace Dalamud.FindAnything;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor.
-public class Service
-{
+public class Service {
     [PluginService] public static IDalamudPluginInterface PluginInterface { get; set; }
     [PluginService] public static ICommandManager CommandManager { get; set; }
     [PluginService] public static IFramework Framework { get; set; }
@@ -23,4 +22,5 @@ public class Service
     [PluginService] public static INotificationManager Notifications { get; set; }
     [PluginService] public static ISeStringEvaluator SeStringEvaluator { get; set; }
     [PluginService] public static IPlayerState PlayerState { get; set; }
+    [PluginService] public static IUnlockState UnlockState { get; set; }
 }
