@@ -195,7 +195,7 @@ public class Configuration : IPluginConfiguration
         Fast,
     }
 
-    public ScrollSpeed? Speed { get; set; } = ScrollSpeed.Medium;
+    [JsonProperty(NullValueHandling=NullValueHandling.Ignore)] public ScrollSpeed? Speed { get; set; }
 
     private static readonly List<SearchSetting> DefaultOrder = [
         SearchSetting.MacroLinks,
@@ -218,7 +218,7 @@ public class Configuration : IPluginConfiguration
         SearchSetting.GatheringItems,
     ];
 
-    [JsonProperty("MatchMode")] public MatchMode? MatchModeOld { get; set; }
+    [JsonProperty("MatchMode", NullValueHandling=NullValueHandling.Ignore)] public MatchMode? MatchModeOld { get; set; }
 
     [JsonProperty("MatchModeNew")] public MatchMode MatchMode { get; set; } = MatchMode.Fuzzy;
 
