@@ -96,7 +96,7 @@ public sealed class Finder : IDisposable
     public void SwitchLookupType(LookupType type) {
         rootLookup.SetBase(type);
         UpdateSearch("");
-        Service.Log.Information($"{nameof(SwitchLookupType)}: {type}");
+        Service.Log.Debug($"{nameof(SwitchLookupType)}: {type}");
     }
 
     private ISearchResult[] GetResults(SearchCriteria criteria) {

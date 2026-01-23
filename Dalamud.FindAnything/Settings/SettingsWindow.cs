@@ -129,7 +129,7 @@ public class FilterCombo<T>
 
         if (!combo) {
             if (openIds.Remove(id)) {
-                Service.Log.Warning("Resetting closed popup {Id} for {Label}.", id, label);
+                Service.Log.Debug($"Resetting closed popup {id} for {label}");
                 Reset();
             }
             return false;

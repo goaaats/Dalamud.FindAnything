@@ -16,7 +16,7 @@ public static class HintProvider
         var nextHint = FindAnythingPlugin.Configuration.HintLevel++;
         FindAnythingPlugin.ConfigManager.Save();
 
-        Service.Log.Information($"Hint: {nextHint}");
+        Service.Log.Debug($"Hint: {nextHint}");
         return new HintResult {
             HintLevel = nextHint,
         };

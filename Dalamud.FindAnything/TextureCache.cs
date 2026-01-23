@@ -192,7 +192,7 @@ namespace Dalamud.FindAnything
                 cjIcons.Add(classJob.RowId, icon);
             }
             ClassJobIcons = cjIcons;
-            Service.Log.Information(ClassJobIcons.Count + " class jobs loaded.");
+            Service.Log.Debug(ClassJobIcons.Count + " class jobs loaded.");
 
             AetheryteIcon = GetIcon(066417);
             WikiIcon = GetIcon(066404);
