@@ -39,17 +39,23 @@ public sealed class CoordinatesModule : SearchModule {
             if (!CoordUtils.CanUseMapLink(entry.TerritoryType))
                 continue;
 
+            if (entry.TerritoryType.Map.ValueNullable is not { } entryMap)
+                continue;
+
+            if (!CoordUtils.IsValidCoord(entryMap, parsed.X, parsed.Y))
+                continue;
+
             var score = localMatcher.Matches(entry.Searchable);
             if (score > 0) {
                 results.Add(new CoordinatesSearchResult {
                     Score = score * scoreMulti * Weight,
-                    Coords = Coordinates.FromInput(entry.TerritoryType, entry.TerritoryType.Map.Value, parsed.X, parsed.Y),
+                    Coords = Coordinates.FromInput(entry.TerritoryType, entryMap, parsed.X, parsed.Y),
                 });
             }
         }
 
         // Check current territory/map
-        if (CoordUtils.GetCurrentTerritoryMap() is { TerritoryType: var territoryType, Map: var map }) {
+        if (CoordUtils.GetCurrentTerritoryMap() is { TerritoryType: var territoryType, Map: var map } && CoordUtils.IsValidCoord(map, parsed.X, parsed.Y)) {
             if (parsed.Remainder.Length != 0) {
                 var score = localMatcher.Matches(CoordUtils.GetSearchableName(territoryType, map));
                 if (score > 0) {
@@ -141,6 +147,26 @@ public static partial class CoordUtils {
 
     private const NumberStyles CoordStyle = NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint;
 
+    private static readonly Dictionary<ushort, decimal> MaxCoordByScale = new();
+
+    public static bool IsValidCoord(LuminaMap map, decimal x, decimal y) {
+        if (x < 1 || y < 1)
+            return false;
+
+        var maxCoord = MaxCoord(map.SizeFactor);
+        return x <= maxCoord && y <= maxCoord;
+    }
+
+    private static decimal MaxCoord(ushort sizeFactor) {
+        if (MaxCoordByScale.TryGetValue(sizeFactor, out var maxCoord)) {
+            return maxCoord;
+        }
+
+        var value = 2048m / 50m / (sizeFactor / 100m) + 1m;
+        MaxCoordByScale[sizeFactor] = value;
+        return value;
+    }
+
     public static ParseResult? Parse(string arg) {
         var coordinates = CoordsRegex().Matches(arg);
         if (coordinates is not [{ Value: var sx }, { Value: var sy }, ..]) {
@@ -171,6 +197,9 @@ public static partial class CoordUtils {
     }
 
     public static IAetheryteEntry? GetClosestAetheryte(MapLinkPayload mapLink) {
+        if (mapLink.Map.ValueNullable is not { } map)
+            return null;
+
         var linkPosition = new Vector2(mapLink.XCoord, mapLink.YCoord);
         var candidateAetherytes = Service.Aetherytes
             .Where(e => e.AetheryteData is { ValueNullable: { IsAetheryte: true } aetheryte } && aetheryte.Map.RowId == mapLink.Map.RowId)
@@ -181,10 +210,10 @@ public static partial class CoordUtils {
 
         foreach (var markers in Service.Data.GetSubrowExcelSheet<MapMarker>())
         foreach (var marker in markers) {
-            if (marker.DataType != 3) continue;
+            if (marker.DataType != 3) continue; // Aetheryte
             foreach (var aetheryte in candidateAetherytes) {
                 if (aetheryte.AetheryteData.RowId == marker.DataKey.RowId) {
-                    var markerPosition = new Vector2(MarkerToMap(marker.X, mapLink.Map.Value.SizeFactor), MarkerToMap(marker.Y, mapLink.Map.Value.SizeFactor));
+                    var markerPosition = new Vector2(PixelToMap(marker.X, map.SizeFactor), PixelToMap(marker.Y, map.SizeFactor));
                     var distance = Vector2.Distance(linkPosition, markerPosition);
                     Service.Log.Debug($"Found aetheryte {aetheryte.AetheryteData.Value.PlaceName.Value.Name} ({markerPosition.X}, {markerPosition.Y}) with distance {distance}");
                     if (distance < closestDistance) {
@@ -198,16 +227,7 @@ public static partial class CoordUtils {
         return closestAetheryteEntry;
     }
 
-    private static float MarkerToMap(int pos, float scale) {
-        var num = scale / 100f;
-        var rawPosition = (int)((float)(pos - 1024.0) / num * 1000f);
-        return RawToMap(rawPosition, scale);
-    }
-
-    private static float RawToMap(int pos, float scale) {
-        var num = scale / 100f;
-        return (float)((pos / 1000f * num + 1024.0) / 2048.0 * 41.0 / num + 1.0);
-    }
+    public static float PixelToMap(float pixel, float mapScale) => pixel / 50 / (mapScale / 100) + 1;
 
     public static string GetSearchableName(TerritoryType territoryType, LuminaMap map) {
         return FindAnythingPlugin.Normalizer.Searchable(GetDisplayName(territoryType, map));
