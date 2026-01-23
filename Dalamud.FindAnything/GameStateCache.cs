@@ -53,39 +53,39 @@ public sealed unsafe class GameStateCache : IDisposable {
             .ToList();
 
         UnlockedEmoteKeys = Service.Data.GetExcelSheet<Emote>()
-            .Where(e => Service.UnlockState.IsEmoteUnlocked(e))
+            .Where(Service.UnlockState.IsEmoteUnlocked)
             .Select(emote => emote.RowId)
             .ToList();
 
         UnlockedMountKeys = Service.Data.GetExcelSheet<Mount>()
-            .Where(x => Service.UnlockState.IsMountUnlocked(x))
+            .Where(Service.UnlockState.IsMountUnlocked)
             .Select(x => x.RowId)
             .ToList();
 
         UnlockedMinionKeys = Service.Data.GetExcelSheet<Companion>()
-            .Where(x => Service.UnlockState.IsCompanionUnlocked(x))
+            .Where(Service.UnlockState.IsCompanionUnlocked)
             .Select(x => x.RowId)
             .ToList();
 
         UnlockedFashionAccessoryKeys = Service.Data.GetExcelSheet<Ornament>()
             .Where(x => x.Icon is not (0 or 786)) // 786 is the invalid icon used for accessories which became glasses
-            .Where(x => Service.UnlockState.IsOrnamentUnlocked(x))
+            .Where(Service.UnlockState.IsOrnamentUnlocked)
             .Select(x => x.RowId)
             .ToList();
 
         UnlockedFacewearKeys = Service.Data.GetExcelSheet<Glasses>()
-            .Where(x => Service.UnlockState.IsGlassesUnlocked(x))
+            .Where(Service.UnlockState.IsGlassesUnlocked)
             .Select(x => x.RowId)
             .ToList();
 
         UnlockedFacewearStyleKeys = Service.Data.GetExcelSheet<Glasses>()
-            .Where(x => Service.UnlockState.IsGlassesUnlocked(x))
+            .Where(Service.UnlockState.IsGlassesUnlocked)
             .Select(x => x.Style.RowId)
             .Distinct()
             .ToList();
 
         UnlockedCollectionKeys = Service.Data.GetExcelSheet<McGuffin>()
-            .Where(x => Service.UnlockState.IsMcGuffinUnlocked(x))
+            .Where(Service.UnlockState.IsMcGuffinUnlocked)
             .Select(x => x.RowId)
             .ToList();
 
