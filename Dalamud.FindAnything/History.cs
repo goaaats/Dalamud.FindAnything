@@ -4,16 +4,14 @@ using System.Linq;
 
 namespace Dalamud.FindAnything;
 
-public class History
-{
+public class History {
     private const int HistoryMax = 5;
 
     private static bool _inReplay;
 
     private List<HistoryEntry> history = new(HistoryMax);
 
-    private struct HistoryEntry
-    {
+    private struct HistoryEntry {
         public LookupType LookupType;
         public SearchCriteria SearchCriteria;
         public ISearchResult Result;

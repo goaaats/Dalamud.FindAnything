@@ -6,8 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Dalamud.FindAnything;
 
-public sealed class FinderActivator : IDisposable
-{
+public sealed class FinderActivator : IDisposable {
     private readonly Finder finder;
     private IDoubleTapDetector doubleTapDetector;
 
@@ -99,8 +98,7 @@ public sealed class FinderActivator : IDisposable
             : OpenAction.None;
     }
 
-    private enum OpenAction
-    {
+    private enum OpenAction {
         None,
         Normal,
         Wiki,

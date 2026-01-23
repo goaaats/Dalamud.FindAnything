@@ -16,10 +16,8 @@ using System.Numerics;
 
 namespace Dalamud.FindAnything.Game;
 
-public class GameWindow : Window
-{
-    public enum NoseKind
-    {
+public class GameWindow : Window {
+    public enum NoseKind {
         Normal,
         Farmer,
         Robo,
@@ -32,8 +30,7 @@ public class GameWindow : Window
         End
     }
 
-    private readonly IReadOnlyDictionary<NoseKind, uint> noseCosts = new Dictionary<NoseKind, uint>
-    {
+    private readonly IReadOnlyDictionary<NoseKind, uint> noseCosts = new Dictionary<NoseKind, uint> {
         { NoseKind.Normal, 15 },
         { NoseKind.Farmer, 500 },
         { NoseKind.Robo, 3000 },
@@ -46,8 +43,7 @@ public class GameWindow : Window
         { NoseKind.End, 2500000 },
     };
 
-    private readonly IReadOnlyDictionary<NoseKind, string> noseDesc = new Dictionary<NoseKind, string>
-    {
+    private readonly IReadOnlyDictionary<NoseKind, string> noseDesc = new Dictionary<NoseKind, string> {
         { NoseKind.Normal, "Your normal, cute and loyal dog." },
         { NoseKind.Farmer, "These dogs like to get their paws dirty." },
         { NoseKind.Robo, "Automated DNs, delivered by drone strike." },
@@ -60,8 +56,7 @@ public class GameWindow : Window
         { NoseKind.End, "From the deepest pits of the universe, they have come to bring you the final DN." },
     };
 
-    private readonly IReadOnlyDictionary<NoseKind, float> nosePassiveEarningPerSecond = new Dictionary<NoseKind, float>
-    {
+    private readonly IReadOnlyDictionary<NoseKind, float> nosePassiveEarningPerSecond = new Dictionary<NoseKind, float> {
         { NoseKind.Normal, 0.1f },
         { NoseKind.Farmer, 1f },
         { NoseKind.Robo, 3f },
@@ -76,8 +71,7 @@ public class GameWindow : Window
 
     private const double ETERNITY_DN_PER_HOUR = 20;
 
-    public enum FarmUpgrade
-    {
+    public enum FarmUpgrade {
         Base,
         FarmHouse,
         TempleOfDog,
@@ -90,8 +84,7 @@ public class GameWindow : Window
         DimensionalGate,
     }
 
-    private static readonly IReadOnlyDictionary<FarmUpgrade, float> farmUpgradeCost = new Dictionary<FarmUpgrade, float>
-    {
+    private static readonly IReadOnlyDictionary<FarmUpgrade, float> farmUpgradeCost = new Dictionary<FarmUpgrade, float> {
         { FarmUpgrade.Base, 0f },
         { FarmUpgrade.FarmHouse, 10000f },
         { FarmUpgrade.TempleOfDog, 49000f },
@@ -104,8 +97,7 @@ public class GameWindow : Window
         { FarmUpgrade.DimensionalGate, 10000000f },
     };
 
-    private static readonly IReadOnlyDictionary<FarmUpgrade, int> farmUpgradeCap = new Dictionary<FarmUpgrade, int>
-    {
+    private static readonly IReadOnlyDictionary<FarmUpgrade, int> farmUpgradeCap = new Dictionary<FarmUpgrade, int> {
         { FarmUpgrade.Base, 100 },
         { FarmUpgrade.FarmHouse, 150 },
         { FarmUpgrade.TempleOfDog, 225 },
@@ -118,8 +110,7 @@ public class GameWindow : Window
         { FarmUpgrade.DimensionalGate, 999999 },
     };
 
-    private static readonly IReadOnlyDictionary<FarmUpgrade, string> farmUpgradeName = new Dictionary<FarmUpgrade, string>
-    {
+    private static readonly IReadOnlyDictionary<FarmUpgrade, string> farmUpgradeName = new Dictionary<FarmUpgrade, string> {
         { FarmUpgrade.Base, "BASE UPGRADE" },
         { FarmUpgrade.FarmHouse, "Farm House" },
         { FarmUpgrade.TempleOfDog, "Temple of Dog" },
@@ -132,8 +123,7 @@ public class GameWindow : Window
         { FarmUpgrade.DimensionalGate, "Dogmensional Gate" },
     };
 
-    private struct Bonus
-    {
+    private struct Bonus {
         public float Multiplier { get; set; }
         public string Name { get; set; }
         public float Cost { get; set; }
@@ -141,36 +131,31 @@ public class GameWindow : Window
 
     private readonly IReadOnlyDictionary<uint, Bonus> bonuses = new Dictionary<uint, Bonus>
     {
-        { 1, new Bonus
-        {
+        [1] = new() {
             Name = "Squeaky Toy Dispenser",
             Multiplier = .1f,
             Cost = 200_000,
-        }},
-        { 2, new Bonus
-        {
+        },
+        [2] = new() {
             Name = "HUGE Frisbee",
             Multiplier = .5f,
             Cost = 2500_000,
-        }},
-        { 3, new Bonus
-        {
+        },
+        [3] = new() {
             Name = "Scooby Snacks",
             Multiplier = .2f,
             Cost = 500_000,
-        }},
-        { 4, new Bonus
-        {
+        },
+        [4] = new() {
             Name = "Water Hose + Pool set",
             Multiplier = .1f,
             Cost = 700_000,
-        }},
-        { 5, new Bonus
-        {
+        },
+        [5] = new() {
             Name = "Endless supply of Premium Dog Food",
             Multiplier = .3f,
             Cost = 1500_000,
-        }},
+        },
     };
 
     private Dictionary<NoseKind, ISharedImmediateTexture> noseTextures;
@@ -181,8 +166,7 @@ public class GameWindow : Window
     private ISharedImmediateTexture sageTexture;
     private ISharedImmediateTexture goldenTicketTexture;
 
-    public class SimulationState
-    {
+    public class SimulationState {
         public DateTimeOffset LastSaved { get; set; }
 
         public ulong TotalSteps { get; set; }
@@ -196,19 +180,17 @@ public class GameWindow : Window
         public FarmUpgrade FarmUpgrade { get; set; }
         public bool UpgradePurchased { get; set; }
         public DateTimeOffset UpgradeFinishesAt { get; set; }
-        public int FarmCap => farmUpgradeCap[this.FarmUpgrade];
-        public ulong DogCount => this.NumNoses.Aggregate(0ul, (acc, kvp) => acc + kvp.Value);
+        public int FarmCap => farmUpgradeCap[FarmUpgrade];
+        public ulong DogCount => NumNoses.Aggregate(0ul, (acc, kvp) => acc + kvp.Value);
 
-        public bool GameComplete => this.NumNoses.TryGetValue(NoseKind.End, out var cnt) && cnt > 0;
+        public bool GameComplete => NumNoses.TryGetValue(NoseKind.End, out var cnt) && cnt > 0;
     }
 
     private SimulationState state;
 
-    public GameWindow() : base("DN Farm###dnwindow")
-    {
+    public GameWindow() : base("DN Farm###dnwindow") {
         noseTextures = new Dictionary<NoseKind, ISharedImmediateTexture>();
-        foreach (var noseKind in Enum.GetValues<NoseKind>())
-        {
+        foreach (var noseKind in Enum.GetValues<NoseKind>()) {
             noseTextures.Add(noseKind, LoadImage(noseKind + ".png"));
         }
 
@@ -219,37 +201,30 @@ public class GameWindow : Window
         sageTexture = LoadImage("Sage.png");
         goldenTicketTexture = LoadImage("goldenticket.png");
 
-        SizeConstraints = new WindowSizeConstraints
-        {
+        SizeConstraints = new WindowSizeConstraints {
             MinimumSize = new Vector2(200, 200),
             MaximumSize = new Vector2(1000, 800),
         };
-        
+
         Load();
     }
 
-    private static ISharedImmediateTexture LoadImage(string fileName)
-    {
+    private static ISharedImmediateTexture LoadImage(string fileName) {
         var file = new FileInfo(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", fileName));
         return Service.TextureProvider.GetFromFile(file)!;
     }
 
     [MemberNotNull(nameof(state))]
-    public void Load()
-    {
-        if (FindAnythingPlugin.Configuration.SimulationState == null)
-        {
+    public void Load() {
+        if (FindAnythingPlugin.Configuration.SimulationState == null) {
             NewGame();
-        }
-        else
-        {
+        } else {
             state = FindAnythingPlugin.Configuration.SimulationState;
         }
     }
 
     [MemberNotNull(nameof(state))]
-    public void NewGame()
-    {
+    public void NewGame() {
         state = new SimulationState {
             NumNoses = new Dictionary<NoseKind, ulong>(),
             RewardsGained = [],
@@ -258,26 +233,23 @@ public class GameWindow : Window
             FarmUpgrade = FarmUpgrade.Base,
         };
 
-        this.thiefActive = false;
-        this.thiefMessageDismissed = true;
+        thiefActive = false;
+        thiefMessageDismissed = true;
 
         FindAnythingPlugin.Configuration.SimulationState = state;
         FindAnythingPlugin.ConfigManager.Save();
     }
 
-    private void EarnRestedDn()
-    {
+    private void EarnRestedDn() {
         var timeSinceSave = DateTimeOffset.Now - state.LastSaved;
         var numHoursSpent = Math.Floor(timeSinceSave.TotalHours);
         Service.Log.Verbose($"{numHoursSpent} hours since last save");
-        if (numHoursSpent > 0 && this.state.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs))
-        {
+        if (numHoursSpent > 0 && state.NumNoses.TryGetValue(NoseKind.Eternity, out var numEternityDogs)) {
             var earnedRestedDn = (ETERNITY_DN_PER_HOUR * numHoursSpent) * numEternityDogs;
-            this.state.CurrentDn += earnedRestedDn;
+            state.CurrentDn += earnedRestedDn;
 
-            Service.Notifications.AddNotification(new Notification
-            {
-                IconTexture = this.noseTextures[NoseKind.Normal],
+            Service.Notifications.AddNotification(new Notification {
+                IconTexture = noseTextures[NoseKind.Normal],
                 Title = "Earned rested DN!",
                 Content = $"You earned {earnedRestedDn:N0} DN from resting for {numHoursSpent} hours.",
                 InitialDuration = TimeSpan.FromSeconds(10),
@@ -285,34 +257,28 @@ public class GameWindow : Window
         }
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         saidNoToSage = false;
         clicks = 0;
         EarnRestedDn();
         base.OnOpen();
     }
 
-    public override void Update()
-    {
+    public override void Update() {
         Simulate();
-        WindowName = $"DN Farm ({this.state.CurrentDn:N0} DN)";
+        WindowName = $"DN Farm ({state.CurrentDn:N0} DN)";
 
-        if (thiefActive)
-        {
+        if (thiefActive) {
             WindowName += " (Thief!!!!!)";
         }
 
         WindowName += "###dnwindow";
     }
 
-    private double GetDps()
-    {
+    private double GetDps() {
         double dps = 0;
-        foreach (var kind in Enum.GetValues<NoseKind>())
-        {
-            if (state.NumNoses.TryGetValue(kind, out var num))
-            {
+        foreach (var kind in Enum.GetValues<NoseKind>()) {
+            if (state.NumNoses.TryGetValue(kind, out var num)) {
                 dps += nosePassiveEarningPerSecond[kind] * num;
             }
         }
@@ -322,13 +288,10 @@ public class GameWindow : Window
 
     private const int AGENT_THIEF_PROTECT_DEATH_CHANCE = 80;
 
-    private bool CheckAgentThiefProtect()
-    {
-        if (this.state.NumNoses.TryGetValue(NoseKind.Agent, out var num) && num > 1)
-        {
-            if (this.random.Next(1, 100) <= AGENT_THIEF_PROTECT_DEATH_CHANCE)
-            {
-                this.state.NumNoses[NoseKind.Agent] = num - 1;
+    private bool CheckAgentThiefProtect() {
+        if (state.NumNoses.TryGetValue(NoseKind.Agent, out var num) && num > 1) {
+            if (random.Next(1, 100) <= AGENT_THIEF_PROTECT_DEATH_CHANCE) {
+                state.NumNoses[NoseKind.Agent] = num - 1;
             }
 
             return true;
@@ -337,10 +300,9 @@ public class GameWindow : Window
         return false;
     }
 
-    private double GetAdjustedCost(NoseKind kind)
-    {
+    private double GetAdjustedCost(NoseKind kind) {
         var baseCost = noseCosts[kind];
-        if (!this.state.NumNoses.TryGetValue(kind, out var num))
+        if (!state.NumNoses.TryGetValue(kind, out var num))
             return baseCost;
 
         var multiplier = 1.0;
@@ -351,7 +313,7 @@ public class GameWindow : Window
 
     private string GetDogName(NoseKind kind) => kind != NoseKind.Thancred ? kind.ToString() + " Dog" : "Dogcred";
 
-    private float GetMultiplier() => this.state.BonusesGained.Select(x => bonuses[x].Multiplier).Aggregate(1f, (x, y) => x + y);
+    private float GetMultiplier() => state.BonusesGained.Select(x => bonuses[x].Multiplier).Aggregate(1f, (x, y) => x + y);
 
     private Random random = new();
 
@@ -361,8 +323,7 @@ public class GameWindow : Window
     private float thiefWillSteal;
     private DateTimeOffset thiefWillStealAt;
 
-    private void Simulate()
-    {
+    private void Simulate() {
         state.TotalSteps++;
 
         var dps = GetDps();
@@ -371,46 +332,40 @@ public class GameWindow : Window
 
         earned *= GetMultiplier();
 
-        this.state.CurrentDn += earned;
-        this.state.TotalEarned += earned;
+        state.CurrentDn += earned;
+        state.TotalEarned += earned;
 
-        if (this.state.UpgradePurchased && DateTimeOffset.Now > this.state.UpgradeFinishesAt)
-        {
-            this.state.UpgradePurchased = false;
-            this.state.FarmUpgrade++;
+        if (state.UpgradePurchased && DateTimeOffset.Now > state.UpgradeFinishesAt) {
+            state.UpgradePurchased = false;
+            state.FarmUpgrade++;
         }
 
-        if (this.state.TotalSteps % 1000 == 0)
-        {
-            if (!this.thiefActive && this.random.Next(0, 300) < 5 && !this.state.GameComplete)
-            {
-                this.thiefWillSteal = random.Next(1, 70) / 100f;
-                this.thiefActive = true;
-                this.thiefMessageDismissed = false;
-                this.thiefWillStealAt = DateTimeOffset.Now.AddSeconds(random.Next(8, 15));
-                Service.Log.Information($"[DN] Thief triggered! Steals: {this.thiefWillSteal} at {this.thiefWillStealAt}");
+        if (state.TotalSteps % 1000 == 0) {
+            if (!thiefActive && random.Next(0, 300) < 5 && !state.GameComplete) {
+                thiefWillSteal = random.Next(1, 70) / 100f;
+                thiefActive = true;
+                thiefMessageDismissed = false;
+                thiefWillStealAt = DateTimeOffset.Now.AddSeconds(random.Next(8, 15));
+                Service.Log.Information($"[DN] Thief triggered! Steals: {thiefWillSteal} at {thiefWillStealAt}");
             }
 
-            this.state.LastSaved = DateTimeOffset.Now;
+            state.LastSaved = DateTimeOffset.Now;
             FindAnythingPlugin.Configuration.SimulationState = state;
             FindAnythingPlugin.ConfigManager.Save();
         }
     }
 
-    public void Cheat()
-    {
-        this.state.CurrentDn = this.state.TotalEarned = 1000000f;
+    public void Cheat() {
+        state.CurrentDn = state.TotalEarned = 1000000f;
     }
 
     private int clicks = 0;
     private bool saidNoToSage = false;
     private bool justGotGoldenTicket = false;
 
-    public override void Draw()
-    {
+    public override void Draw() {
 
-        if (justGotGoldenTicket && FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue)
-        {
+        if (justGotGoldenTicket && FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue) {
             var name = GetLocalPlayerName("adventurer");
 
             ImGui.Image(sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
@@ -430,8 +385,7 @@ public class GameWindow : Window
 
             ImGuiHelpers.ScaledDummy(10);
 
-            if (ImGui.Button("OK"))
-            {
+            if (ImGui.Button("OK")) {
                 IsOpen = false;
                 justGotGoldenTicket = false;
                 NewGame();
@@ -443,45 +397,36 @@ public class GameWindow : Window
         ImGui.TextUnformatted($"{state.CurrentDn:N2} DN");
         ImGui.SameLine();
         ImGui.Image(noseTextures[NoseKind.Normal].GetWrapOrEmpty().Handle, new Vector2(16, 16));
-        if (ImGui.IsItemClicked())
-        {
+        if (ImGui.IsItemClicked()) {
             state.CurrentDn += 0.1;
             state.TotalEarned += 0.1;
         }
         ImGui.SameLine();
         ImGuiHelpers.ScaledDummy(0, 5);
         ImGui.SameLine();
-        if (this.state.BonusesGained.Count > 0)
-        {
+        if (state.BonusesGained.Count > 0) {
             ImGui.TextColored(ImGuiColors.DalamudGrey, $"({GetDps():N2}/s x {GetMultiplier():N2})");
-        }
-        else
-        {
+        } else {
             ImGui.TextColored(ImGuiColors.DalamudGrey, $"({GetDps():N2}/s)");
         }
 
-        var numDogs = this.state.DogCount;
-        var dogCap = (ulong)this.state.FarmCap;
+        var numDogs = state.DogCount;
+        var dogCap = (ulong)state.FarmCap;
         ImGui.TextColored(ImGuiColors.DalamudGrey, $"Your farm has space for {numDogs}/{dogCap} dogs.");
 
         ImGuiHelpers.ScaledDummy(5);
 
-        if (ImGui.BeginTabBar("###noseTabs"))
-        {
-            if (ImGui.BeginTabItem("Farm"))
-            {
-                if (ImGui.BeginChild("NoseShop", new Vector2(-1, 500 * ImGuiHelpers.GlobalScale), false))
-                {
+        if (ImGui.BeginTabBar("###noseTabs")) {
+            if (ImGui.BeginTabItem("Farm")) {
+                if (ImGui.BeginChild("NoseShop", new Vector2(-1, 500 * ImGuiHelpers.GlobalScale), false)) {
                     var windowSize = ImGui.GetWindowSize();
 
                     var didAny = false;
                     var lastHadDn = NoseKind.Normal;
-                    foreach (var kind in Enum.GetValues<NoseKind>())
-                    {
+                    foreach (var kind in Enum.GetValues<NoseKind>()) {
                         var cost = GetAdjustedCost(kind);
                         var name = GetDogName(kind);
-                        if (state.NumNoses.TryGetValue(kind, out var num))
-                        {
+                        if (state.NumNoses.TryGetValue(kind, out var num)) {
                             didAny = true;
                             var desc = noseDesc[kind];
                             var cursorStart = ImGui.GetCursorPos();
@@ -495,41 +440,29 @@ public class GameWindow : Window
                             ImGui.TextColored(ImGuiColors.DalamudGrey, desc);
 
                             var buyText = $"Buy {name} ({cost:N0} DN)";
-                            if (state.CurrentDn >= cost && numDogs < dogCap)
-                            {
-                                if (ImGui.Button(buyText))
-                                {
-                                    if (Service.Keys[VirtualKey.SHIFT])
-                                    {
-                                        for (var i = 0; i < 10; i++)
-                                        {
+                            if (state.CurrentDn >= cost && numDogs < dogCap) {
+                                if (ImGui.Button(buyText)) {
+                                    if (Service.Keys[VirtualKey.SHIFT]) {
+                                        for (var i = 0; i < 10; i++) {
                                             BuyDog(kind);
                                         }
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         clicks++;
                                         BuyDog(kind);
                                     }
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 ImGuiComponents.DisabledButton(buyText);
                             }
 
                             ImGui.SameLine();
 
                             var btnReleaseText = $"Release from duty###release{kind}";
-                            if (num > 1)
-                            {
-                                if (ImGui.Button(btnReleaseText))
-                                {
+                            if (num > 1) {
+                                if (ImGui.Button(btnReleaseText)) {
                                     state.NumNoses[kind]--;
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 ImGuiComponents.DisabledButton(btnReleaseText);
                             }
 
@@ -540,24 +473,17 @@ public class GameWindow : Window
                             lastHadDn = kind;
 
                             ImGui.Separator();
-                        }
-                        else if (lastHadDn == kind - 1 && kind != NoseKind.Normal && didAny)
-                        {
+                        } else if (lastHadDn == kind - 1 && kind != NoseKind.Normal && didAny) {
                             var btnText = $"Buy your first {GetDogName(kind)} ({noseCosts[kind]} DN)";
-                            if (this.state.CurrentDn >= cost && numDogs < dogCap)
-                            {
-                                if (ImGui.Button(btnText))
-                                {
+                            if (state.CurrentDn >= cost && numDogs < dogCap) {
+                                if (ImGui.Button(btnText)) {
                                     BuyDog(kind);
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 ImGuiComponents.DisabledButton(btnText);
                             }
 
-                            if (clicks >= 50)
-                            {
+                            if (clicks >= 50) {
                                 ImGui.SameLine();
                                 ImGui.TextColored(ImGuiColors.DalamudGrey, "Only pro dogs know this: You can hold SHIFT to buy 10 at once!");
                             }
@@ -566,10 +492,8 @@ public class GameWindow : Window
                         }
                     }
 
-                    if (!didAny)
-                    {
-                        if (ImGui.Button($"Buy your first dog ({noseCosts[NoseKind.Normal]} DN)"))
-                        {
+                    if (!didAny) {
+                        if (ImGui.Button($"Buy your first dog ({noseCosts[NoseKind.Normal]} DN)")) {
                             BuyDog(NoseKind.Normal);
                         }
                     }
@@ -580,64 +504,49 @@ public class GameWindow : Window
                 ImGui.Separator();
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (this.state.GameComplete)
-                {
+                if (state.GameComplete) {
                     var name = GetLocalPlayerName("my love");
 
-                    ImGui.Image(this.noseTextures[NoseKind.Magical].GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                    ImGui.Image(noseTextures[NoseKind.Magical].GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"Peace has returned to the DN hills.\nEveryone is living happily.\nYou did it.\nThank you, {name}.\"");
-                }
-                else if (this.thiefActive)
-                {
-                    ImGui.Image(this.thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                } else if (thiefActive) {
+                    ImGui.Image(thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
-                    var timeLeft = this.thiefWillStealAt - DateTimeOffset.Now;
-                    if (timeLeft.TotalSeconds > 0)
-                    {
+                    var timeLeft = thiefWillStealAt - DateTimeOffset.Now;
+                    if (timeLeft.TotalSeconds > 0) {
                         ImGui.SameLine();
                         ImGui.TextWrapped($"Oh no! A thief is here to rob you!\nYou have to stop it!\n\nYou have {timeLeft.TotalSeconds:N0} seconds left until he'll get away!");
-                    }
-                    else
-                    {
-                        if (CheckAgentThiefProtect())
-                        {
-                            this.thiefActive = false;
-                            this.thiefMessageDismissed = true;
-                            this.thiefWillSteal = 0;
-                        }
-                        else
-                        {
-                            var steals = this.state.CurrentDn * this.thiefWillSteal;
-                            this.state.CurrentDn -= steals;
-                            this.thiefStolenDn = steals;
-                            this.thiefActive = false;
+                    } else {
+                        if (CheckAgentThiefProtect()) {
+                            thiefActive = false;
+                            thiefMessageDismissed = true;
+                            thiefWillSteal = 0;
+                        } else {
+                            var steals = state.CurrentDn * thiefWillSteal;
+                            state.CurrentDn -= steals;
+                            thiefStolenDn = steals;
+                            thiefActive = false;
                         }
                     }
 
                     ImGuiHelpers.ScaledDummy(5);
 
-                    if (ImGui.Button("Call the cops"))
-                    {
-                        this.thiefActive = false;
-                        this.thiefMessageDismissed = true;
-                        this.thiefWillSteal = 0;
+                    if (ImGui.Button("Call the cops")) {
+                        thiefActive = false;
+                        thiefMessageDismissed = true;
+                        thiefWillSteal = 0;
                     }
-                }
-                else if (!this.thiefActive && !this.thiefMessageDismissed)
-                {
-                    ImGui.Image(this.thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+                } else if (!thiefActive && !thiefMessageDismissed) {
+                    ImGui.Image(thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
-                    ImGui.TextWrapped($"Oh no! A thief has robbed your farm and you didn't catch it!\nYou lost {this.thiefStolenDn:N0} DN, that's a lot...");
+                    ImGui.TextWrapped($"Oh no! A thief has robbed your farm and you didn't catch it!\nYou lost {thiefStolenDn:N0} DN, that's a lot...");
 
-                    if (ImGui.Button("OK"))
-                    {
-                        this.thiefMessageDismissed = true;
+                    if (ImGui.Button("OK")) {
+                        thiefMessageDismissed = true;
                     }
-                }
-                else
-                {
+                } else {
                     ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
                     ImGui.TextWrapped("Keep your eyes peeled! A thief may appear...");
                     ImGui.PopStyleColor();
@@ -646,73 +555,56 @@ public class GameWindow : Window
                 ImGui.EndTabItem();
             }
 
-            if (ImGui.BeginTabItem("City"))
-            {
-                if (ImGui.CollapsingHeader("DN Construction Co."))
-                {
-                    ImGui.Image(this.clerkBuilderTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            if (ImGui.BeginTabItem("City")) {
+                if (ImGui.CollapsingHeader("DN Construction Co.")) {
+                    ImGui.Image(clerkBuilderTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
-                    if (this.state.UpgradePurchased)
-                    {
-                        var minutesLeft = (this.state.UpgradeFinishesAt - DateTimeOffset.Now).TotalMinutes;
+                    if (state.UpgradePurchased) {
+                        var minutesLeft = (state.UpgradeFinishesAt - DateTimeOffset.Now).TotalMinutes;
                         ImGui.TextWrapped($"\"Working on it! We'll be done in {minutesLeft:N0} minutes.\"");
                         ImGui.SetNextItemWidth(10);
-                    }
-                    else if (this.state.FarmUpgrade != FarmUpgrade.DimensionalGate)
-                    {
+                    } else if (state.FarmUpgrade != FarmUpgrade.DimensionalGate) {
                         ImGui.TextWrapped($"\"Hey, what's up. Need a bigger farm?\nYou'll be able to get more dogs if you upgrade it.\"");
 
                         ImGuiHelpers.ScaledDummy(5);
 
-                        var nextUpgrade = this.state.FarmUpgrade + 1;
+                        var nextUpgrade = state.FarmUpgrade + 1;
                         var nextUpgradeName = farmUpgradeName[nextUpgrade];
                         var nextUpgradeCost = farmUpgradeCost[nextUpgrade];
                         var btnText = $"Buy Farm Upgrade: {nextUpgradeName} ({nextUpgradeCost:N0} DN)";
-                        if (this.state.CurrentDn >= nextUpgradeCost)
-                        {
-                            if (ImGui.Button(btnText))
-                            {
-                                this.state.CurrentDn -= nextUpgradeCost;
-                                this.state.UpgradePurchased = true;
-                                this.state.UpgradeFinishesAt = DateTimeOffset.Now + TimeSpan.FromMinutes(random.Next(3, 14));
+                        if (state.CurrentDn >= nextUpgradeCost) {
+                            if (ImGui.Button(btnText)) {
+                                state.CurrentDn -= nextUpgradeCost;
+                                state.UpgradePurchased = true;
+                                state.UpgradeFinishesAt = DateTimeOffset.Now + TimeSpan.FromMinutes(random.Next(3, 14));
                             }
-                        }
-                        else
-                        {
+                        } else {
                             ImGuiComponents.DisabledButton(btnText);
                         }
-                    }
-                    else
-                    {
+                    } else {
                         ImGui.TextWrapped($"\"Sorry, your farm is as big as it gets.\nNothing I can do, we don't have the permit to make it any bigger!\"");
                     }
                 }
 
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (ImGui.CollapsingHeader("DN Needs & Utilities"))
-                {
-                    ImGui.Image(this.clerkNeedsTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                if (ImGui.CollapsingHeader("DN Needs & Utilities")) {
+                    ImGui.Image(clerkNeedsTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"Hi, welcome to DN Needs & Utilities. Here you can buy stuff that your dogs will love.\nWhat can I get you?\"");
 
                     ImGuiHelpers.ScaledDummy(5);
 
-                    foreach (var bonus in bonuses)
-                    {
-                        var available = !this.state.BonusesGained.Contains(bonus.Key) && this.state.CurrentDn >= bonus.Value.Cost;
+                    foreach (var bonus in bonuses) {
+                        var available = !state.BonusesGained.Contains(bonus.Key) && state.CurrentDn >= bonus.Value.Cost;
                         var btnText = $"Buy {bonus.Value.Name} ({bonus.Value.Cost:N0} DN)";
-                        if (available)
-                        {
-                            if (ImGui.Button(btnText))
-                            {
+                        if (available) {
+                            if (ImGui.Button(btnText)) {
                                 state.CurrentDn -= bonus.Value.Cost;
                                 state.BonusesGained.Add(bonus.Key);
                             }
-                        }
-                        else
-                        {
+                        } else {
                             ImGuiComponents.DisabledButton(btnText);
                         }
 
@@ -723,35 +615,26 @@ public class GameWindow : Window
 
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (ImGui.CollapsingHeader("DN Boutique"))
-                {
-                    ImGui.Image(this.clerkBoutiqueTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                if (ImGui.CollapsingHeader("DN Boutique")) {
+                    ImGui.Image(clerkBoutiqueTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
 
-                    if (!this.state.GameComplete)
-                    {
+                    if (!state.GameComplete) {
                         ImGui.TextWrapped($"\"The DN boutique is still under renovation, we're very sorry!\nPlease come back when you cleared the game, we should be done by then!\"");
-                    }
-                    else
-                    {
+                    } else {
                         ImGui.TextWrapped($"\"Hello! Welcome to the DN Boutique!\nWe offer a wide variety of handcrafted DN accessories to improve your living space!\"");
 
                         ImGuiHelpers.ScaledDummy(5);
 
-                        foreach (var reward in GameRewards.Rewards)
-                        {
+                        foreach (var reward in GameRewards.Rewards) {
                             var btnText = $"Buy {reward.Value.Name} ({reward.Value.Cost:N0} DN)";
-                            if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key))
-                            {
-                                if (ImGui.Button(btnText))
-                                {
+                            if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key)) {
+                                if (ImGui.Button(btnText)) {
                                     reward.Value.Bought();
                                     state.CurrentDn -= reward.Value.Cost;
                                     state.RewardsGained.Add(reward.Key);
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 ImGuiComponents.DisabledButton(btnText);
                             }
                         }
@@ -760,23 +643,18 @@ public class GameWindow : Window
 
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage"))
-                {
-                    ImGui.Image(this.sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage")) {
+                    ImGui.Image(sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
                     ImGui.SameLine();
                     ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
 
-                    if (ImGui.Button("Yes"))
-                    {
-                        if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && this.state.TotalEarned > 100_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber))
-                        {
+                    if (ImGui.Button("Yes")) {
+                        if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && state.TotalEarned > 100_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber)) {
                             FindAnythingPlugin.Configuration.GoldenTicketNumber = ticketNumber;
                             FindAnythingPlugin.ConfigManager.Save();
 
-                            this.justGotGoldenTicket = true;
-                        }
-                        else
-                        {
+                            justGotGoldenTicket = true;
+                        } else {
                             IsOpen = false;
                             NewGame();
                         }
@@ -784,17 +662,15 @@ public class GameWindow : Window
 
                     ImGui.SameLine();
 
-                    if (ImGui.Button("No"))
-                    {
+                    if (ImGui.Button("No")) {
                         saidNoToSage = true;
                     }
                 }
 
                 ImGuiHelpers.ScaledDummy(10);
 
-                if (FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && ImGui.CollapsingHeader("Goat's Golden Ticket"))
-                {
-                    ImGui.Image(this.goldenTicketTexture.GetWrapOrEmpty().Handle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
+                if (FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && ImGui.CollapsingHeader("Goat's Golden Ticket")) {
+                    ImGui.Image(goldenTicketTexture.GetWrapOrEmpty().Handle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
 
                     ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
 
@@ -813,8 +689,7 @@ public class GameWindow : Window
         }
     }
 
-    private string GetLocalPlayerName(string fallback)
-    {
+    private string GetLocalPlayerName(string fallback) {
         var name = fallback;
         if (Service.PlayerState.IsLoaded)
             name = Service.PlayerState.CharacterName.Split()[0];
@@ -822,20 +697,15 @@ public class GameWindow : Window
         return name;
     }
 
-    private void BuyDog(NoseKind kind)
-    {
+    private void BuyDog(NoseKind kind) {
         var cost = GetAdjustedCost(kind);
-        if (this.state.CurrentDn >= cost && this.state.DogCount < (uint)this.state.FarmCap)
-        {
-            this.state.CurrentDn -= cost;
+        if (state.CurrentDn >= cost && state.DogCount < (uint)state.FarmCap) {
+            state.CurrentDn -= cost;
 
-            if (!this.state.NumNoses.ContainsKey(kind))
-            {
-                this.state.NumNoses.Add(kind, 1);
-            }
-            else
-            {
-                this.state.NumNoses[kind]++;
+            if (!state.NumNoses.ContainsKey(kind)) {
+                state.NumNoses.Add(kind, 1);
+            } else {
+                state.NumNoses[kind]++;
             }
         }
     }

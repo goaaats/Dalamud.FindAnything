@@ -13,8 +13,7 @@ using System.Numerics;
 
 namespace Dalamud.FindAnything;
 
-public sealed class Finder : IDisposable
-{
+public sealed class Finder : IDisposable {
     private const int MaxOnePage = 10;
     private const int SelectionScrollOffset = 1;
 
@@ -295,8 +294,7 @@ public sealed class Finder : IDisposable
         }
     }
 
-    private class CursorController
-    {
+    private class CursorController {
         private readonly Finder finder;
         private Configuration.CursorControlType controlType;
         private ActionRepeater up;

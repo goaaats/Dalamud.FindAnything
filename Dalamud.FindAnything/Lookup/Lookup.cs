@@ -2,8 +2,7 @@
 
 namespace Dalamud.FindAnything.Lookup;
 
-public interface ILookup
-{
+public interface ILookup {
     void OnOpen() { }
 
     string GetPlaceholder();
@@ -13,8 +12,7 @@ public interface ILookup
     void OnSelected(SearchCriteria criteria, ISearchResult result) { }
 }
 
-public record LookupResult(List<ISearchResult> Results, bool AllowSort)
-{
+public record LookupResult(List<ISearchResult> Results, bool AllowSort) {
     public static LookupResult Bag(List<ISearchResult> results) => new(results, true);
     public static LookupResult List(List<ISearchResult> results) => new(results, false);
     public static LookupResult Empty { get; } = new([], false);

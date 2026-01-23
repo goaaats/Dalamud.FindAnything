@@ -6,8 +6,7 @@ using System.Numerics;
 
 namespace Dalamud.FindAnything.Settings;
 
-public partial class SettingsWindow
-{
+public partial class SettingsWindow {
     private uint flags;
     private Configuration.OpenMode openMode;
     private VirtualKey shiftShiftKey;

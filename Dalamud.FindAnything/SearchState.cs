@@ -7,8 +7,7 @@ namespace Dalamud.FindAnything;
 // - CleanString: the above but with whitespace stripped
 // - SemanticString: the above but with any sigils removed
 // - MatchString: the above but in lower case and with kana and some special characters normalized
-public class SearchState
-{
+public class SearchState {
     private const string ModeSigilWiki = "?";
 
     private LookupType? OverrideLookupType { get; set; }
@@ -96,8 +95,7 @@ public record SearchCriteria(
     string CleanString,
     string SemanticString,
     string MatchString,
-    bool ContainsKana)
-{
+    bool ContainsKana) {
     public bool HasMatchString() {
         return MatchString.Length != 0;
     }

@@ -4,8 +4,7 @@ using System.Linq;
 
 namespace Dalamud.FindAnything.Lookup;
 
-public sealed class ModuleLookup : ILookup
-{
+public sealed class ModuleLookup : ILookup {
     private readonly SearchModule[] orderedModules;
     private readonly SearchModule[] fixedPositionModules;
     private readonly SearchModule[] constantModules;

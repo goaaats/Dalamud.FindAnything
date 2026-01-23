@@ -4,8 +4,7 @@ using System;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class InternalModule : SearchModule
-{
+public sealed class InternalModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Internal;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -20,8 +19,7 @@ public sealed class InternalModule : SearchModule
         }
     }
 
-    private class InternalSearchResult : ISearchResult
-    {
+    private class InternalSearchResult : ISearchResult {
         public string CatName => GetCatNameForKind(Kind);
         public string Name => GetNameForKind(Kind);
 
@@ -57,8 +55,7 @@ public sealed class InternalModule : SearchModule
         }
     }
 
-    public enum InternalSearchResultKind
-    {
+    public enum InternalSearchResultKind {
         Settings,
         DalamudPlugins,
         DalamudSettings,

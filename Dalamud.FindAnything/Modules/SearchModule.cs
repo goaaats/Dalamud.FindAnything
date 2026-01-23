@@ -2,8 +2,7 @@
 
 namespace Dalamud.FindAnything.Modules;
 
-public abstract class SearchModule
-{
+public abstract class SearchModule {
     public const int DefaultWeight = 100;
 
     public abstract Configuration.SearchSetting SearchSetting { get; }

@@ -6,8 +6,7 @@ using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class MinionsModule : SearchModule
-{
+public sealed class MinionsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Minions;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -29,8 +28,7 @@ public sealed class MinionsModule : SearchModule
         }
     }
 
-    private class MinionResult : ISearchResult
-    {
+    private class MinionResult : ISearchResult {
         public string CatName => "Minion";
         public required string Name { get; init; }
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon(Minion.Icon);

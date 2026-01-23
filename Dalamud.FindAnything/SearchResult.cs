@@ -4,8 +4,7 @@ using System.Collections.Generic;
 
 namespace Dalamud.FindAnything;
 
-public interface ISearchResult
-{
+public interface ISearchResult {
     public string CatName { get; }
     public string Name { get; }
     public ISharedImmediateTexture? Icon { get; }
@@ -15,8 +14,7 @@ public interface ISearchResult
     public void Selected();
 }
 
-public sealed class SearchResultComparer : IEqualityComparer<ISearchResult>
-{
+public sealed class SearchResultComparer : IEqualityComparer<ISearchResult> {
     public static SearchResultComparer Instance { get; } = new();
 
     public bool Equals(ISearchResult? a, ISearchResult? b) {

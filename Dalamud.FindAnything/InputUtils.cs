@@ -3,8 +3,7 @@ using System;
 
 namespace Dalamud.FindAnything;
 
-public record RepeatPolicy
-{
+public record RepeatPolicy {
     public readonly long InitialDelay;
     public readonly long RepeatInterval;
 
@@ -17,8 +16,7 @@ public record RepeatPolicy
     }
 }
 
-public class RepeatEngine(RepeatPolicy policy)
-{
+public class RepeatEngine(RepeatPolicy policy) {
     private bool isHeld;
     private long nextEmitTime;
 
@@ -43,8 +41,7 @@ public class RepeatEngine(RepeatPolicy policy)
     }
 }
 
-public class ActionRepeater(RepeatPolicy policy, Action action) : RepeatEngine(policy)
-{
+public class ActionRepeater(RepeatPolicy policy, Action action) : RepeatEngine(policy) {
     public new void Update(bool isDown, long now) {
         var count = base.Update(isDown, now);
         if (count > 0) {
@@ -55,10 +52,8 @@ public class ActionRepeater(RepeatPolicy policy, Action action) : RepeatEngine(p
     }
 }
 
-public class DoubleTapEngine(long maxDelay)
-{
-    private enum Phase
-    {
+public class DoubleTapEngine(long maxDelay) {
+    private enum Phase {
         Idle,
         WaitingForRelease,
         WaitingForSecondPress,
@@ -105,20 +100,17 @@ public class DoubleTapEngine(long maxDelay)
     }
 }
 
-public interface IDoubleTapDetector
-{
+public interface IDoubleTapDetector {
     bool Update(bool isDown);
 }
 
-public class TimeBasedDoubleTapDetector(long maxDelay) : DoubleTapEngine(maxDelay), IDoubleTapDetector
-{
+public class TimeBasedDoubleTapDetector(long maxDelay) : DoubleTapEngine(maxDelay), IDoubleTapDetector {
     public bool Update(bool isDown) {
         return base.Update(isDown, Environment.TickCount64);
     }
 }
 
-public class FrameBasedDoubleTapDetector(long maxDelay) : DoubleTapEngine(maxDelay), IDoubleTapDetector
-{
+public class FrameBasedDoubleTapDetector(long maxDelay) : DoubleTapEngine(maxDelay), IDoubleTapDetector {
     public unsafe bool Update(bool isDown) {
         return base.Update(isDown, Framework.Instance()->FrameCounter);
     }

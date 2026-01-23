@@ -1,13 +1,11 @@
 ﻿using Dalamud.Interface.Textures;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class CollectionModule : SearchModule
-{
+public sealed class CollectionModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Collection;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -29,8 +27,7 @@ public sealed class CollectionModule : SearchModule
         }
     }
 
-    private class CollectionResult : ISearchResult
-    {
+    private class CollectionResult : ISearchResult {
         public string CatName => "Collection";
         public string Name => McGuffinUiData.Name.ToText();
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon(McGuffinUiData.Icon);

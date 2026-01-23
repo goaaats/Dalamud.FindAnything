@@ -1,14 +1,13 @@
-﻿using System.Runtime.InteropServices;
+﻿using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using Dalamud.Bindings.ImGui;
+using System.Runtime.InteropServices;
 
 namespace Dalamud.FindAnything;
 
 // Most of this is stolen from QoLBar
-public static unsafe class Input
-{
+public static unsafe class Input {
     private static bool IsGameFocused => !Framework.Instance()->WindowInactive;
     private static bool IsGameTextInputActive => RaptureAtkModule.Instance()->AtkModule.IsTextInputActive();
 
@@ -19,8 +18,7 @@ public static unsafe class Input
     private static extern bool GetKeyboardState(byte[] lpKeyState);
     private static readonly byte[] KeyboardState = new byte[256];
 
-    public static void Update()
-    {
+    public static void Update() {
         GetKeyboardState(KeyboardState);
     }
 

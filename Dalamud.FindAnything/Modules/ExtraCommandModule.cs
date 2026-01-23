@@ -4,8 +4,7 @@ using Lumina.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class ExtraCommandModule : SearchModule
-{
+public sealed class ExtraCommandModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.ExtraCommand;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -26,8 +25,7 @@ public sealed class ExtraCommandModule : SearchModule
         }
     }
 
-    private class ExtraCommandSearchResult : ISearchResult
-    {
+    private class ExtraCommandSearchResult : ISearchResult {
         public string CatName => "Extra Commands";
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }

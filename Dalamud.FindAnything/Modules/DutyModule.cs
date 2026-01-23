@@ -6,8 +6,7 @@ using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class DutyModule : SearchModule
-{
+public sealed class DutyModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Duty;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -60,8 +59,7 @@ public sealed class DutyModule : SearchModule
         }
     }
 
-    private record DutySearchResult : ISearchResult
-    {
+    private record DutySearchResult : ISearchResult {
         public required string CatName { get; init; }
         public required string Name { get; init; }
         public required ISharedImmediateTexture Icon { get; init; }
@@ -75,8 +73,7 @@ public sealed class DutyModule : SearchModule
         }
     }
 
-    private record ContentRouletteSearchResult : ISearchResult
-    {
+    private record ContentRouletteSearchResult : ISearchResult {
         public string CatName => "Duty Roulette";
         public required string Name { get; init; }
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.RoulettesIcon;

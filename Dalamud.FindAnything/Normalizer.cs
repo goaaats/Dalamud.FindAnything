@@ -5,8 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Dalamud.FindAnything;
 
-public class Normalizer
-{
+public class Normalizer {
     private readonly Sanitizer sanitizer;
     private readonly bool normalizeKana;
 

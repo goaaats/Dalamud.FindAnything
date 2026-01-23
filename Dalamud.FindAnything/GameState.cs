@@ -4,8 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace Dalamud.FindAnything;
 
-public class GameState
-{
+public class GameState {
     public bool IsInDuty() {
         if (Service.ClientState.TerritoryType == 1055) return false;
 

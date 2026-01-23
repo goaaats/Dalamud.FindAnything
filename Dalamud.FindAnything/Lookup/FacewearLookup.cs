@@ -1,5 +1,4 @@
 ﻿using Dalamud.FindAnything.Modules;
-using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Interface.Textures;
 using Lumina.Excel.Sheets;
 

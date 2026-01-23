@@ -4,8 +4,7 @@ using System.Linq;
 
 namespace Dalamud.FindAnything;
 
-public static class HintProvider
-{
+public static class HintProvider {
     private static readonly Configuration.HintKind StartHintLevel = Enum.GetValues<Configuration.HintKind>().First();
     private static readonly Configuration.HintKind NoHintLevel = Enum.GetValues<Configuration.HintKind>().Last() + 1;
 
@@ -27,8 +26,7 @@ public static class HintProvider
         FindAnythingPlugin.ConfigManager.Save();
     }
 
-    public class HintResult : ISearchResult
-    {
+    public class HintResult : ISearchResult {
         public string CatName => string.Empty;
 
         public string Name => HintLevel switch {

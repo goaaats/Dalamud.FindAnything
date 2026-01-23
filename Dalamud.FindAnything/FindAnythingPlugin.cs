@@ -9,8 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Dalamud.FindAnything;
 
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
-public sealed class FindAnythingPlugin : IDalamudPlugin
-{
+public sealed class FindAnythingPlugin : IDalamudPlugin {
     private const string CommandName = "/wotsit";
 
     public static FindAnythingPlugin Instance { get; private set; } = null!;

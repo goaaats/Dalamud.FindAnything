@@ -1,13 +1,11 @@
 ﻿using Dalamud.Interface.Textures;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class CraftingRecipesModule : SearchModule
-{
+public sealed class CraftingRecipesModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.CraftingRecipes;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -30,8 +28,7 @@ public sealed class CraftingRecipesModule : SearchModule
         }
     }
 
-    private class CraftingRecipeResult : ISearchResult
-    {
+    private class CraftingRecipeResult : ISearchResult {
         public string CatName =>
             CraftType is { } craftType
                 ? $"Crafting Recipe ({craftType.Name.ToText()})"

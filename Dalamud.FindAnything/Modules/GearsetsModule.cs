@@ -6,8 +6,7 @@ using System.Collections.Generic;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class GearsetsModule : SearchModule
-{
+public sealed class GearsetsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Gearsets;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -32,8 +31,7 @@ public sealed class GearsetsModule : SearchModule
         }
     }
 
-    private class GearsetSearchResult : ISearchResult
-    {
+    private class GearsetSearchResult : ISearchResult {
         public string CatName => "Gearset";
         public string Name => Gearset.Name;
         public ISharedImmediateTexture? Icon => FindAnythingPlugin.TexCache.ClassJobIcons[Gearset.ClassJob];

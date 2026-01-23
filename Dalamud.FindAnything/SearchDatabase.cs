@@ -8,10 +8,8 @@ using System.Collections.Generic;
 
 namespace Dalamud.FindAnything;
 
-public class SearchDatabase
-{
-    public struct SearchEntry
-    {
+public class SearchDatabase {
+    public struct SearchEntry {
         public string Searchable;
         public string Display;
     }

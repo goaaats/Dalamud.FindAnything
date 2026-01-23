@@ -10,8 +10,7 @@ using System.Numerics;
 
 namespace Dalamud.FindAnything.Settings;
 
-public partial class SettingsWindow
-{
+public partial class SettingsWindow {
     private void DrawSearchTab() {
         using var tabItem = ImRaii.TabItem("What to search");
         if (!tabItem) return;

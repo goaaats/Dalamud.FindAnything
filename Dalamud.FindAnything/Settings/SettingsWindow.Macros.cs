@@ -12,8 +12,7 @@ using System.Numerics;
 
 namespace Dalamud.FindAnything.Settings;
 
-public partial class SettingsWindow
-{
+public partial class SettingsWindow {
     private bool macroRearrangeMode;
     private int macroDragDropSource = -1;
 
@@ -166,6 +165,7 @@ public partial class SettingsWindow
                 }
 
                 break;
+
             case Configuration.MacroEntry.MacroEntryKind.SingleLine: {
                 ImGui.SetNextItemWidth(-1);
                 var line = macro.Line;

@@ -9,8 +9,7 @@ using System.Threading.Tasks;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class MathsModule : SearchModule
-{
+public sealed class MathsModule : SearchModule {
     private object? lastAcceptedExpressionResult;
 
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Maths;
@@ -22,7 +21,7 @@ public sealed class MathsModule : SearchModule
 
     public MathsModule() {
         Expression.CacheEnabled = true;
-        Task.Run(() => new Expression("1+1").Evaluate());  // Warm up evaluator, takes like 100ms
+        Task.Run(() => new Expression("1+1").Evaluate()); // Warm up evaluator, takes like 100ms
     }
 
     private void CheckExpression(SearchContext ctx) {
@@ -42,6 +41,7 @@ public sealed class MathsModule : SearchModule
                     }
 
                     break;
+
                 case "cexp":
                     if (args.Parameters.Length == 0) {
                         args.Result = MathAux.GetCurrentExp();
@@ -49,6 +49,7 @@ public sealed class MathsModule : SearchModule
                     }
 
                     break;
+
                 case "expleft":
                     if (args.Parameters.Length == 0) {
                         args.Result = MathAux.GetExpLeft();
@@ -56,6 +57,7 @@ public sealed class MathsModule : SearchModule
                     }
 
                     break;
+
                 case "lvl":
                     if (args.Parameters.Length == 0) {
                         args.Result = MathAux.GetLevel();
@@ -107,8 +109,7 @@ public sealed class MathsModule : SearchModule
         }
     }
 
-    private class ExpressionResult : ISearchResult
-    {
+    private class ExpressionResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => !HasError ? $" = {Result}" : " = ERROR";
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.MathsIcon;
@@ -135,8 +136,7 @@ public sealed class MathsModule : SearchModule
         }
     }
 
-    private class GameSearchResult : ISearchResult
-    {
+    private class GameSearchResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => "DN Farm";
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GameIcon;
@@ -150,8 +150,7 @@ public sealed class MathsModule : SearchModule
     }
 }
 
-public static class MathAux
-{
+public static class MathAux {
     public static int GetNeededExpForLevel(short level) {
         var paramGrow = Service.Data.GetExcelSheet<ParamGrow>();
         if (paramGrow.Count < level) {

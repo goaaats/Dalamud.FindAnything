@@ -1,14 +1,13 @@
 ﻿using Lumina.Text.Payloads;
 using Lumina.Text.ReadOnly;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Dalamud.FindAnything;
 
-public static class LuminaExtensions
-{
+public static class LuminaExtensions {
     /// <summary>
     /// Modified version of Lumina's ExtractText which renders a ReadOnlySeString in a way that's suited to display and
     /// text matching, by avoiding unsearchable characters and characters that don't render correctly.
@@ -17,8 +16,7 @@ public static class LuminaExtensions
     /// <returns>A plain string</returns>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     [SuppressMessage("ReSharper", "SwitchStatementMissingSomeEnumCasesNoDefault")] // Just skip them
-    public static string ToText(this ReadOnlySeString str)
-    {
+    public static string ToText(this ReadOnlySeString str) {
         var span = str.AsSpan();
         var len = 0;
         foreach (var v in span) {
@@ -26,8 +24,8 @@ public static class LuminaExtensions
                 case ReadOnlySePayloadType.Text:
                     len += Encoding.UTF8.GetCharCount(v.Body);
                     break;
-                case ReadOnlySePayloadType.Macro:
-                {
+
+                case ReadOnlySePayloadType.Macro: {
                     // Skip rendering NonBreakingSpace and SoftHyphen entirely
                     switch (v.MacroCode) {
                         case MacroCode.NewLine:
@@ -47,8 +45,8 @@ public static class LuminaExtensions
                 case ReadOnlySePayloadType.Text:
                     bufspan = bufspan[Encoding.UTF8.GetChars(v.Body, bufspan) ..];
                     break;
-                case ReadOnlySePayloadType.Macro:
-                {
+
+                case ReadOnlySePayloadType.Macro: {
                     switch (v.MacroCode) {
                         case MacroCode.NewLine:
                             bufspan[0] = ' ';

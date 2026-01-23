@@ -1,13 +1,11 @@
-﻿using System;
+﻿using Dalamud.Plugin.Ipc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Plugin.Ipc;
-using Dalamud.Plugin.Services;
 
 namespace Dalamud.FindAnything;
 
-public sealed class IpcSystem : IDisposable
-{
+public sealed class IpcSystem : IDisposable {
     private readonly Normalizer normalizer;
     private readonly ICallGateProvider<string, string, uint, string> cgRegister;
     private readonly ICallGateProvider<string, string, string, uint, string> cgRegisterWithSearch;
@@ -19,8 +17,7 @@ public sealed class IpcSystem : IDisposable
 
     public Dictionary<string, List<IpcBinding>> TrackedIpcs;
 
-    public class IpcBinding
-    {
+    public class IpcBinding {
         public required string Display { get; init; }
         public required string Search { get; init; }
         public required uint IconId { get; init; }

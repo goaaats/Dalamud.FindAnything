@@ -2,14 +2,12 @@
 using Dalamud.Utility;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
-using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
 namespace Dalamud.FindAnything.Lookup;
 
-public class WikiLookup : ILookup
-{
+public class WikiLookup : ILookup {
     private readonly History history = new();
 
     public string GetPlaceholder() => "Search in wikis...";
@@ -96,10 +94,8 @@ public class WikiLookup : ILookup
         history.Add(LookupType.Wiki, criteria, result);
     }
 
-    public class WikiDataResult : ISearchResult
-    {
-        public enum Category
-        {
+    public class WikiDataResult : ISearchResult {
+        public enum Category {
             Instance,
             Quest,
             Item,
@@ -122,8 +118,7 @@ public class WikiLookup : ILookup
         }
     }
 
-    public class WikiTextResult : ISearchResult
-    {
+    public class WikiTextResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => $"Search for \"{Query}\" in wikis...";
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.WikiIcon;

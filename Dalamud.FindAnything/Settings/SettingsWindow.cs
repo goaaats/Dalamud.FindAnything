@@ -13,8 +13,7 @@ using System.Numerics;
 
 namespace Dalamud.FindAnything.Settings;
 
-public partial class SettingsWindow : Window
-{
+public partial class SettingsWindow : Window {
     private DateTime? finderOffsetChangeTime;
     private const int SaveDiscardOffset = -40;
 
@@ -81,8 +80,7 @@ public partial class SettingsWindow : Window
     }
 }
 
-public class FilterCombo<T>
-{
+public class FilterCombo<T> {
     private readonly T[] items;
     private readonly List<int> matchingIndexes = [];
     private readonly HashSet<uint> openIds = [];

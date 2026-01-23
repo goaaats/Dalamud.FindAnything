@@ -5,16 +5,14 @@ using Lumina.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class GatheringItemsModule : SearchModule
-{
+public sealed class GatheringItemsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.GatheringItems;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         var items = Service.Data.GetExcelSheet<Item>()!;
         var gatheringItem = Service.Data.GetExcelSheet<GatheringItem>()!;
 
-        foreach (var gatherSearch in FindAnythingPlugin.SearchDatabase.GetAll<GatheringItem>())
-        {
+        foreach (var gatherSearch in FindAnythingPlugin.SearchDatabase.GetAll<GatheringItem>()) {
             var gather = gatheringItem.GetRow(gatherSearch.Key)!;
             var item = items.GetRowOrDefault(gather.Item.RowId);
 
@@ -24,8 +22,7 @@ public sealed class GatheringItemsModule : SearchModule
 
             var score = matcher.Matches(gatherSearch.Value.Searchable);
             if (score > 0) {
-                ctx.AddResult(new GatheringItemResult
-                {
+                ctx.AddResult(new GatheringItemResult {
                     Score = score * Weight,
                     Item = gather,
                     Name = gatherSearch.Value.Display,

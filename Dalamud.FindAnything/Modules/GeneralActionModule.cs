@@ -5,15 +5,14 @@ using Lumina.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class GeneralActionModule : SearchModule
-{
+public sealed class GeneralActionModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.GeneralAction;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
         unsafe {
-            var hasMelding = UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(66175); // Waking the Spirit
+            var hasMelding = UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(66175);         // Waking the Spirit
             var hasAdvancedMelding = UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(66176); // Melding Materia Muchly
 
             foreach (var generalAction in FindAnythingPlugin.SearchDatabase.GetAll<GeneralAction>()) {
@@ -39,8 +38,7 @@ public sealed class GeneralActionModule : SearchModule
         }
     }
 
-    public class GeneralActionSearchResult : ISearchResult
-    {
+    public class GeneralActionSearchResult : ISearchResult {
         public string CatName => "General Actions";
         public required string Name { get; set; }
         public required ISharedImmediateTexture? Icon { get; init; }

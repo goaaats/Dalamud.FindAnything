@@ -2,13 +2,11 @@
 using Dalamud.Interface.Textures;
 using Lumina.Excel.Sheets;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class EmoteModule : SearchModule
-{
+public sealed class EmoteModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Emote;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -39,8 +37,7 @@ public sealed class EmoteModule : SearchModule
         }
     }
 
-    public class EmoteSearchResult : ISearchResult
-    {
+    public class EmoteSearchResult : ISearchResult {
         public string CatName {
             get {
                 var cat = "Emote";
@@ -80,8 +77,7 @@ public sealed class EmoteModule : SearchModule
         }
     }
 
-    public enum EmoteModeChoice
-    {
+    public enum EmoteModeChoice {
         Default,
         MotionOnly,
     }

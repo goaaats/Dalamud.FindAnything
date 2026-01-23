@@ -9,8 +9,7 @@ using System.Numerics;
 namespace Dalamud.FindAnything;
 
 [Serializable]
-public class Configuration : IPluginConfiguration
-{
+public class Configuration : IPluginConfiguration {
     public int Version { get; set; } = 0;
 
     public SearchSetting ToSearchV3 { get; set; } =
@@ -29,8 +28,7 @@ public class Configuration : IPluginConfiguration
 
     public uint ShiftShiftDelay { get; set; } = 40;
 
-    public enum DoubleTapUnit
-    {
+    public enum DoubleTapUnit {
         Frames,
         Milliseconds,
     }
@@ -52,15 +50,13 @@ public class Configuration : IPluginConfiguration
     public bool DisableMouseSelection { get; set; } = false;
     public bool OpenCraftingLogToRecipe { get; set; } = false;
 
-    public enum OpenMode
-    {
+    public enum OpenMode {
         ShiftShift,
         Combo,
     }
 
     [Flags]
-    public enum SearchSetting : uint
-    {
+    public enum SearchSetting : uint {
         None = 0,
         Duty = 1 << 0,
         Aetheryte = 1 << 1,
@@ -74,7 +70,7 @@ public class Configuration : IPluginConfiguration
         Mounts = 1 << 9,
         Minions = 1 << 10,
         MacroLinks = 1 << 11, // Cannot be toggled off
-        Internal = 1 << 12, // Cannot be toggled off
+        Internal = 1 << 12,   // Cannot be toggled off
         Maths = 1 << 13,
         FashionAccessories = 1 << 14,
         Collection = 1 << 15,
@@ -95,8 +91,7 @@ public class Configuration : IPluginConfiguration
         Reserved24 = 1 << 30,
     }
 
-    public class MacroEntry
-    {
+    public class MacroEntry {
         public bool Shared { get; set; }
         public int Id { get; set; }
         public string Line { get; set; } = string.Empty;
@@ -104,8 +99,7 @@ public class Configuration : IPluginConfiguration
         public int IconId { get; set; }
         public MacroEntryKind Kind { get; set; }
 
-        public enum MacroEntryKind
-        {
+        public enum MacroEntryKind {
             Id,
             SingleLine,
         }
@@ -124,8 +118,7 @@ public class Configuration : IPluginConfiguration
 
     public List<MacroEntry> MacroLinks { get; set; } = [];
 
-    public enum MacroSearchDirection
-    {
+    public enum MacroSearchDirection {
         BottomToTop,
         TopToBottom,
     }
@@ -136,8 +129,7 @@ public class Configuration : IPluginConfiguration
 
 
     [Flags]
-    public enum AetheryteAdditionalShortcut
-    {
+    public enum AetheryteAdditionalShortcut {
         None,
         MarketBoard = 1 << 0,
         StrikingDummy = 1 << 1,
@@ -167,8 +159,7 @@ public class Configuration : IPluginConfiguration
 
     public bool HistoryEnabled { get; set; } = true;
 
-    public enum HintKind
-    {
+    public enum HintKind {
         HintTyping,
         HintEnter,
         HintUpDown,
@@ -181,21 +172,20 @@ public class Configuration : IPluginConfiguration
         HintMath,
     }
 
-    public enum EmoteMotionMode
-    {
+    public enum EmoteMotionMode {
         Default,
         Ask,
         AlwaysMotion,
     }
 
-    public enum ScrollSpeed
-    {
+    public enum ScrollSpeed {
         Slow,
         Medium,
         Fast,
     }
 
-    [JsonProperty(NullValueHandling=NullValueHandling.Ignore)] public ScrollSpeed? Speed { get; set; }
+    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+    public ScrollSpeed? Speed { get; set; }
 
     private static readonly List<SearchSetting> DefaultOrder = [
         SearchSetting.MacroLinks,
@@ -218,9 +208,11 @@ public class Configuration : IPluginConfiguration
         SearchSetting.GatheringItems,
     ];
 
-    [JsonProperty("MatchMode", NullValueHandling=NullValueHandling.Ignore)] public MatchMode? MatchModeOld { get; set; }
+    [JsonProperty("MatchMode", NullValueHandling = NullValueHandling.Ignore)]
+    public MatchMode? MatchModeOld { get; set; }
 
-    [JsonProperty("MatchModeNew")] public MatchMode MatchMode { get; set; } = MatchMode.Fuzzy;
+    [JsonProperty("MatchModeNew")]
+    public MatchMode MatchMode { get; set; } = MatchMode.Fuzzy;
 
     public string MatchSigilSimple { get; set; } = "'";
 
@@ -228,8 +220,7 @@ public class Configuration : IPluginConfiguration
 
     public string MatchSigilFuzzyParts { get; set; } = "~";
 
-    public enum CursorControlType
-    {
+    public enum CursorControlType {
         System,
         Custom,
     }

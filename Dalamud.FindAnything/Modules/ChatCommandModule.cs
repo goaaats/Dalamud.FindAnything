@@ -1,13 +1,9 @@
 ﻿using Dalamud.Interface.Textures;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.Sheets;
 using System;
-using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class ChatCommandModule : SearchModule
-{
+public sealed class ChatCommandModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.None;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -19,8 +15,7 @@ public sealed class ChatCommandModule : SearchModule
         }
     }
 
-    private class ChatCommandSearchResult : ISearchResult
-    {
+    private class ChatCommandSearchResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => $"Run chat command \"{Command}\"";
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.ChatIcon;

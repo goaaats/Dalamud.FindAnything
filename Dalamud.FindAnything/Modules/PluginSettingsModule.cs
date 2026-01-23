@@ -3,8 +3,7 @@ using Dalamud.Plugin;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class PluginSettingsModule : SearchModule
-{
+public sealed class PluginSettingsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.PluginSettings;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -58,8 +57,7 @@ public sealed class PluginSettingsModule : SearchModule
         }
     }
 
-    private class PluginSettingsSearchResult : ISearchResult
-    {
+    private class PluginSettingsSearchResult : ISearchResult {
         public string CatName => "Other Plugins";
         public required string Name { get; init; }
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.PluginInstallerIcon;
@@ -73,8 +71,7 @@ public sealed class PluginSettingsModule : SearchModule
         }
     }
 
-    private class PluginInterfaceSearchResult : ISearchResult
-    {
+    private class PluginInterfaceSearchResult : ISearchResult {
         public string CatName => "Other Plugins";
         public required string Name { get; init; }
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.PluginInstallerIcon;
@@ -88,8 +85,7 @@ public sealed class PluginSettingsModule : SearchModule
         }
     }
 
-    private class IpcSearchResult : ISearchResult
-    {
+    private class IpcSearchResult : ISearchResult {
         public required string CatName { get; init; }
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }

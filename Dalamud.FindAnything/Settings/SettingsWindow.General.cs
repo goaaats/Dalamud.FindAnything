@@ -11,8 +11,7 @@ using System.Linq;
 
 namespace Dalamud.FindAnything.Settings;
 
-public partial class SettingsWindow
-{
+public partial class SettingsWindow {
     private void DrawGeneralTab() {
         using var tabItem = ImRaii.TabItem("General");
         if (!tabItem) return;

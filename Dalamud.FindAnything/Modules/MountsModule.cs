@@ -1,14 +1,12 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.Sheets;
 using System.Globalization;
 using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class MountsModule : SearchModule
-{
+public sealed class MountsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Mounts;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -44,8 +42,7 @@ public sealed class MountsModule : SearchModule
         }
     }
 
-    private class MountResult : ISearchResult
-    {
+    private class MountResult : ISearchResult {
         public string CatName => "Mount";
         public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular.ToText());
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon(Mount.Icon);

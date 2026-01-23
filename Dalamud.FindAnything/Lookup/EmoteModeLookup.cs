@@ -1,13 +1,11 @@
 ﻿using Dalamud.FindAnything.Modules;
 using Dalamud.Interface.Textures;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Dalamud.FindAnything.Lookup;
 
-public class EmoteModeLookup : ILookup
-{
+public class EmoteModeLookup : ILookup {
     private static ISearchResult? _baseResult;
 
     public static void SetBaseResult(ISearchResult result) {
@@ -31,8 +29,7 @@ public class EmoteModeLookup : ILookup
         );
     }
 
-    private class EmoteModeChoicerResult : ISearchResult
-    {
+    private class EmoteModeChoicerResult : ISearchResult {
         public string CatName => string.Empty;
 
         public string Name => Choice switch {

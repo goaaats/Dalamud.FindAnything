@@ -1,21 +1,19 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using Dalamud.Interface.Textures;
+﻿using Dalamud.Interface.Textures;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using System.Collections.Generic;
+using System.IO;
 
-namespace Dalamud.FindAnything
-{
-    public class TextureCache
-    {
+namespace Dalamud.FindAnything {
+    public class TextureCache {
         private readonly ITextureProvider textureProvider;
 
         /*
-        
-        
+
+
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> ContentTypeIcons { get; }
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> EmoteIcons { get; }
-        
+
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> MountIcons { get; }
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> MinionIcons { get; }
         public IReadOnlyDictionary<uint, ISharedImmediateTexture> FashionAccessoryIcons { get; }
@@ -41,23 +39,20 @@ namespace Dalamud.FindAnything
         public ISharedImmediateTexture RoulettesIcon { get; }
 
         public ISharedImmediateTexture GameIcon { get; }
-       
 
-        public ISharedImmediateTexture GetIcon(uint iconId)
-        {
-            return textureProvider.GetFromGameIcon(new GameIconLookup
-            {
+
+        public ISharedImmediateTexture GetIcon(uint iconId) {
+            return textureProvider.GetFromGameIcon(new GameIconLookup {
                 HiRes = false,
                 IconId = iconId,
             });
         }
 
-        private TextureCache(IDataManager data, ITextureProvider textureProvider)
-        {
+        private TextureCache(IDataManager data, ITextureProvider textureProvider) {
             this.textureProvider = textureProvider;
 
             /*
-            
+
 
 
 
@@ -82,7 +77,7 @@ namespace Dalamud.FindAnything
             }
             EmoteIcons = emotes;
 
-            
+
 
             var mountIcons = new Dictionary<uint, IDalamudTextureWrap>();
             foreach (var mount in data.GetExcelSheet<Mount>()!)
@@ -128,40 +123,32 @@ namespace Dalamud.FindAnything
             }
             CollectionIcons = collectionIcons;
             */
-            
+
             var mainCommands = new Dictionary<uint, ISharedImmediateTexture>();
-            foreach (var mainCommand in data.GetExcelSheet<MainCommand>()!)
-            {
-                mainCommands.Add(mainCommand.RowId, GetIcon((uint) mainCommand.Icon)!);
+            foreach (var mainCommand in data.GetExcelSheet<MainCommand>()!) {
+                mainCommands.Add(mainCommand.RowId, GetIcon((uint)mainCommand.Icon)!);
             }
             MainCommandIcons = mainCommands;
 
             var extraCommands = new Dictionary<uint, ISharedImmediateTexture>();
-            foreach (var extraCommand in data.GetExcelSheet<ExtraCommand>()!)
-            {
-                extraCommands.Add(extraCommand.RowId, GetIcon((uint) extraCommand.Icon)!);
+            foreach (var extraCommand in data.GetExcelSheet<ExtraCommand>()!) {
+                extraCommands.Add(extraCommand.RowId, GetIcon((uint)extraCommand.Icon)!);
             }
             ExtraCommandIcons = extraCommands;
-            
+
             var generalActions = new Dictionary<uint, ISharedImmediateTexture>();
-            foreach (var action in data.GetExcelSheet<GeneralAction>()!)
-            {
-                generalActions.Add(action.RowId, GetIcon((uint) action.Icon)!);
+            foreach (var action in data.GetExcelSheet<GeneralAction>()!) {
+                generalActions.Add(action.RowId, GetIcon((uint)action.Icon)!);
             }
             GeneralActionIcons = generalActions;
-            
+
             var cjIcons = new Dictionary<uint, ISharedImmediateTexture>();
-            foreach (var classJob in data.GetExcelSheet<ClassJob>()!)
-            {
+            foreach (var classJob in data.GetExcelSheet<ClassJob>()!) {
                 ISharedImmediateTexture? icon;
-                if (classJob.JobIndex != 0)
-                {
+                if (classJob.JobIndex != 0) {
                     icon = GetIcon(062400 + (uint)classJob.JobIndex);
-                }
-                else
-                {
-                    var offset = classJob.RowId switch
-                    {
+                } else {
+                    var offset = classJob.RowId switch {
                         1 => 1,
                         2 => 2,
                         3 => 3,
@@ -186,7 +173,7 @@ namespace Dalamud.FindAnything
                         _ => 0,
                     };
 
-                    icon = GetIcon(062300 + (uint) offset);
+                    icon = GetIcon(062300 + (uint)offset);
                 }
 
                 cjIcons.Add(classJob.RowId, icon);
@@ -209,7 +196,7 @@ namespace Dalamud.FindAnything
                 Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "Normal.png"));
             GameIcon = textureProvider.GetFromFile(gameIconPath);
         }
-        
+
         public static TextureCache Load(IDataManager data, ITextureProvider textureProvider) => new(data, textureProvider);
     }
 }

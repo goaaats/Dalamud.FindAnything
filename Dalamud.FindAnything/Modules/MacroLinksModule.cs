@@ -6,8 +6,7 @@ using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
-public sealed class MacroLinksModule : SearchModule
-{
+public sealed class MacroLinksModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.MacroLinks;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -27,8 +26,7 @@ public sealed class MacroLinksModule : SearchModule
         }
     }
 
-    private class MacroLinkSearchResult : ISearchResult
-    {
+    private class MacroLinkSearchResult : ISearchResult {
         public string CatName => "Macros";
         public string Name => Entry.SearchName.Split(';', StringSplitOptions.TrimEntries).First();
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon((uint)Entry.IconId);
@@ -56,6 +54,7 @@ public sealed class MacroLinksModule : SearchModule
                     }
                     RaptureShellModule.Instance()->ExecuteMacro(macro);
                     break;
+
                 case Configuration.MacroEntry.MacroEntryKind.SingleLine:
                     if (!Entry.Line.StartsWith('/')) {
                         FindAnythingPlugin.Instance.UserError("Invalid slash command:" + Entry.Line);

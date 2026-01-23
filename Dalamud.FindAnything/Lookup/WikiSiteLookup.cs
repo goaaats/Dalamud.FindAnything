@@ -1,17 +1,14 @@
 ﻿using Dalamud.Interface.Textures;
 using Dalamud.Utility;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 
 namespace Dalamud.FindAnything.Lookup;
 
-public class WikiSiteLookup : ILookup
-{
+public class WikiSiteLookup : ILookup {
     private static ISearchResult? _baseResult;
     private static bool _teamcraftLocalFailed;
 
@@ -78,10 +75,8 @@ public class WikiSiteLookup : ILookup
         return LookupResult.Bag(ctx.Results);
     }
 
-    private class WikiSiteChoicerResult : ISearchResult
-    {
-        public enum SiteChoice
-        {
+    private class WikiSiteChoicerResult : ISearchResult {
+        public enum SiteChoice {
             GamerEscape,
             GarlandTools,
             ConsoleGamesWiki,
@@ -156,6 +151,7 @@ public class WikiSiteLookup : ILookup
                 case SiteChoice.GamerEscape:
                     OpenWikiPage(wikiResult.Name, Site);
                     break;
+
                 case SiteChoice.GarlandTools:
                     switch (wikiResult.DataCategory) {
                         case WikiLookup.WikiDataResult.Category.Instance:

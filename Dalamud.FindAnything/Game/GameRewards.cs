@@ -11,18 +11,15 @@ using System.Text;
 
 namespace Dalamud.FindAnything.Game;
 
-public static class GameRewards
-{
-    public interface IRewardItem
-    {
+public static class GameRewards {
+    public interface IRewardItem {
         public string Name { get; }
         public float Cost { get; }
 
         public void Bought();
     }
 
-    private class GoldenTicketResponse
-    {
+    private class GoldenTicketResponse {
         [JsonProperty("hasTicketsLeft")]
         public bool HasTicketsLeft { get; set; }
 
@@ -30,8 +27,7 @@ public static class GameRewards
         public int TicketNumber { get; set; }
     }
 
-    public static bool TryGetGoldenTicket(out int ticketNumber)
-    {
+    public static bool TryGetGoldenTicket(out int ticketNumber) {
         using var client = new HttpClient();
         client.Timeout = TimeSpan.FromSeconds(20);
 
@@ -44,8 +40,7 @@ public static class GameRewards
 
         var response = JsonConvert.DeserializeObject<GoldenTicketResponse>(text);
 
-        if (response is { HasTicketsLeft: true })
-        {
+        if (response is { HasTicketsLeft: true }) {
             ticketNumber = response.TicketNumber;
             return true;
         }
@@ -54,18 +49,15 @@ public static class GameRewards
         return false;
     }
 
-    public class EmoteSetReward : IRewardItem
-    {
+    public class EmoteSetReward : IRewardItem {
         public string Name => "a special set of bespoke, handcrafted DN emojis";
         public float Cost => 1_800_000;
-        public void Bought()
-        {
+        public void Bought() {
             var tmpFolder = Path.Combine(Path.GetTempPath(), "Noses");
             Directory.CreateDirectory(tmpFolder);
 
             var noses = Directory.GetFiles(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses"), "*.png");
-            foreach (var nose in noses)
-            {
+            foreach (var nose in noses) {
                 File.Copy(nose, Path.Combine(tmpFolder, Path.GetFileName(nose)), true);
             }
 
@@ -75,13 +67,11 @@ public static class GameRewards
         }
     }
 
-    public class WallpaperReward : IRewardItem
-    {
+    public class WallpaperReward : IRewardItem {
         public string Name => "DN Desktop Wallpaper";
         public float Cost => 1_900_000;
 
-        public sealed class Wallpaper
-        {
+        public sealed class Wallpaper {
             Wallpaper() { }
 
             const int SPI_SETDESKWALLPAPER = 20;
@@ -91,8 +81,7 @@ public static class GameRewards
             [DllImport("user32.dll", CharSet = CharSet.Auto)]
             static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
 
-            public enum Style
-            {
+            public enum Style {
                 Tile,
                 Center,
                 Stretch,
@@ -101,8 +90,7 @@ public static class GameRewards
                 Fill,
             }
 
-            public static void Set(string path, Style style)
-            {
+            public static void Set(string path, Style style) {
                 if (Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true) is not { } key) {
                     Service.Notifications.AddNotification(new Notification {
                         Title = "Failed to set wallpaper.",
@@ -112,13 +100,11 @@ public static class GameRewards
                     return;
                 }
 
-                if (style == Style.Fill)
-                {
+                if (style == Style.Fill) {
                     key.SetValue(@"WallpaperStyle", 10.ToString());
                     key.SetValue(@"TileWallpaper", 0.ToString());
                 }
-                if (style == Style.Fit)
-                {
+                if (style == Style.Fit) {
                     key.SetValue(@"WallpaperStyle", 6.ToString());
                     key.SetValue(@"TileWallpaper", 0.ToString());
                 }
@@ -127,18 +113,15 @@ public static class GameRewards
                     key.SetValue(@"WallpaperStyle", 22.ToString());
                     key.SetValue(@"TileWallpaper", 0.ToString());
                 }
-                if (style == Style.Stretch)
-                {
+                if (style == Style.Stretch) {
                     key.SetValue(@"WallpaperStyle", 2.ToString());
                     key.SetValue(@"TileWallpaper", 0.ToString());
                 }
-                if (style == Style.Tile)
-                {
+                if (style == Style.Tile) {
                     key.SetValue(@"WallpaperStyle", 0.ToString());
                     key.SetValue(@"TileWallpaper", 1.ToString());
                 }
-                if (style == Style.Center)
-                {
+                if (style == Style.Center) {
                     key.SetValue(@"WallpaperStyle", 0.ToString());
                     key.SetValue(@"TileWallpaper", 0.ToString());
                 }
@@ -151,26 +134,20 @@ public static class GameRewards
         }
 
 
-        public void Bought()
-        {
-            try
-            {
+        public void Bought() {
+            try {
                 Wallpaper.Set(Path.Combine(Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "wallpaper.jpg"), Wallpaper.Style.Fill);
-                Service.Notifications.AddNotification(new Notification
-                {
+                Service.Notifications.AddNotification(new Notification {
                     Title = "Wallpaper bought!",
                     Content = "Congrats!",
                 });
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 Service.Log.Error(ex, "Could not set Desktop Wallpaper.");
             }
         }
     }
 
-    public static readonly IReadOnlyDictionary<uint, IRewardItem> Rewards = new Dictionary<uint, IRewardItem>
-    {
+    public static readonly IReadOnlyDictionary<uint, IRewardItem> Rewards = new Dictionary<uint, IRewardItem> {
         { 0x00, new WallpaperReward() },
         { 0x01, new EmoteSetReward() }
     };
