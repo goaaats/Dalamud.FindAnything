@@ -47,6 +47,7 @@ public partial class SettingsWindow {
     private int lineScrollRepeatInterval;
     private int pageScrollRepeatDelay;
     private int pageScrollRepeatInterval;
+    private bool matchShortPluginSettings;
 
     private void CopyConfigToWindow(Configuration config) {
         flags = (uint)config.ToSearchV3;
@@ -88,6 +89,8 @@ public partial class SettingsWindow {
         lineScrollRepeatInterval = config.CursorLineRepeatInterval;
         pageScrollRepeatDelay = config.CursorPageRepeatDelay;
         pageScrollRepeatInterval = config.CursorPageRepeatInterval;
+
+        matchShortPluginSettings = config.MatchShortPluginSettings;
     }
 
     private void CopyWindowToConfig(Configuration config) {
@@ -140,6 +143,8 @@ public partial class SettingsWindow {
         config.CursorLineRepeatInterval = lineScrollRepeatInterval;
         config.CursorPageRepeatDelay = pageScrollRepeatDelay;
         config.CursorPageRepeatInterval = pageScrollRepeatInterval;
+
+        config.MatchShortPluginSettings = matchShortPluginSettings;
     }
 
     private void DrawSaveFooter() {

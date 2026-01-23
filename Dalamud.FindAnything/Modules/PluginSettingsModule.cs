@@ -13,7 +13,14 @@ public sealed class PluginSettingsModule : SearchModule {
 
             if (plugin.HasMainUi) {
                 var name = $"Open {plugin.Name} Interface";
-                var score = matcher.Matches(normalizer.Searchable(name));
+
+                int score;
+                if (FindAnythingPlugin.Configuration.MatchShortPluginSettings) {
+                    var shortName = $"{plugin.Name} Interface";
+                    score = matcher.MatchesAny(normalizer.Searchable(name), normalizer.Searchable(shortName));
+                } else {
+                    score = matcher.Matches(normalizer.Searchable(name));
+                }
 
                 if (score > 0) {
                     ctx.AddResult(new PluginInterfaceSearchResult {
@@ -26,7 +33,14 @@ public sealed class PluginSettingsModule : SearchModule {
 
             if (plugin.HasConfigUi) {
                 var name = $"Open {plugin.Name} Settings";
-                var score = matcher.Matches(normalizer.Searchable(name));
+
+                int score;
+                if (FindAnythingPlugin.Configuration.MatchShortPluginSettings) {
+                    var shortName = $"{plugin.Name} Settings";
+                    score = matcher.MatchesAny(normalizer.Searchable(name), normalizer.Searchable(shortName));
+                } else {
+                    score = matcher.Matches(normalizer.Searchable(name));
+                }
 
                 if (score > 0) {
                     ctx.AddResult(new PluginSettingsSearchResult {

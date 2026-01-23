@@ -235,6 +235,8 @@ public class Configuration : IPluginConfiguration {
 
     public int CursorPageRepeatInterval = 200;
 
+    public bool MatchShortPluginSettings = false;
+
     public GameWindow.SimulationState? SimulationState { get; set; } = null;
 
     public int? GoldenTicketNumber { get; set; } = null;

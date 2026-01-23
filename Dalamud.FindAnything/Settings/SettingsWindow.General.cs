@@ -192,6 +192,7 @@ public partial class SettingsWindow {
         ImGui.Checkbox("Force TeamCraft links to open in your browser", ref tcForceBrowser);
         ImGui.Checkbox("Disable mouse selection in results list unless Quick Select Key is held", ref disableMouseSelection);
         ImGui.Checkbox("When selecting a crafting recipe, jump to the recipe instead of using Recipe Search", ref openCraftingLogToRecipe);
+        ImGui.Checkbox("Match plugin settings and interface links using short form without 'Open'", ref matchShortPluginSettings);
 
         ImGuiHelpers.ScaledDummy(5);
     }
