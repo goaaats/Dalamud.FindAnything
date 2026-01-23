@@ -226,12 +226,19 @@ public sealed class Finder : IDisposable {
 
         var clickedIndex = -1;
         var selectedScrollPos = 0f;
+        var fastModeScrollPos = ImGui.GetScrollY();
 
         for (var i = 0; i < results.Length; i++) {
             var result = results[i];
 
             if (i == SelectedIndex - SelectionScrollOffset) {
                 selectedScrollPos = ImGui.GetCursorPosY();
+            }
+
+            // FAST MODE (but makes newly appearing icons be blank for 1 frame more often)
+            if (!ImGui.IsItemVisible() && float.Abs(fastModeScrollPos - ImGui.GetCursorPosY()) > textSize.Y * 2) {
+                ImGui.Selectable($"X###faEntry{i}", false, ImGuiSelectableFlags.None, selectableSize);
+                continue;
             }
 
             var selectableFlags = ImGuiSelectableFlags.None;
