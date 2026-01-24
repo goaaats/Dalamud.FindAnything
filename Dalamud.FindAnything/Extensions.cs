@@ -1,8 +1,22 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 
 namespace Dalamud.FindAnything;
 
-public static class StringExtensions {
+public static class Extensions {
+    extension<T>(T self) where T : struct, Enum {
+        public string GetDisplayName() {
+            if (Enum.GetName(self) is { } name
+                && typeof(T).GetField(name) is { } field
+                && field.GetCustomAttribute<DisplayAttribute>() is { } displayAttribute
+                && displayAttribute.GetName() is { } displayName) {
+                return displayName;
+            }
+            return self.ToString();
+        }
+    }
+
     extension(string source) {
         public string Downcase(bool normalizeKana = false) {
             if (normalizeKana) {
