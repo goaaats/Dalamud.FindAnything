@@ -2,7 +2,7 @@
 using Dalamud.Utility;
 using Lumina.Excel.Sheets;
 using Lumina.Extensions;
-using System.Linq;
+using System;
 using System.Web;
 
 namespace Dalamud.FindAnything.Lookup;
@@ -43,7 +43,7 @@ public class WikiLookup : ILookup {
         });
 
         foreach (var cfc in FindAnythingPlugin.SearchDatabase.GetAll<ContentFinderCondition>()) {
-            if (FindAnythingPlugin.Configuration.WikiModeNoSpoilers && !FindAnythingPlugin.GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
+            if (FindAnythingPlugin.Configuration.WikiModeNoSpoilers && Array.IndexOf(FindAnythingPlugin.GameStateCache.UnlockedDutyKeys, cfc.Key) == -1)
                 continue;
 
             var score = matcher.Matches(cfc.Value.Searchable);

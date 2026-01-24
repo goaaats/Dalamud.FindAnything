@@ -2,7 +2,6 @@
 using Dalamud.Interface.Textures;
 using Lumina.Excel.Sheets;
 using System;
-using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -12,7 +11,7 @@ public sealed class EmoteModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
-        foreach (var emoteRow in Service.Data.GetExcelSheet<Emote>().Where(x => x.Order != 0 && FindAnythingPlugin.GameStateCache.UnlockedEmoteKeys.Contains(x.RowId))) {
+        foreach (var emoteRow in FindAnythingPlugin.GameStateCache.UnlockedEmotes) {
             var text = FindAnythingPlugin.SearchDatabase.GetString<Emote>(emoteRow.RowId);
             var slashCmd = emoteRow.TextCommand.Value;
 

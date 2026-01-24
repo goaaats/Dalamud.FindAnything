@@ -12,25 +12,23 @@ public sealed class DutyModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInDuty()) return;
 
-        foreach (var cfc in FindAnythingPlugin.SearchDatabase.GetAll<ContentFinderCondition>()) {
-            if (!FindAnythingPlugin.GameStateCache.UnlockedDutyKeys.Contains(cfc.Key))
-                continue;
-
-            if (Service.Data.GetExcelSheet<ContentFinderCondition>().GetRowOrDefault(cfc.Key) is not
-                { ContentType.ValueNullable: { } contentType } row)
+        foreach (var cfc in FindAnythingPlugin.GameStateCache.UnlockedDuties) {
+            if (cfc is not { ContentType.ValueNullable: { } contentType } row)
                 continue;
 
             // Only include dungeon, trials, raids, ultimates
             if (contentType.RowId is not (2 or 4 or 5 or 28))
                 continue;
 
-            var score = matcher.Matches(cfc.Value.Searchable);
+            var dbEntry = FindAnythingPlugin.SearchDatabase.GetString<ContentFinderCondition>(cfc.RowId);
+
+            var score = matcher.Matches(dbEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new DutySearchResult {
                     Score = score * Weight,
                     CatName = row.Name.ToText(),
-                    DataKey = cfc.Key,
-                    Name = cfc.Value.Display,
+                    DataKey = cfc.RowId,
+                    Name = dbEntry.Display,
                     Icon = FindAnythingPlugin.TexCache.GetIcon(contentType.Icon),
                 });
             }

@@ -9,10 +9,7 @@ public sealed class CollectionModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Collection;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        foreach (var mcGuffin in Service.Data.GetExcelSheet<McGuffin>()) {
-            if (!FindAnythingPlugin.GameStateCache.UnlockedCollectionKeys.Contains(mcGuffin.RowId))
-                continue;
-
+        foreach (var mcGuffin in FindAnythingPlugin.GameStateCache.UnlockedCollectionItems) {
             var uiData = mcGuffin.UIData.Value; // Already checked validity in UnlockedCollectionKeys
             var score = matcher.Matches(normalizer.Searchable(uiData.Name));
             if (score > 0) {

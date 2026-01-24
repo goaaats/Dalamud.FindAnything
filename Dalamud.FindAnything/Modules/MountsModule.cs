@@ -2,7 +2,6 @@
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
 using System.Globalization;
-using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -26,10 +25,7 @@ public sealed class MountsModule : SearchModule {
 
         if (isInNoMountDuty || gameState.IsInCombat()) return;
 
-        foreach (var mount in Service.Data.GetExcelSheet<Mount>()) {
-            if (!FindAnythingPlugin.GameStateCache.UnlockedMountKeys.Contains(mount.RowId))
-                continue;
-
+        foreach (var mount in FindAnythingPlugin.GameStateCache.UnlockedMounts) {
             var score = matcher.Matches(normalizer.Searchable(mount.Singular));
             if (score > 0) {
                 ctx.AddResult(new MountResult {

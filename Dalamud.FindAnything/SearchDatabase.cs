@@ -86,7 +86,7 @@ public class SearchDatabase {
 
     public SearchEntry GetString<T>(uint row) where T : struct, IExcelRow<T> => SearchData[typeof(T)][row];
 
-    public IReadOnlyDictionary<uint, SearchEntry> GetAll<T>() where T : struct, IExcelRow<T> => SearchData[typeof(T)];
+    public FrozenDictionary<uint, SearchEntry> GetAll<T>() where T : struct, IExcelRow<T> => SearchData[typeof(T)];
 
     public static SearchDatabase Load(Normalizer normalizer) => new(normalizer);
 }
