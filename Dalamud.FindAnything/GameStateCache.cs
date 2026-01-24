@@ -63,7 +63,7 @@ public sealed unsafe class GameStateCache : IDisposable {
 
         UnlockedEmotes = Service.Data.GetExcelSheet<Emote>()
             .Where(x => x.Order != 0)
-            .Where(Service.UnlockState.IsEmoteUnlocked)
+            .Where(x => x.UnlockLink == 0 || Service.UnlockState.IsEmoteUnlocked(x))
             .ToArray();
 
         UnlockedMounts = Service.Data.GetExcelSheet<Mount>()
