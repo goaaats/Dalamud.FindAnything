@@ -65,7 +65,7 @@ public sealed class RootLookup : ILookup {
         var result = GetActiveLookup().Lookup(criteria);
 #if DEBUG
         sw.Stop();
-        Service.Log.Debug($"Took: {sw.ElapsedMilliseconds}ms (lookup: {GetActiveLookup().GetType().Name})");
+        Service.Log.Debug($"Took: {sw.Elapsed.TotalNanoseconds/1_000_000d:0.000}ms \"{criteria.CleanString}\" (lookup: {GetActiveLookup().GetType().Name})");
 #endif
         return result;
     }
