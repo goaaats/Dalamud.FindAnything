@@ -65,11 +65,8 @@ public class CraftingRecipeLookup : ILookup {
         public object Key => Recipe.RowId;
 
         public void Selected() {
-            if (_baseResult is null)
-                return;
-
-            _baseResult.RecipeSelection = Recipe;
-            _baseResult.Selected();
+            _baseResult?.RecipeSelection = Recipe;
+            _baseResult?.Selected();
         }
     }
 }

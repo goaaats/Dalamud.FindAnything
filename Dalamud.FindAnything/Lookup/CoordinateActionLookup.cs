@@ -1,14 +1,13 @@
 ﻿using Dalamud.FindAnything.Modules;
 using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Interface.Textures;
-using static Dalamud.FindAnything.Modules.CoordinatesModule;
 
 namespace Dalamud.FindAnything.Lookup;
 
 public class CoordinateActionLookup : ILookup {
-    private static CoordinatesSearchResult? _baseResult;
+    private static CoordinatesModule.CoordinatesSearchResult? _baseResult;
 
-    public static void SetBaseResult(CoordinatesSearchResult result) {
+    public static void SetBaseResult(CoordinatesModule.CoordinatesSearchResult result) {
         _baseResult = result;
     }
 
@@ -56,7 +55,7 @@ public class CoordinateActionLookup : ILookup {
 
         public object Key => (BaseResult.Key, TeleportDestination is not null);
 
-        public required CoordinatesSearchResult BaseResult { get; init; }
+        public required CoordinatesModule.CoordinatesSearchResult BaseResult { get; init; }
         public required IAetheryteEntry? TeleportDestination { get; init; }
 
         private string GetActionName() {

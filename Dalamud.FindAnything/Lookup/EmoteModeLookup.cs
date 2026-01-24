@@ -6,14 +6,14 @@ using System.Linq;
 namespace Dalamud.FindAnything.Lookup;
 
 public class EmoteModeLookup : ILookup {
-    private static ISearchResult? _baseResult;
+    private static EmoteModule.EmoteSearchResult? _baseResult;
 
-    public static void SetBaseResult(ISearchResult result) {
+    public static void SetBaseResult(EmoteModule.EmoteSearchResult result) {
         _baseResult = result;
     }
 
     public string GetPlaceholder() {
-        if (_baseResult is EmoteModule.EmoteSearchResult emoteRes) {
+        if (_baseResult is { } emoteRes) {
             return $"Choose emote mode for \"{emoteRes.Name}\"...";
         }
 
@@ -45,18 +45,12 @@ public class EmoteModeLookup : ILookup {
         public object Key => Choice.ToString();
 
         public void Selected() {
-            if (_baseResult is not EmoteModule.EmoteSearchResult emoteRes) {
-                Service.Log.Error($"{nameof(_baseResult)} was not of type {nameof(EmoteModule.EmoteSearchResult)}, was: {_baseResult?.GetType().FullName}");
-                return;
-            }
-
-            emoteRes.MotionMode = Choice switch {
+            _baseResult?.MotionMode = Choice switch {
                 EmoteModule.EmoteModeChoice.Default => Configuration.EmoteMotionMode.Default,
                 EmoteModule.EmoteModeChoice.MotionOnly => Configuration.EmoteMotionMode.AlwaysMotion,
                 _ => throw new ArgumentOutOfRangeException($"Unknown EmoteModeChoice: {Choice}"),
             };
-
-            emoteRes.Selected();
+            _baseResult?.Selected();
         }
     }
 }
