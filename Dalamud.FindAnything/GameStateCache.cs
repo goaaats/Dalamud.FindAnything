@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+﻿using Dalamud.Game.ClientState.Aetherytes;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System;
@@ -24,6 +25,7 @@ public sealed unsafe class GameStateCache : IDisposable {
     public McGuffin[] UnlockedCollectionItems = [];
 
     public Gearset[] Gearsets { get; private set; } = [];
+    public IAetheryteEntry[] AetheryteEntries { get; private set; } = [];
 
     public GameStateCache() {
         Service.UnlockState.Unlock += OnUnlock;
@@ -44,6 +46,7 @@ public sealed unsafe class GameStateCache : IDisposable {
             checkUnlocks = false;
         }
         RefreshGearsets();
+        RefreshAetherytes();
     }
 
     private void RefreshUnlocks() {
@@ -102,5 +105,9 @@ public sealed unsafe class GameStateCache : IDisposable {
                 gearsets.Add(new Gearset(i, gs.NameString, gs.ClassJob));
         }
         Gearsets = gearsets.ToArray();
+    }
+
+    private void RefreshAetherytes() {
+        AetheryteEntries = Service.Aetherytes.ToArray();
     }
 }

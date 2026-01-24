@@ -27,7 +27,7 @@ public sealed class AetheryteModule : SearchModule {
         var dummyScore = 0;
         var innScore = 0;
 
-        foreach (var aetheryte in Service.Aetherytes) {
+        foreach (var aetheryte in FindAnythingPlugin.GameStateCache.AetheryteEntries) {
             var aetheryteName = aetheryteManager.GetAetheryteName(aetheryte);
             var terriName = FindAnythingPlugin.SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
             var score = matcher.MatchesAny(
