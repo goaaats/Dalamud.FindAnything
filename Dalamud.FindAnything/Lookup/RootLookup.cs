@@ -9,6 +9,8 @@ public sealed class RootLookup : ILookup {
     private EmoteModeLookup EmoteModeLookup { get; } = new();
     private FacewearLookup FacewearLookup { get; } = new();
     private CoordinateActionLookup CoordinateActionLookup { get; } = new();
+    private CraftingRecipeLookup CraftingRecipeLookup { get; } = new();
+
 
     private LookupSetting baseSetting;
     private LookupSetting? overrideSetting;
@@ -25,6 +27,7 @@ public sealed class RootLookup : ILookup {
             LookupType.EmoteMode => EmoteModeLookup,
             LookupType.Facewear => FacewearLookup,
             LookupType.CoordinateAction => CoordinateActionLookup,
+            LookupType.CraftingRecipe => CraftingRecipeLookup,
             _ => throw new ArgumentOutOfRangeException($"Unknown lookup ty[e: {lookupType}"),
         };
     }
@@ -79,6 +82,7 @@ public enum LookupType {
     EmoteMode,
     Facewear,
     CoordinateAction,
+    CraftingRecipe,
 }
 
 public record LookupSetting(LookupType Type, ILookup Lookup);

@@ -158,6 +158,45 @@ public partial class SettingsWindow {
 
         DrawSpacedSeparator();
 
+        const int craftingComboWidth = 300;
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Crafting recipes");
+        ImGui.Checkbox("Merge multiple crafting recipes for the same item", ref craftingMergeItems);
+        if (craftingMergeItems) {
+            ImGui.PushItemWidth(craftingComboWidth * ImGuiHelpers.GlobalScale);
+            using (var singleCombo = ImRaii.Combo("When selecting a item with only one recipe...", craftingItemSingleSelect.GetDisplayName())) {
+                if (singleCombo) {
+                    foreach (var key in Enum.GetValues<Configuration.CraftingSingleSelectAction>()) {
+                        if (ImGui.Selectable(key.GetDisplayName(), key == craftingItemSingleSelect)) {
+                            craftingItemSingleSelect = key;
+                        }
+                    }
+                }
+            }
+            ImGui.PushItemWidth(craftingComboWidth * ImGuiHelpers.GlobalScale);
+            using (var mergedCombo = ImRaii.Combo("When selecting a item with multiple recipes...", craftingItemMergedSelect.GetDisplayName())) {
+                if (mergedCombo) {
+                    foreach (var key in Enum.GetValues<Configuration.CraftingMergedSelectAction>()) {
+                        if (ImGui.Selectable(key.GetDisplayName(), key == craftingItemMergedSelect)) {
+                            craftingItemMergedSelect = key;
+                        }
+                    }
+                }
+            }
+        } else {
+            ImGui.PushItemWidth(craftingComboWidth * ImGuiHelpers.GlobalScale);
+            using (var singleCombo = ImRaii.Combo("When selecting a recipe...", craftingRecipeSelect.GetDisplayName())) {
+                if (singleCombo) {
+                    foreach (var key in Enum.GetValues<Configuration.CraftingSingleSelectAction>()) {
+                        if (ImGui.Selectable(key.GetDisplayName(), key == craftingRecipeSelect)) {
+                            craftingRecipeSelect = key;
+                        }
+                    }
+                }
+            }
+        }
+
+        DrawSpacedSeparator();
+
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
 
         ImGui.Checkbox("Enable Search History", ref historyEnabled);
@@ -191,7 +230,6 @@ public partial class SettingsWindow {
         ImGui.Checkbox("Don't open Wotsit in combat", ref notInCombat);
         ImGui.Checkbox("Force TeamCraft links to open in your browser", ref tcForceBrowser);
         ImGui.Checkbox("Disable mouse selection in results list unless Quick Select Key is held", ref disableMouseSelection);
-        ImGui.Checkbox("When selecting a crafting recipe, jump to the recipe instead of using Recipe Search", ref openCraftingLogToRecipe);
         ImGui.Checkbox("Match plugin settings and interface links using short form without 'Open'", ref matchShortPluginSettings);
 
         ImGuiHelpers.ScaledDummy(5);

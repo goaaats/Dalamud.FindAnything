@@ -37,7 +37,6 @@ public partial class SettingsWindow {
     private bool tcForceBrowser;
     private bool historyEnabled;
     private bool disableMouseSelection;
-    private bool openCraftingLogToRecipe;
     private MatchMode matchMode;
     private string matchSigilSimple = "'";
     private string matchSigilFuzzy = "`";
@@ -48,6 +47,10 @@ public partial class SettingsWindow {
     private int pageScrollRepeatDelay;
     private int pageScrollRepeatInterval;
     private bool matchShortPluginSettings;
+    private bool craftingMergeItems;
+    private Configuration.CraftingSingleSelectAction craftingRecipeSelect;
+    private Configuration.CraftingSingleSelectAction craftingItemSingleSelect;
+    private Configuration.CraftingMergedSelectAction craftingItemMergedSelect;
 
     private void CopyConfigToWindow(Configuration config) {
         flags = (uint)config.ToSearchV3;
@@ -78,7 +81,6 @@ public partial class SettingsWindow {
         tcForceBrowser = config.TeamCraftForceBrowser;
         historyEnabled = config.HistoryEnabled;
         disableMouseSelection = config.DisableMouseSelection;
-        openCraftingLogToRecipe = config.OpenCraftingLogToRecipe;
         matchMode = config.MatchMode;
         matchSigilSimple = config.MatchSigilSimple;
         matchSigilFuzzy = config.MatchSigilFuzzy;
@@ -91,6 +93,11 @@ public partial class SettingsWindow {
         pageScrollRepeatInterval = config.CursorPageRepeatInterval;
 
         matchShortPluginSettings = config.MatchShortPluginSettings;
+
+        craftingMergeItems = config.CraftingMergeItems;
+        craftingRecipeSelect = config.CraftingRecipeSelect;
+        craftingItemSingleSelect = config.CraftingItemSelectSingle;
+        craftingItemMergedSelect = config.CraftingItemSelectMerged;
     }
 
     private void CopyWindowToConfig(Configuration config) {
@@ -131,7 +138,6 @@ public partial class SettingsWindow {
         config.TeamCraftForceBrowser = tcForceBrowser;
         config.HistoryEnabled = historyEnabled;
         config.DisableMouseSelection = disableMouseSelection;
-        config.OpenCraftingLogToRecipe = openCraftingLogToRecipe;
 
         config.MatchMode = matchMode;
         config.MatchSigilSimple = matchSigilSimple;
@@ -145,6 +151,11 @@ public partial class SettingsWindow {
         config.CursorPageRepeatInterval = pageScrollRepeatInterval;
 
         config.MatchShortPluginSettings = matchShortPluginSettings;
+
+        config.CraftingMergeItems = craftingMergeItems;
+        config.CraftingRecipeSelect = craftingRecipeSelect;
+        config.CraftingItemSelectSingle = craftingItemSingleSelect;
+        config.CraftingItemSelectMerged = craftingItemMergedSelect;
     }
 
     private void DrawSaveFooter() {

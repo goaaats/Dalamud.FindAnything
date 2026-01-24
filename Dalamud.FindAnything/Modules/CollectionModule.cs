@@ -1,7 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
-using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 

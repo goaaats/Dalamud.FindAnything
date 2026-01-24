@@ -4,6 +4,7 @@ using Dalamud.Game.ClientState.Keys;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Numerics;
 
 namespace Dalamud.FindAnything;
@@ -48,7 +49,6 @@ public class Configuration : IPluginConfiguration {
     public bool WikiModeNoSpoilers { get; set; } = true;
     public bool TeamCraftForceBrowser { get; set; } = false;
     public bool DisableMouseSelection { get; set; } = false;
-    public bool OpenCraftingLogToRecipe { get; set; } = false;
 
     public enum OpenMode {
         ShiftShift,
@@ -236,6 +236,25 @@ public class Configuration : IPluginConfiguration {
     public int CursorPageRepeatInterval = 200;
 
     public bool MatchShortPluginSettings = false;
+
+    public enum CraftingSingleSelectAction {
+        [Display(Name = "Search in Crafting Log")]
+        SearchInLog,
+        [Display(Name = "Open in Crafting Log")]
+        OpenInLog,
+    }
+
+    public enum CraftingMergedSelectAction {
+        [Display(Name = "Search in Crafting Log")]
+        SearchInLog,
+        [Display(Name = "Search in Wotsit")]
+        SearchInFinder,
+    }
+
+    public bool CraftingMergeItems = true;
+    public CraftingSingleSelectAction CraftingRecipeSelect = CraftingSingleSelectAction.OpenInLog;
+    public CraftingSingleSelectAction CraftingItemSelectSingle = CraftingSingleSelectAction.OpenInLog;
+    public CraftingMergedSelectAction CraftingItemSelectMerged = CraftingMergedSelectAction.SearchInLog;
 
     public GameWindow.SimulationState? SimulationState { get; set; } = null;
 

@@ -23,6 +23,8 @@ public sealed unsafe class GameStateCache : IDisposable {
     public Glasses[] UnlockedFacewear = [];
     public GlassesStyle[] UnlockedFacewearStyles = [];
     public McGuffin[] UnlockedCollectionItems = [];
+    public Recipe[] UnlockedRecipes = [];
+    public RecipeGroup[] UnlockedRecipeGroups = [];
 
     public Gearset[] Gearsets { get; private set; } = [];
     public IAetheryteEntry[] AetheryteEntries { get; private set; } = [];
@@ -81,8 +83,7 @@ public sealed unsafe class GameStateCache : IDisposable {
             .Where(Service.UnlockState.IsGlassesUnlocked)
             .ToArray();
 
-        UnlockedFacewearStyles = Service.Data.GetExcelSheet<Glasses>()
-            .Where(Service.UnlockState.IsGlassesUnlocked)
+        UnlockedFacewearStyles = UnlockedFacewear
             .Select(x => x.Style.ValueNullable)
             .OfType<GlassesStyle>()
             .DistinctBy(x => x.RowId)
@@ -90,6 +91,21 @@ public sealed unsafe class GameStateCache : IDisposable {
 
         UnlockedCollectionItems = Service.Data.GetExcelSheet<McGuffin>()
             .Where(Service.UnlockState.IsMcGuffinUnlocked)
+            .ToArray();
+
+        UnlockedRecipes = Service.Data.GetExcelSheet<Recipe>()
+            .Where(x => x.ItemResult.RowId != 0)
+            .Where(Service.UnlockState.IsRecipeUnlocked)
+            .ToArray();
+
+        UnlockedRecipeGroups = UnlockedRecipes
+            .Where(Service.UnlockState.IsRecipeUnlocked)
+            .Where(x => x.ItemResult.IsValid)
+            .GroupBy(x => x.ItemResult.RowId)
+            .Select(x => {
+                var recipes = x.ToArray();
+                return new RecipeGroup(recipes[0].ItemResult.Value, recipes);
+            })
             .ToArray();
 
         Service.Log.Verbose($"{UnlockedDuties.Length} duties unlocked.");
@@ -111,3 +127,5 @@ public sealed unsafe class GameStateCache : IDisposable {
         AetheryteEntries = Service.Aetherytes.ToArray();
     }
 }
+
+public record RecipeGroup(Item Item, Recipe[] Recipes);

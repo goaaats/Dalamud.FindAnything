@@ -184,6 +184,7 @@ public sealed class Finder : IDisposable {
                 LookupType.EmoteMode => FontAwesomeIcon.HandsClapping,
                 LookupType.Facewear => FontAwesomeIcon.Glasses,
                 LookupType.CoordinateAction => FontAwesomeIcon.Flag,
+                LookupType.CraftingRecipe => FontAwesomeIcon.Hammer,
                 _ => FontAwesomeIcon.Star,
             };
             ImGui.Text(icon.ToIconString());
