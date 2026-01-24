@@ -94,13 +94,11 @@ public sealed unsafe class GameStateCache : IDisposable {
             .ToArray();
 
         UnlockedRecipes = Service.Data.GetExcelSheet<Recipe>()
-            .Where(x => x.ItemResult.RowId != 0)
+            .Where(x => x.ItemResult is { IsValid: true, RowId: > 0 })
             .Where(Service.UnlockState.IsRecipeUnlocked)
             .ToArray();
 
         UnlockedRecipeGroups = UnlockedRecipes
-            .Where(Service.UnlockState.IsRecipeUnlocked)
-            .Where(x => x.ItemResult.IsValid)
             .GroupBy(x => x.ItemResult.RowId)
             .Select(x => {
                 var recipes = x.ToArray();
