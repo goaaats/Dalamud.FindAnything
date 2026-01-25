@@ -9,11 +9,12 @@ namespace Dalamud.FindAnything;
 public readonly ref struct FuzzyMatcher {
     private static readonly (int, int)[] EmptySegArray = [];
 
-    private readonly string needleString = string.Empty;
-    private readonly ReadOnlySpan<char> needleSpan = ReadOnlySpan<char>.Empty;
-    private readonly int needleFinalPosition = -1;
-    private readonly (int start, int end)[] needleSegments = EmptySegArray;
-    private readonly MatchMode mode = MatchMode.Simple;
+    private readonly string needleString;
+    private readonly ReadOnlySpan<char> needleSpan;
+    private readonly int needleFinalPosition;
+    private readonly (int start, int end)[] needleSegments;
+    private readonly int needleSegmentsLength;
+    private readonly MatchMode mode;
 
     public FuzzyMatcher(string term, MatchMode matchMode) {
         needleString = term;
@@ -24,10 +25,18 @@ public readonly ref struct FuzzyMatcher {
         switch (matchMode) {
             case MatchMode.FuzzyParts:
                 needleSegments = FindNeedleSegments(needleSpan);
+                needleSegmentsLength = needleSegments.Length;
+                if (needleSegmentsLength < 2) {
+                    // Single segment, so use Fuzzy mode
+                    needleSegmentsLength = 0;
+                    mode = MatchMode.Fuzzy;
+                }
+
                 break;
             case MatchMode.Fuzzy:
             case MatchMode.Simple:
                 needleSegments = EmptySegArray;
+                needleSegmentsLength = 0;
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(matchMode), matchMode, null);
@@ -35,54 +44,50 @@ public readonly ref struct FuzzyMatcher {
     }
 
     private static (int start, int end)[] FindNeedleSegments(ReadOnlySpan<char> span) {
+        if (span.IndexOfAny(' ', '\u3000') == -1)
+            return EmptySegArray; // No spaces found, return EmptySegArray to skip allocation and fall back to Fuzzy
+
         var segments = new List<(int, int)>();
         var wordStart = -1;
 
         for (var i = 0; i < span.Length; i++) {
             if (span[i] is not ' ' and not '\u3000') {
-                if (wordStart < 0) {
+                if (wordStart < 0)
                     wordStart = i;
-                }
             } else if (wordStart >= 0) {
                 segments.Add((wordStart, i - 1));
                 wordStart = -1;
             }
         }
 
-        if (wordStart >= 0) {
+        if (wordStart >= 0)
             segments.Add((wordStart, span.Length - 1));
-        }
 
         return segments.ToArray();
     }
 
     public int Matches(string value) {
-        if (needleFinalPosition < 0) {
-            return 0;
-        }
+        if (needleFinalPosition == -1)
+            return 0; // Needle is empty
 
-        if (mode == MatchMode.Simple) {
+        if (value.Length == 0)
+            return 0; // Haystack is empty
+
+        if (mode == MatchMode.Simple)
             return value.Contains(needleString) ? 1 : 0;
-        }
 
         var haystack = value.AsSpan();
 
-        if (mode == MatchMode.Fuzzy) {
+        if (mode == MatchMode.Fuzzy)
             return GetRawScore(haystack, 0, needleFinalPosition);
-        }
 
         if (mode == MatchMode.FuzzyParts) {
-            if (needleSegments.Length < 2) {
-                return GetRawScore(haystack, 0, needleFinalPosition);
-            }
-
             var total = 0;
-            for (var i = 0; i < needleSegments.Length; i++) {
+            for (var i = 0; i < needleSegmentsLength; i++) {
                 var (start, end) = needleSegments[i];
                 var cur = GetRawScore(haystack, start, end);
-                if (cur == 0) {
+                if (cur == 0)
                     return 0;
-                }
 
                 total += cur;
             }
@@ -97,30 +102,28 @@ public readonly ref struct FuzzyMatcher {
         var max = 0;
         for (var i = 0; i < values.Length; i++) {
             var cur = Matches(values[i]);
-            if (cur > max) {
+            if (cur > max)
                 max = cur;
-            }
         }
 
         return max;
     }
 
     private int GetRawScore(ReadOnlySpan<char> haystack, int needleStart, int needleEnd) {
-        var (startPos, gaps, consecutive, borderMatches, endPos) = FindForward(haystack, needleStart, needleEnd);
-        if (startPos < 0) {
-            return 0;
-        }
-
         var needleSize = needleEnd - needleStart + 1;
+        if (needleSize > haystack.Length)
+            return 0; // Needle is bigger than haystack, full match is impossible
+
+        var (startPos, gaps, consecutive, borderMatches, endPos) = FindForward(haystack, needleStart, needleEnd);
+        if (startPos < 0)
+            return 0; // No forward match found, reverse match is impossible
 
         var score = CalculateRawScore(needleSize, startPos, gaps, consecutive, borderMatches);
-        // FindAnythingPlugin.Log.Debug(
-        //     $"['{needleString.Substring(needleStart, needleEnd - needleStart + 1)}' in '{haystack}'] fwd: needleSize={needleSize} startPos={startPos} gaps={gaps} consecutive={consecutive} borderMatches={borderMatches} score={score}");
+        if (gaps == 0)
+            return score; // Reverse score cannot beat forward score with no gaps
 
         (startPos, gaps, consecutive, borderMatches) = FindReverse(haystack, endPos, needleStart, needleEnd);
         var revScore = CalculateRawScore(needleSize, startPos, gaps, consecutive, borderMatches);
-        // FindAnythingPlugin.Log.Debug(
-        //     $"['{needleString.Substring(needleStart, needleEnd - needleStart + 1)}' in '{haystack}'] rev: needleSize={needleSize} startPos={startPos} gaps={gaps} consecutive={consecutive} borderMatches={borderMatches} score={revScore}");
 
         return int.Max(score, revScore);
     }
@@ -140,83 +143,92 @@ public readonly ref struct FuzzyMatcher {
 
     private (int startPos, int gaps, int consecutive, int borderMatches, int haystackIndex) FindForward(
         ReadOnlySpan<char> haystack, int needleStart, int needleEnd) {
-        var needleIndex = needleStart;
-        var lastMatchIndex = -10;
+        var needle = needleSpan;
+        var firstPos = haystack.IndexOf(needle[needleStart]);
+        if (firstPos < 0)
+            return (-1, 0, 0, 0, 0);
 
-        var startPos = 0;
         var gaps = 0;
         var consecutive = 0;
         var borderMatches = 0;
 
-        for (var haystackIndex = 0; haystackIndex < haystack.Length; haystackIndex++) {
-            if (haystack[haystackIndex] == needleSpan[needleIndex]) {
 #if BORDER_MATCHING
-                if (haystackIndex > 0) {
-                    if (!char.IsLetterOrDigit(haystack[haystackIndex - 1])) {
-                        borderMatches++;
-                    }
-                }
-#endif
-
-                needleIndex++;
-
-                if (haystackIndex == lastMatchIndex + 1) {
-                    consecutive++;
-                }
-
-                if (needleIndex > needleEnd) {
-                    return (startPos, gaps, consecutive, borderMatches, haystackIndex);
-                }
-
-                lastMatchIndex = haystackIndex;
-            } else {
-                if (needleIndex > needleStart) {
-                    gaps++;
-                } else {
-                    startPos++;
-                }
+        if (firstPos > 0) {
+            if (!char.IsLetterOrDigit(haystack[firstPos - 1])) {
+                borderMatches++;
             }
         }
+#endif
 
-        return (-1, 0, 0, 0, 0);
+        var lastPos = firstPos;
+        for (var needleIndex = needleStart + 1; needleIndex <= needleEnd; needleIndex++) {
+            var relPos = haystack[(lastPos + 1)..].IndexOf(needle[needleIndex]);
+            if (relPos < 0)
+                return (-1, 0, 0, 0, 0);
+
+            var pos = lastPos + 1 + relPos;
+            var gap = pos - lastPos - 1;
+            if (gap == 0) {
+                consecutive++;
+            } else {
+                gaps += gap;
+            }
+
+#if BORDER_MATCHING
+            if (pos > 0) {
+                if (!char.IsLetterOrDigit(haystack[pos - 1])) {
+                    borderMatches++;
+                }
+            }
+#endif
+
+            lastPos = pos;
+        }
+
+        return (firstPos, gaps, consecutive, borderMatches, lastPos);
     }
 
     private (int startPos, int gaps, int consecutive, int borderMatches) FindReverse(ReadOnlySpan<char> haystack,
         int haystackLastMatchIndex, int needleStart, int needleEnd) {
-        var needleIndex = needleEnd;
-        var revLastMatchIndex = haystack.Length + 10;
+        var needle = needleSpan;
 
         var gaps = 0;
         var consecutive = 0;
         var borderMatches = 0;
 
-        for (var haystackIndex = haystackLastMatchIndex; haystackIndex >= 0; haystackIndex--) {
-            if (haystack[haystackIndex] == needleSpan[needleIndex]) {
 #if BORDER_MATCHING
-                if (haystackIndex > 0) {
-                    if (!char.IsLetterOrDigit(haystack[haystackIndex - 1])) {
-                        borderMatches++;
-                    }
-                }
-#endif
-
-                needleIndex--;
-
-                if (haystackIndex == revLastMatchIndex - 1) {
-                    consecutive++;
-                }
-
-                if (needleIndex < needleStart) {
-                    return (haystackIndex, gaps, consecutive, borderMatches);
-                }
-
-                revLastMatchIndex = haystackIndex;
-            } else {
-                gaps++;
+        if (haystackLastMatchIndex > 0) {
+            if (!char.IsLetterOrDigit(haystack[haystackLastMatchIndex - 1])) {
+                borderMatches++;
             }
         }
+#endif
 
-        return (-1, 0, 0, 0);
+        var lastPos = haystackLastMatchIndex;
+        for (var needleIndex = needleEnd - 1; needleIndex >= needleStart; needleIndex--) {
+            var pos = haystack[..lastPos].LastIndexOf(needle[needleIndex]);
+            if (pos < 0)
+                return (-1, 0, 0, 0);
+
+            var gap = lastPos - pos - 1;
+            if (gap == 0) {
+                consecutive++;
+            } else {
+                gaps += gap;
+            }
+
+#if BORDER_MATCHING
+            if (pos > 0) {
+                if (!char.IsLetterOrDigit(haystack[pos - 1])) {
+                    borderMatches++;
+                }
+            }
+#endif
+
+            lastPos = pos;
+        }
+
+        return (lastPos, gaps, consecutive, borderMatches);
     }
 }
 
