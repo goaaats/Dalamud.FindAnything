@@ -82,8 +82,6 @@ public class SearchDatabase {
         searchDb.Add(typeof(T), data.ToFrozenDictionary());
     }
 
-    public static string GetSearchableText(string input, bool normalizeKana) => input.Downcase(normalizeKana).Replace("'", string.Empty);
-
     public SearchEntry GetString<T>(uint row) where T : struct, IExcelRow<T> => SearchData[typeof(T)][row];
 
     public FrozenDictionary<uint, SearchEntry> GetAll<T>() where T : struct, IExcelRow<T> => SearchData[typeof(T)];
