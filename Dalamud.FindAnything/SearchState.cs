@@ -77,7 +77,7 @@ public class SearchState {
         SemanticString = term;
 
         ContainsKana = term.ContainsKana();
-        term = normalizer.WithKana(ContainsKana).Searchable(term);
+        term = normalizer.WithKana(ContainsKana).SearchableInput(term);
 
         MatchString = term;
 

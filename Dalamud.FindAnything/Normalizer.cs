@@ -35,6 +35,12 @@ public class Normalizer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string SearchableInput(string str) {
+        // Normalize extra characters that don't appear in game data but might be in (possibly pasted) input
+        return Searchable(str.Replace("’", string.Empty));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string SearchableAscii(ReadOnlySeString input) {
         return input.ToText().ToLowerInvariant();
     }
