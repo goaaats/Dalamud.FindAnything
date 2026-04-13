@@ -42,11 +42,6 @@ public sealed class FinderActivator : IDisposable {
 
         Input.Update();
 
-        if (Input.IsDown(VirtualKey.ESCAPE)) {
-            finder.Close();
-            return;
-        }
-
         // Always do this even if the finder is closed or unopenable, because CheckOpenWithCombo needs to prevent input passthrough
         var openType = FindAnythingPlugin.Configuration.Open switch {
             Configuration.OpenMode.Combo => CheckOpenWithCombo(),

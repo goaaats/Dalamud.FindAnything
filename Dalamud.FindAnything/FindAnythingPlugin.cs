@@ -65,6 +65,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
         GameWindow = new GameWindow { IsOpen = false };
         WindowSystem.AddWindow(GameWindow);
 
+        WindowSystem.AddWindow(Finder);
+
         pluginInterface.UiBuilder.Draw += WindowSystem.Draw;
 
         // Commands
@@ -85,7 +87,6 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
         Service.CommandManager.RemoveHandler("/bountifuldn");
 
         FinderActivator.Dispose();
-        Finder.Dispose();
 
         GameStateCache.Dispose();
         Ipc.Dispose();
