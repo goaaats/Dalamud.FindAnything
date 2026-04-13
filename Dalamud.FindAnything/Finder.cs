@@ -163,10 +163,18 @@ public sealed class Finder : IDisposable {
     private void DrawFinder(Vector2 size, Vector2 iconSize, Vector2 textSize, float windowPadding, float scrollbarWidth, float scaledFour, out bool closeFinder) {
         closeFinder = false;
 
+        var inputFlags = ImGuiInputTextFlags.NoUndoRedo;
+
+        if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.ESCAPE))) {
+            Log.Verbose("Focus loss or escape");
+            closeFinder = true;
+            inputFlags |= ImGuiInputTextFlags.ReadOnly;
+        }
+
         using (ImRaii.ItemWidth(size.X - iconSize.Y - windowPadding - ImGui.GetStyle().FramePadding.X - ImGui.GetStyle().ItemSpacing.X)) {
             var searchInput = searchState.RawString;
             if (ImGui.InputTextWithHint("###findeverythinginput", rootLookup.GetPlaceholder(), ref searchInput, 1000,
-                    ImGuiInputTextFlags.NoUndoRedo)) {
+                    inputFlags)) {
                 UpdateSearch(searchInput);
             }
         }
@@ -188,11 +196,6 @@ public sealed class Finder : IDisposable {
                 _ => FontAwesomeIcon.Star,
             };
             ImGui.Text(icon.ToIconString());
-        }
-
-        if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) || ImGui.IsKeyDown(ImGuiHelpers.VirtualKeyToImGuiKey(VirtualKey.ESCAPE))) {
-            Log.Verbose("Focus loss or escape");
-            closeFinder = true;
         }
 
         using var style = new ImRaii.Style()
