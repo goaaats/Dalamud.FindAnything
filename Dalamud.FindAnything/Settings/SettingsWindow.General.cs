@@ -76,10 +76,7 @@ public partial class SettingsWindow {
         DrawSpacedSeparator();
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Search mode");
-        ImGui.TextWrapped("Use this menu to select the default search mode:\n" +
-                          "  - \"Simple\" looks for the exact text entered.\n" +
-                          "  - \"Fuzzy\" finds close matches to your text even if some characters are missing (e.g. \"dufi\" can locate the Duty Finder).\n" +
-                          "  - \"FuzzyParts\" is like Fuzzy but each word in the input is searched for separately, so that input word order does not matter.");
+        ImGui.TextWrapped("Use this menu to select the default search mode:\n" + "  - \"Simple\" looks for the exact text entered.\n" + "  - \"Fuzzy\" finds close matches to your text even if some characters are missing (e.g. \"dufi\" can locate the Duty Finder).\n" + "  - \"FuzzyParts\" is like Fuzzy but each word in the input is searched for separately, so that input word order does not matter.");
         ImGui.TextWrapped(
             "When using fuzzy search modes, results are shown in order from best match to worst match.");
 
@@ -97,8 +94,7 @@ public partial class SettingsWindow {
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Search prefixes");
         ImGui.SameLine();
         ImGuiComponents.HelpMarker(
-            "Inputting one of the prefixes below as the first character of your search text " +
-            "will temporarily change the search mode for that search.");
+            "Inputting one of the prefixes below as the first character of your search text " + "will temporarily change the search mode for that search.");
 
         using (ImRaii.ItemWidth(40)) {
             ImGui.InputText("Simple search mode prefix", ref matchSigilSimple, 1);
@@ -123,8 +119,7 @@ public partial class SettingsWindow {
                 }
             }
             ImGuiComponents.HelpMarker(
-                "- The \"System\" scroll style matches the key repeat rate and delays from your operating system.\n" +
-                "- The \"Custom\" scroll style lets you customize these settings for Wotsit.");
+                "- The \"System\" scroll style matches the key repeat rate and delays from your operating system.\n" + "- The \"Custom\" scroll style lets you customize these settings for Wotsit.");
         }
 
         if (cursorControl == Configuration.CursorControlType.Custom) {
@@ -197,6 +192,22 @@ public partial class SettingsWindow {
 
         DrawSpacedSeparator();
 
+        ImGui.TextColored(ImGuiColors.DalamudGrey, "Search window");
+        ImGui.Checkbox("Disable window sounds", ref disableWindowSounds);
+        ImGui.Checkbox("Disable fade in/out", ref disableFadeInFadeOut);
+        ImGui.Checkbox("Disable background blur", ref disableBackgroundBlur);
+        ImGui.SameLine();
+        ImGuiComponents.HelpMarker("If background blur is enabled in global Dalamud style options, check this to force it off for Wotsit.");
+        ImGui.Checkbox("Override background opacity", ref overrideBgAlpha);
+        if (overrideBgAlpha) {
+            ImGui.SliderFloat("Override background opacity value", ref overrideBgAlphaValue, 0, 1, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+        }
+        if (ImGui.SliderFloat2("Search window position offset", ref posOffset, -800, 800)) {
+            finderOffsetChangeTime = DateTime.UtcNow;
+        }
+
+        DrawSpacedSeparator();
+
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Other stuff");
 
         ImGui.Checkbox("Enable Search History", ref historyEnabled);
@@ -223,10 +234,6 @@ public partial class SettingsWindow {
         ImGui.Checkbox("Show Emote command in search result", ref showEmoteCommand);
         ImGui.Checkbox("Try to prevent spoilers in wiki mode(not 100% reliable)", ref wikiModeNoSpoilers);
         ImGui.Checkbox("Directly go to wiki mode when opening search", ref onlyWiki);
-        if (ImGui.SliderFloat2("Search window position offset", ref posOffset, -800, 800)) {
-            finderOffsetChangeTime = DateTime.UtcNow;
-        }
-
         ImGui.Checkbox("Don't open Wotsit in combat", ref notInCombat);
         ImGui.Checkbox("Force TeamCraft links to open in your browser", ref tcForceBrowser);
         ImGui.Checkbox("Disable mouse selection in results list unless Quick Select Key is held", ref disableMouseSelection);

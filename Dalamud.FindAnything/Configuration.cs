@@ -149,6 +149,12 @@ public class Configuration : IPluginConfiguration {
 
     public Dictionary<string, float> MathConstants { get; set; } = new();
 
+    public bool DisableWindowSounds { get; set; } = true;
+    public bool DisableFadeInFadeOut { get; set; } = true;
+    public bool DisableBackgroundBlur { get; set; } = false;
+    public bool OverrideBgAlpha { get; set; } = false;
+    public float OverrideBgAlphaValue { get; set; } = 1.0f;
+
     public Vector2 PositionOffset { get; set; } = new(0, 0);
 
     public bool OnlyWikiMode { get; set; } = false;

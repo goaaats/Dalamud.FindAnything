@@ -67,7 +67,17 @@ public sealed class Finder : Window {
         rootLookup.OnOpen();
         resetScroll = true;
         UpdateSearch("");
+
+        ApplyWindowSettings();
         IsOpen = true;
+    }
+
+    private void ApplyWindowSettings() {
+        var config = FindAnythingPlugin.Configuration;
+        DisableWindowSounds = config.DisableWindowSounds;
+        DisableFadeInFadeOut = config.DisableFadeInFadeOut;
+        typeof(Window).GetProperty("AllowBackgroundBlur")?.SetValue(this, !config.DisableBackgroundBlur); // TODO: Use the actual property after next patch
+        BgAlpha = config.OverrideBgAlpha ? config.OverrideBgAlphaValue : null;
     }
 
     public void Close() {

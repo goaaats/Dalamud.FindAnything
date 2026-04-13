@@ -28,6 +28,11 @@ public partial class SettingsWindow {
     private bool showEmoteCommand;
     private bool wikiModeNoSpoilers;
     private Dictionary<string, float> constants = new();
+    private bool disableWindowSounds;
+    private bool disableFadeInFadeOut;
+    private bool disableBackgroundBlur;
+    private bool overrideBgAlpha;
+    private float overrideBgAlphaValue;
     private Vector2 posOffset;
     private bool onlyWiki;
     private VirtualKey quickSelectKey;
@@ -72,6 +77,11 @@ public partial class SettingsWindow {
         showEmoteCommand = config.ShowEmoteCommand;
         wikiModeNoSpoilers = config.WikiModeNoSpoilers;
         constants = config.MathConstants;
+        disableWindowSounds = config.DisableWindowSounds;
+        disableFadeInFadeOut = config.DisableFadeInFadeOut;
+        disableBackgroundBlur = config.DisableBackgroundBlur;
+        overrideBgAlpha = config.OverrideBgAlpha;
+        overrideBgAlphaValue = config.OverrideBgAlphaValue;
         posOffset = config.PositionOffset;
         onlyWiki = config.OnlyWikiMode;
         quickSelectKey = config.QuickSelectKey;
@@ -131,7 +141,14 @@ public partial class SettingsWindow {
         config.EmoteMode = emoteMotionMode;
         config.ShowEmoteCommand = showEmoteCommand;
         config.WikiModeNoSpoilers = wikiModeNoSpoilers;
+
+        config.DisableWindowSounds = disableWindowSounds;
+        config.DisableFadeInFadeOut = disableFadeInFadeOut;
+        config.DisableBackgroundBlur = disableBackgroundBlur;
+        config.OverrideBgAlpha = overrideBgAlpha;
+        config.OverrideBgAlphaValue = overrideBgAlphaValue;
         config.PositionOffset = posOffset;
+
         config.OnlyWikiMode = onlyWiki;
         config.QuickSelectKey = quickSelectKey;
         config.NotInCombat = notInCombat;
