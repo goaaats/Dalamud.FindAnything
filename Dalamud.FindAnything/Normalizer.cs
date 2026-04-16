@@ -52,6 +52,6 @@ public class Normalizer {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string StripPunctuation(string str) {
-        return str.Replace("'", string.Empty).Replace("’", string.Empty);
+        return str.Replace("'", string.Empty);
     }
 }
