@@ -6,7 +6,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
-using Serilog;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -80,7 +79,7 @@ public sealed class Finder : Window {
         BgAlpha = config.OverrideBgAlpha ? config.OverrideBgAlphaValue : null;
     }
 
-    public void Close() {
+    private void Close() {
         IsOpen = false;
         SelectedIndex = 0;
         searchState.Reset();

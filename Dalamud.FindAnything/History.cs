@@ -38,8 +38,6 @@ public class History {
         var newHistory = new List<HistoryEntry>();
         var results = new List<ISearchResult>();
 
-        Service.Log.Verbose("{Num} histories:", history.Count);
-
         foreach (var entry in history) {
             if (Replay(entry).Contains(entry.Result, SearchResultComparer.Instance)) {
                 newHistory.Add(entry);
