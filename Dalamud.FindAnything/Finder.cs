@@ -138,11 +138,7 @@ public sealed class Finder : Window {
         }
 
         Position = startPos;
-        Size = size;
-        SizeConstraints = new WindowSizeConstraints {
-            MinimumSize = size,
-            MaximumSize = size with { Y = size.Y + (400 * ImGuiHelpers.GlobalScale) }
-        };
+        Size = size / ImGuiHelpers.GlobalScale;
     }
 
     public override void Draw() {
