@@ -204,7 +204,7 @@ public sealed class Finder : Window {
             ImGui.Text(icon.ToIconString());
         }
 
-        using var style = new ImRaii.Style()
+        using var style = new ImRaii.StyleDisposable()
             .Push(ImGuiStyleVar.ItemSpacing, new Vector2(smallPadding * 2, smallPadding))
             .Push(ImGuiStyleVar.ItemInnerSpacing, new Vector2(smallPadding, smallPadding));
 

@@ -128,7 +128,7 @@ public partial class SettingsWindow {
     }
 
     private static void CheckboxLocked(string text) {
-        using (new ImRaii.Color()
+        using (new ImRaii.ColorDisposable()
                    .Push(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.TextDisabled))
                    .Push(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.FrameBg))
                    .Push(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.FrameBgActive))

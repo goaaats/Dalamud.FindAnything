@@ -143,7 +143,7 @@ public partial class SettingsWindow {
                 macro.Shared = isShared;
             }
         } else {
-            using (new ImRaii.Color()
+            using (new ImRaii.ColorDisposable()
                        .Push(ImGuiCol.FrameBg, ImGuiColors.ParsedGrey)
                        .Push(ImGuiCol.FrameBgActive, ImGuiColors.ParsedGrey)
                        .Push(ImGuiCol.FrameBgHovered, ImGuiColors.ParsedGrey)
