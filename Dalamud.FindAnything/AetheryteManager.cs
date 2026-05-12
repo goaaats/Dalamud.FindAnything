@@ -152,8 +152,12 @@ internal class Teleporter(AetheryteManager aetheryteManager) {
         }
 
         public (TeleportResult, bool) Teleport(IAetheryteEntry entry) {
-            if (teleportIpc.InvokeFunc(entry.AetheryteId, entry.SubIndex)) {
-                return (TeleportResult.Success, showTeleportChatMessageIpc.InvokeFunc());
+            try {
+                if (teleportIpc.InvokeFunc(entry.AetheryteId, entry.SubIndex)) {
+                    return (TeleportResult.Success, showTeleportChatMessageIpc.InvokeFunc());
+                }
+            } catch (Exception ex) {
+                Service.Log.Error(ex, $"Error while attempting to use IPC teleport to teleport to {entry.AetheryteId}:{entry.SubIndex}");
             }
 
             return (TeleportResult.BadState, false);
@@ -179,17 +183,21 @@ internal class Teleporter(AetheryteManager aetheryteManager) {
         }
 
         public static unsafe TeleportResult Teleport(IAetheryteEntry entry) {
-            if (!UpdateList())
-                return TeleportResult.BadState;
+            try {
+                if (!UpdateList())
+                    return TeleportResult.BadState;
 
-            if (!GetList().Exists(tp => tp.AetheryteId == entry.AetheryteId && tp.SubIndex == entry.SubIndex))
-                return TeleportResult.BadDestination;
+                if (!GetList().Exists(tp => tp.AetheryteId == entry.AetheryteId && tp.SubIndex == entry.SubIndex))
+                    return TeleportResult.BadDestination;
 
-            if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 5) != 0)
-                return TeleportResult.BadState;
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 5) != 0)
+                    return TeleportResult.BadState;
 
-            if (Telepo.Instance()->Teleport(entry.AetheryteId, entry.SubIndex)) {
-                return TeleportResult.Success;
+                if (Telepo.Instance()->Teleport(entry.AetheryteId, entry.SubIndex)) {
+                    return TeleportResult.Success;
+                }
+            } catch (Exception ex) {
+                Service.Log.Error(ex, $"Error while attempting to use built-in teleport to teleport to {entry.AetheryteId}:{entry.SubIndex}");
             }
 
             return TeleportResult.BadState;
