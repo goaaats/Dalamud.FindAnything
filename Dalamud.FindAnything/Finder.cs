@@ -149,7 +149,7 @@ public sealed class Finder : Window {
             Service.Log.Error(ex, "Error in DrawFinder");
 
             using var color = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-            ImGui.Text("Could render Wotsit UI. Please report this error.");
+            ImGui.Text("Could not render Wotsit UI. Please report this error.");
         }
 
         if (closeFinder) {
