@@ -53,6 +53,7 @@ public sealed class PluginSettingsModule : SearchModule {
         }
 
         foreach (var plugin in FindAnythingPlugin.Ipc.TrackedIpcs) {
+            var pluginResults = 0;
             foreach (var ipcBinding in plugin.Value) {
                 var score = matcher.Matches(ipcBinding.Search);
                 if (score > 0) {
@@ -63,10 +64,11 @@ public sealed class PluginSettingsModule : SearchModule {
                         Guid = ipcBinding.Guid,
                         Icon = FindAnythingPlugin.TexCache.GetIcon(ipcBinding.IconId),
                     });
-                }
 
-                // Limit IPC results to 25
-                if (ctx.ResultCount > 25) break;
+                    // Limit IPC results to 25 per plugin
+                    if (++pluginResults > 25)
+                        break;
+                }
             }
         }
     }
