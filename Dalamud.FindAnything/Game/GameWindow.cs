@@ -6,6 +6,7 @@ using Dalamud.Interface.Components;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using System;
 using System.Collections.Generic;
@@ -129,8 +130,7 @@ public class GameWindow : Window {
         public float Cost { get; set; }
     }
 
-    private readonly IReadOnlyDictionary<uint, Bonus> bonuses = new Dictionary<uint, Bonus>
-    {
+    private readonly IReadOnlyDictionary<uint, Bonus> bonuses = new Dictionary<uint, Bonus> {
         [1] = new() {
             Name = "Squeaky Toy Dispenser",
             Multiplier = .1f,
@@ -416,276 +416,287 @@ public class GameWindow : Window {
 
         ImGuiHelpers.ScaledDummy(5);
 
-        if (ImGui.BeginTabBar("###noseTabs")) {
-            if (ImGui.BeginTabItem("Farm")) {
-                if (ImGui.BeginChild("NoseShop", new Vector2(-1, 500 * ImGuiHelpers.GlobalScale), false)) {
-                    var windowSize = ImGui.GetWindowSize();
+        using (var tabBar = ImRaii.TabBar("###noseTabs")) {
+            if (tabBar) {
+                DrawFarmTab();
+                DrawCityTab();
+            }
+        }
+    }
 
-                    var didAny = false;
-                    var lastHadDn = NoseKind.Normal;
-                    foreach (var kind in Enum.GetValues<NoseKind>()) {
-                        var cost = GetAdjustedCost(kind);
-                        var name = GetDogName(kind);
-                        if (state.NumNoses.TryGetValue(kind, out var num)) {
-                            didAny = true;
-                            var desc = noseDesc[kind];
-                            var cursorStart = ImGui.GetCursorPos();
+    private void DrawFarmTab() {
+        using var tab = ImRaii.TabItem("Farm");
+        if (!tab) return;
 
-                            ImGui.Text($"{name}");
-                            ImGui.SameLine();
-                            ImGuiHelpers.ScaledDummy(0, 5);
-                            ImGui.SameLine();
-                            ImGui.TextColored(ImGuiColors.DalamudGrey, $"x{num}");
+        DrawFarmTabNoseShop();
 
-                            ImGui.TextColored(ImGuiColors.DalamudGrey, desc);
+        ImGui.Separator();
+        ImGuiHelpers.ScaledDummy(10);
 
-                            var buyText = $"Buy {name} ({cost:N0} DN)";
-                            if (state.CurrentDn >= cost && numDogs < dogCap) {
-                                if (ImGui.Button(buyText)) {
-                                    if (Service.Keys[VirtualKey.SHIFT]) {
-                                        for (var i = 0; i < 10; i++) {
-                                            BuyDog(kind);
-                                        }
-                                    } else {
-                                        clicks++;
-                                        BuyDog(kind);
-                                    }
-                                }
-                            } else {
-                                ImGuiComponents.DisabledButton(buyText);
-                            }
+        if (state.GameComplete) {
+            var name = GetLocalPlayerName("my love");
 
-                            ImGui.SameLine();
+            ImGui.Image(noseTextures[NoseKind.Magical].GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+            ImGui.TextWrapped($"\"Peace has returned to the DN hills.\nEveryone is living happily.\nYou did it.\nThank you, {name}.\"");
+        } else if (thiefActive) {
+            ImGui.Image(thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
 
-                            var btnReleaseText = $"Release from duty###release{kind}";
-                            if (num > 1) {
-                                if (ImGui.Button(btnReleaseText)) {
-                                    state.NumNoses[kind]--;
-                                }
-                            } else {
-                                ImGuiComponents.DisabledButton(btnReleaseText);
-                            }
-
-                            cursorStart.X = windowSize.X - 64 - 30;
-                            ImGui.SetCursorPos(cursorStart);
-                            ImGui.Image(noseTextures[kind].GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
-
-                            lastHadDn = kind;
-
-                            ImGui.Separator();
-                        } else if (lastHadDn == kind - 1 && kind != NoseKind.Normal && didAny) {
-                            var btnText = $"Buy your first {GetDogName(kind)} ({noseCosts[kind]} DN)";
-                            if (state.CurrentDn >= cost && numDogs < dogCap) {
-                                if (ImGui.Button(btnText)) {
-                                    BuyDog(kind);
-                                }
-                            } else {
-                                ImGuiComponents.DisabledButton(btnText);
-                            }
-
-                            if (clicks >= 50) {
-                                ImGui.SameLine();
-                                ImGui.TextColored(ImGuiColors.DalamudGrey, "Only pro dogs know this: You can hold SHIFT to buy 10 at once!");
-                            }
-
-                            ImGui.Separator();
-                        }
-                    }
-
-                    if (!didAny) {
-                        if (ImGui.Button($"Buy your first dog ({noseCosts[NoseKind.Normal]} DN)")) {
-                            BuyDog(NoseKind.Normal);
-                        }
-                    }
+            var timeLeft = thiefWillStealAt - DateTimeOffset.Now;
+            if (timeLeft.TotalSeconds > 0) {
+                ImGui.SameLine();
+                ImGui.TextWrapped($"Oh no! A thief is here to rob you!\nYou have to stop it!\n\nYou have {timeLeft.TotalSeconds:N0} seconds left until he'll get away!");
+            } else {
+                if (CheckAgentThiefProtect()) {
+                    thiefActive = false;
+                    thiefMessageDismissed = true;
+                    thiefWillSteal = 0;
+                } else {
+                    var steals = state.CurrentDn * thiefWillSteal;
+                    state.CurrentDn -= steals;
+                    thiefStolenDn = steals;
+                    thiefActive = false;
                 }
+            }
 
-                ImGui.EndChild();
+            ImGuiHelpers.ScaledDummy(5);
 
-                ImGui.Separator();
-                ImGuiHelpers.ScaledDummy(10);
+            if (ImGui.Button("Call the cops")) {
+                thiefActive = false;
+                thiefMessageDismissed = true;
+                thiefWillSteal = 0;
+            }
+        } else if (!thiefActive && !thiefMessageDismissed) {
+            ImGui.Image(thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+            ImGui.TextWrapped($"Oh no! A thief has robbed your farm and you didn't catch it!\nYou lost {thiefStolenDn:N0} DN, that's a lot...");
 
-                if (state.GameComplete) {
-                    var name = GetLocalPlayerName("my love");
+            if (ImGui.Button("OK")) {
+                thiefMessageDismissed = true;
+            }
+        } else {
+            ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
+            ImGui.TextWrapped("Keep your eyes peeled! A thief may appear...");
+            ImGui.PopStyleColor();
+        }
+    }
 
-                    ImGui.Image(noseTextures[NoseKind.Magical].GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
-                    ImGui.SameLine();
-                    ImGui.TextWrapped($"\"Peace has returned to the DN hills.\nEveryone is living happily.\nYou did it.\nThank you, {name}.\"");
-                } else if (thiefActive) {
-                    ImGui.Image(thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
-                    ImGui.SameLine();
+    private void DrawFarmTabNoseShop() {
+        using var noseShopChild = ImRaii.Child("NoseShop", new Vector2(-1, 500 * ImGuiHelpers.GlobalScale), false);
+        if (!noseShopChild) return;
 
-                    var timeLeft = thiefWillStealAt - DateTimeOffset.Now;
-                    if (timeLeft.TotalSeconds > 0) {
-                        ImGui.SameLine();
-                        ImGui.TextWrapped($"Oh no! A thief is here to rob you!\nYou have to stop it!\n\nYou have {timeLeft.TotalSeconds:N0} seconds left until he'll get away!");
-                    } else {
-                        if (CheckAgentThiefProtect()) {
-                            thiefActive = false;
-                            thiefMessageDismissed = true;
-                            thiefWillSteal = 0;
+        var windowSize = ImGui.GetWindowSize();
+
+        var numDogs = state.DogCount;
+        var dogCap = (ulong)state.FarmCap;
+
+        var didAny = false;
+        var lastHadDn = NoseKind.Normal;
+        foreach (var kind in Enum.GetValues<NoseKind>()) {
+            var cost = GetAdjustedCost(kind);
+            var name = GetDogName(kind);
+            if (state.NumNoses.TryGetValue(kind, out var num)) {
+                didAny = true;
+                var desc = noseDesc[kind];
+                var cursorStart = ImGui.GetCursorPos();
+
+                ImGui.Text($"{name}");
+                ImGui.SameLine();
+                ImGuiHelpers.ScaledDummy(0, 5);
+                ImGui.SameLine();
+                ImGui.TextColored(ImGuiColors.DalamudGrey, $"x{num}");
+
+                ImGui.TextColored(ImGuiColors.DalamudGrey, desc);
+
+                var buyText = $"Buy {name} ({cost:N0} DN)";
+                if (state.CurrentDn >= cost && numDogs < dogCap) {
+                    if (ImGui.Button(buyText)) {
+                        if (Service.Keys[VirtualKey.SHIFT]) {
+                            for (var i = 0; i < 10; i++) {
+                                BuyDog(kind);
+                            }
                         } else {
-                            var steals = state.CurrentDn * thiefWillSteal;
-                            state.CurrentDn -= steals;
-                            thiefStolenDn = steals;
-                            thiefActive = false;
+                            clicks++;
+                            BuyDog(kind);
                         }
-                    }
-
-                    ImGuiHelpers.ScaledDummy(5);
-
-                    if (ImGui.Button("Call the cops")) {
-                        thiefActive = false;
-                        thiefMessageDismissed = true;
-                        thiefWillSteal = 0;
-                    }
-                } else if (!thiefActive && !thiefMessageDismissed) {
-                    ImGui.Image(thiefTexture.GetWrapOrEmpty().Handle, new Vector2(128, 128) * ImGuiHelpers.GlobalScale);
-                    ImGui.SameLine();
-                    ImGui.TextWrapped($"Oh no! A thief has robbed your farm and you didn't catch it!\nYou lost {thiefStolenDn:N0} DN, that's a lot...");
-
-                    if (ImGui.Button("OK")) {
-                        thiefMessageDismissed = true;
                     }
                 } else {
-                    ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
-                    ImGui.TextWrapped("Keep your eyes peeled! A thief may appear...");
-                    ImGui.PopStyleColor();
+                    ImGuiComponents.DisabledButton(buyText);
                 }
 
-                ImGui.EndTabItem();
-            }
+                ImGui.SameLine();
 
-            if (ImGui.BeginTabItem("City")) {
-                if (ImGui.CollapsingHeader("DN Construction Co.")) {
-                    ImGui.Image(clerkBuilderTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+                var btnReleaseText = $"Release from duty###release{kind}";
+                if (num > 1) {
+                    if (ImGui.Button(btnReleaseText)) {
+                        state.NumNoses[kind]--;
+                    }
+                } else {
+                    ImGuiComponents.DisabledButton(btnReleaseText);
+                }
+
+                cursorStart.X = windowSize.X - 64 - 30;
+                ImGui.SetCursorPos(cursorStart);
+                ImGui.Image(noseTextures[kind].GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+
+                lastHadDn = kind;
+
+                ImGui.Separator();
+            } else if (lastHadDn == kind - 1 && kind != NoseKind.Normal && didAny) {
+                var btnText = $"Buy your first {GetDogName(kind)} ({noseCosts[kind]} DN)";
+                if (state.CurrentDn >= cost && numDogs < dogCap) {
+                    if (ImGui.Button(btnText)) {
+                        BuyDog(kind);
+                    }
+                } else {
+                    ImGuiComponents.DisabledButton(btnText);
+                }
+
+                if (clicks >= 50) {
                     ImGui.SameLine();
+                    ImGui.TextColored(ImGuiColors.DalamudGrey, "Only pro dogs know this: You can hold SHIFT to buy 10 at once!");
+                }
 
-                    if (state.UpgradePurchased) {
-                        var minutesLeft = (state.UpgradeFinishesAt - DateTimeOffset.Now).TotalMinutes;
-                        ImGui.TextWrapped($"\"Working on it! We'll be done in {minutesLeft:N0} minutes.\"");
-                        ImGui.SetNextItemWidth(10);
-                    } else if (state.FarmUpgrade != FarmUpgrade.DimensionalGate) {
-                        ImGui.TextWrapped($"\"Hey, what's up. Need a bigger farm?\nYou'll be able to get more dogs if you upgrade it.\"");
+                ImGui.Separator();
+            }
+        }
 
-                        ImGuiHelpers.ScaledDummy(5);
+        if (!didAny) {
+            if (ImGui.Button($"Buy your first dog ({noseCosts[NoseKind.Normal]} DN)")) {
+                BuyDog(NoseKind.Normal);
+            }
+        }
+    }
 
-                        var nextUpgrade = state.FarmUpgrade + 1;
-                        var nextUpgradeName = farmUpgradeName[nextUpgrade];
-                        var nextUpgradeCost = farmUpgradeCost[nextUpgrade];
-                        var btnText = $"Buy Farm Upgrade: {nextUpgradeName} ({nextUpgradeCost:N0} DN)";
-                        if (state.CurrentDn >= nextUpgradeCost) {
-                            if (ImGui.Button(btnText)) {
-                                state.CurrentDn -= nextUpgradeCost;
-                                state.UpgradePurchased = true;
-                                state.UpgradeFinishesAt = DateTimeOffset.Now + TimeSpan.FromMinutes(random.Next(3, 14));
-                            }
-                        } else {
-                            ImGuiComponents.DisabledButton(btnText);
+    private void DrawCityTab() {
+        using var tab = ImRaii.TabItem("City");
+        if (!tab) return;
+
+        if (ImGui.CollapsingHeader("DN Construction Co.")) {
+            ImGui.Image(clerkBuilderTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+
+            if (state.UpgradePurchased) {
+                var minutesLeft = (state.UpgradeFinishesAt - DateTimeOffset.Now).TotalMinutes;
+                ImGui.TextWrapped($"\"Working on it! We'll be done in {minutesLeft:N0} minutes.\"");
+                ImGui.SetNextItemWidth(10);
+            } else if (state.FarmUpgrade != FarmUpgrade.DimensionalGate) {
+                ImGui.TextWrapped($"\"Hey, what's up. Need a bigger farm?\nYou'll be able to get more dogs if you upgrade it.\"");
+
+                ImGuiHelpers.ScaledDummy(5);
+
+                var nextUpgrade = state.FarmUpgrade + 1;
+                var nextUpgradeName = farmUpgradeName[nextUpgrade];
+                var nextUpgradeCost = farmUpgradeCost[nextUpgrade];
+                var btnText = $"Buy Farm Upgrade: {nextUpgradeName} ({nextUpgradeCost:N0} DN)";
+                if (state.CurrentDn >= nextUpgradeCost) {
+                    if (ImGui.Button(btnText)) {
+                        state.CurrentDn -= nextUpgradeCost;
+                        state.UpgradePurchased = true;
+                        state.UpgradeFinishesAt = DateTimeOffset.Now + TimeSpan.FromMinutes(random.Next(3, 14));
+                    }
+                } else {
+                    ImGuiComponents.DisabledButton(btnText);
+                }
+            } else {
+                ImGui.TextWrapped($"\"Sorry, your farm is as big as it gets.\nNothing I can do, we don't have the permit to make it any bigger!\"");
+            }
+        }
+
+        ImGuiHelpers.ScaledDummy(10);
+
+        if (ImGui.CollapsingHeader("DN Needs & Utilities")) {
+            ImGui.Image(clerkNeedsTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+            ImGui.TextWrapped($"\"Hi, welcome to DN Needs & Utilities. Here you can buy stuff that your dogs will love.\nWhat can I get you?\"");
+
+            ImGuiHelpers.ScaledDummy(5);
+
+            foreach (var bonus in bonuses) {
+                var available = !state.BonusesGained.Contains(bonus.Key) && state.CurrentDn >= bonus.Value.Cost;
+                var btnText = $"Buy {bonus.Value.Name} ({bonus.Value.Cost:N0} DN)";
+                if (available) {
+                    if (ImGui.Button(btnText)) {
+                        state.CurrentDn -= bonus.Value.Cost;
+                        state.BonusesGained.Add(bonus.Key);
+                    }
+                } else {
+                    ImGuiComponents.DisabledButton(btnText);
+                }
+
+                ImGui.SameLine();
+                ImGui.TextColored(ImGuiColors.DalamudGrey, $"This will increase DN gain by {bonus.Value.Multiplier:N2}");
+            }
+        }
+
+        ImGuiHelpers.ScaledDummy(10);
+
+        if (ImGui.CollapsingHeader("DN Boutique")) {
+            ImGui.Image(clerkBoutiqueTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+
+            if (!state.GameComplete) {
+                ImGui.TextWrapped($"\"The DN boutique is still under renovation, we're very sorry!\nPlease come back when you cleared the game, we should be done by then!\"");
+            } else {
+                ImGui.TextWrapped($"\"Hello! Welcome to the DN Boutique!\nWe offer a wide variety of handcrafted DN accessories to improve your living space!\"");
+
+                ImGuiHelpers.ScaledDummy(5);
+
+                foreach (var reward in GameRewards.Rewards) {
+                    var btnText = $"Buy {reward.Value.Name} ({reward.Value.Cost:N0} DN)";
+                    if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key)) {
+                        if (ImGui.Button(btnText)) {
+                            reward.Value.Bought();
+                            state.CurrentDn -= reward.Value.Cost;
+                            state.RewardsGained.Add(reward.Key);
                         }
                     } else {
-                        ImGui.TextWrapped($"\"Sorry, your farm is as big as it gets.\nNothing I can do, we don't have the permit to make it any bigger!\"");
+                        ImGuiComponents.DisabledButton(btnText);
                     }
                 }
+            }
+        }
 
-                ImGuiHelpers.ScaledDummy(10);
+        ImGuiHelpers.ScaledDummy(10);
 
-                if (ImGui.CollapsingHeader("DN Needs & Utilities")) {
-                    ImGui.Image(clerkNeedsTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
-                    ImGui.SameLine();
-                    ImGui.TextWrapped($"\"Hi, welcome to DN Needs & Utilities. Here you can buy stuff that your dogs will love.\nWhat can I get you?\"");
+        if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage")) {
+            ImGui.Image(sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
+            ImGui.SameLine();
+            ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
 
-                    ImGuiHelpers.ScaledDummy(5);
+            if (ImGui.Button("Yes")) {
+                if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && state.TotalEarned > 100_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber)) {
+                    FindAnythingPlugin.Configuration.GoldenTicketNumber = ticketNumber;
+                    FindAnythingPlugin.ConfigManager.Save();
 
-                    foreach (var bonus in bonuses) {
-                        var available = !state.BonusesGained.Contains(bonus.Key) && state.CurrentDn >= bonus.Value.Cost;
-                        var btnText = $"Buy {bonus.Value.Name} ({bonus.Value.Cost:N0} DN)";
-                        if (available) {
-                            if (ImGui.Button(btnText)) {
-                                state.CurrentDn -= bonus.Value.Cost;
-                                state.BonusesGained.Add(bonus.Key);
-                            }
-                        } else {
-                            ImGuiComponents.DisabledButton(btnText);
-                        }
-
-                        ImGui.SameLine();
-                        ImGui.TextColored(ImGuiColors.DalamudGrey, $"This will increase DN gain by {bonus.Value.Multiplier:N2}");
-                    }
+                    justGotGoldenTicket = true;
+                } else {
+                    IsOpen = false;
+                    NewGame();
                 }
-
-                ImGuiHelpers.ScaledDummy(10);
-
-                if (ImGui.CollapsingHeader("DN Boutique")) {
-                    ImGui.Image(clerkBoutiqueTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
-                    ImGui.SameLine();
-
-                    if (!state.GameComplete) {
-                        ImGui.TextWrapped($"\"The DN boutique is still under renovation, we're very sorry!\nPlease come back when you cleared the game, we should be done by then!\"");
-                    } else {
-                        ImGui.TextWrapped($"\"Hello! Welcome to the DN Boutique!\nWe offer a wide variety of handcrafted DN accessories to improve your living space!\"");
-
-                        ImGuiHelpers.ScaledDummy(5);
-
-                        foreach (var reward in GameRewards.Rewards) {
-                            var btnText = $"Buy {reward.Value.Name} ({reward.Value.Cost:N0} DN)";
-                            if (state.CurrentDn >= reward.Value.Cost && !state.RewardsGained.Contains(reward.Key)) {
-                                if (ImGui.Button(btnText)) {
-                                    reward.Value.Bought();
-                                    state.CurrentDn -= reward.Value.Cost;
-                                    state.RewardsGained.Add(reward.Key);
-                                }
-                            } else {
-                                ImGuiComponents.DisabledButton(btnText);
-                            }
-                        }
-                    }
-                }
-
-                ImGuiHelpers.ScaledDummy(10);
-
-                if (!saidNoToSage && ImGui.CollapsingHeader("DN Sage")) {
-                    ImGui.Image(sageTexture.GetWrapOrEmpty().Handle, new Vector2(64, 64) * ImGuiHelpers.GlobalScale);
-                    ImGui.SameLine();
-                    ImGui.TextWrapped($"\"If you are weary of this world, you may start anew.\nConsider your life a journey, and you will find your way.\nAltogether, you have earned {state.TotalEarned:N0} DN.\n\nIs this what you want?\"");
-
-                    if (ImGui.Button("Yes")) {
-                        if (!FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && state.TotalEarned > 100_000_000 && GameRewards.TryGetGoldenTicket(out var ticketNumber)) {
-                            FindAnythingPlugin.Configuration.GoldenTicketNumber = ticketNumber;
-                            FindAnythingPlugin.ConfigManager.Save();
-
-                            justGotGoldenTicket = true;
-                        } else {
-                            IsOpen = false;
-                            NewGame();
-                        }
-                    }
-
-                    ImGui.SameLine();
-
-                    if (ImGui.Button("No")) {
-                        saidNoToSage = true;
-                    }
-                }
-
-                ImGuiHelpers.ScaledDummy(10);
-
-                if (FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && ImGui.CollapsingHeader("Goat's Golden Ticket")) {
-                    ImGui.Image(goldenTicketTexture.GetWrapOrEmpty().Handle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
-
-                    ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
-
-                    ImGui.TextUnformatted("Your ticket number:");
-                    ImGui.SameLine();
-
-                    ImGui.PushFont(UiBuilder.MonoFont);
-                    ImGui.TextUnformatted(FindAnythingPlugin.Configuration.GoldenTicketNumber.Value.ToString("000000"));
-                    ImGui.PopFont();
-                }
-
-                ImGui.EndTabItem();
             }
 
-            ImGui.EndTabBar();
+            ImGui.SameLine();
+
+            if (ImGui.Button("No")) {
+                saidNoToSage = true;
+            }
+        }
+
+        ImGuiHelpers.ScaledDummy(10);
+
+        if (FindAnythingPlugin.Configuration.GoldenTicketNumber.HasValue && ImGui.CollapsingHeader("Goat's Golden Ticket")) {
+            ImGui.Image(goldenTicketTexture.GetWrapOrEmpty().Handle, new Vector2(800, 364) * ImGuiHelpers.GlobalScale);
+
+            ImGui.TextUnformatted("You have a Golden Ticket! Keep it close and don't tell anyone... you never know.\nNow run home, and don't stop till you get there.");
+
+            ImGui.TextUnformatted("Your ticket number:");
+            ImGui.SameLine();
+
+            ImGui.PushFont(UiBuilder.MonoFont);
+            ImGui.TextUnformatted(FindAnythingPlugin.Configuration.GoldenTicketNumber.Value.ToString("000000"));
+            ImGui.PopFont();
         }
     }
 

@@ -42,14 +42,14 @@ public partial class SettingsWindow {
 
                     ImGui.SameLine();
 
-                    if (ImGui.BeginCombo("Delay", shiftShiftUnit.ToString())) {
-                        foreach (var key in Enum.GetValues<Configuration.DoubleTapUnit>()) {
-                            if (ImGui.Selectable(key.ToString(), key == shiftShiftUnit)) {
-                                shiftShiftUnit = key;
+                    using (var combo = ImRaii.Combo("Delay", shiftShiftUnit.ToString())) {
+                        if (combo) {
+                            foreach (var key in Enum.GetValues<Configuration.DoubleTapUnit>()) {
+                                if (ImGui.Selectable(key.ToString(), key == shiftShiftUnit)) {
+                                    shiftShiftUnit = key;
+                                }
                             }
                         }
-
-                        ImGui.EndCombo();
                     }
                 }
 
@@ -80,14 +80,14 @@ public partial class SettingsWindow {
         ImGui.TextWrapped(
             "When using fuzzy search modes, results are shown in order from best match to worst match.");
 
-        if (ImGui.BeginCombo("Search mode", matchMode.ToString())) {
-            foreach (var key in Enum.GetValues<MatchMode>()) {
-                if (ImGui.Selectable(key.ToString(), key == matchMode)) {
-                    matchMode = key;
+        using (var combo = ImRaii.Combo("Search mode", matchMode.ToString())) {
+            if (combo) {
+                foreach (var key in Enum.GetValues<MatchMode>()) {
+                    if (ImGui.Selectable(key.ToString(), key == matchMode)) {
+                        matchMode = key;
+                    }
                 }
             }
-
-            ImGui.EndCombo();
         }
 
         ImGuiHelpers.ScaledDummy(5);
