@@ -1,5 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using Dalamud.Plugin;
+using System.Collections.Generic;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -53,12 +54,17 @@ public sealed class PluginSettingsModule : SearchModule {
         }
 
         foreach (var plugin in FindAnythingPlugin.Ipc.TrackedIpcs) {
+            var ipConfig = FindAnythingPlugin.Configuration.IpcConfigs.GetValueOrDefault(plugin.Key);
+            if (ipConfig is { Enabled: false })
+                continue;
+
             var pluginResults = 0;
+            var weight = ipConfig?.OverrideWeight ?? Weight;
             foreach (var ipcBinding in plugin.Value) {
                 var score = matcher.Matches(ipcBinding.Search);
                 if (score > 0) {
                     ctx.AddResult(new IpcSearchResult {
-                        Score = score * Weight,
+                        Score = score * weight,
                         CatName = plugin.Key,
                         Name = ipcBinding.Display,
                         Guid = ipcBinding.Guid,

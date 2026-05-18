@@ -56,6 +56,7 @@ public partial class SettingsWindow {
     private Configuration.CraftingSingleSelectAction craftingRecipeSelect;
     private Configuration.CraftingSingleSelectAction craftingItemSingleSelect;
     private Configuration.CraftingMergedSelectAction craftingItemMergedSelect;
+    private Dictionary<string, Configuration.IpcConfig> ipcConfigs = new();
 
     private void CopyConfigToWindow(Configuration config) {
         flags = (uint)config.ToSearchV3;
@@ -108,6 +109,8 @@ public partial class SettingsWindow {
         craftingRecipeSelect = config.CraftingRecipeSelect;
         craftingItemSingleSelect = config.CraftingItemSelectSingle;
         craftingItemMergedSelect = config.CraftingItemSelectMerged;
+
+        ipcConfigs = config.IpcConfigs;
     }
 
     private void CopyWindowToConfig(Configuration config) {
@@ -173,6 +176,10 @@ public partial class SettingsWindow {
         config.CraftingRecipeSelect = craftingRecipeSelect;
         config.CraftingItemSelectSingle = craftingItemSingleSelect;
         config.CraftingItemSelectMerged = craftingItemMergedSelect;
+
+        config.IpcConfigs = ipcConfigs
+            .Where(kv => kv.Value != new Configuration.IpcConfig())
+            .ToDictionary(x => x.Key, x => x.Value);
     }
 
     private void DrawSaveFooter() {

@@ -262,6 +262,13 @@ public class Configuration : IPluginConfiguration {
     public CraftingSingleSelectAction CraftingItemSelectSingle = CraftingSingleSelectAction.OpenInLog;
     public CraftingMergedSelectAction CraftingItemSelectMerged = CraftingMergedSelectAction.SearchInLog;
 
+    public Dictionary<string, IpcConfig> IpcConfigs { get; set; } = new();
+
+    public record IpcConfig {
+        public bool Enabled { get; set; } = true;
+        public int? OverrideWeight { get; set; } = null;
+    }
+
     public GameWindow.SimulationState? SimulationState { get; set; } = null;
 
     public int? GoldenTicketNumber { get; set; } = null;

@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace Dalamud.FindAnything.Settings;
 
@@ -16,7 +17,7 @@ public partial class SettingsWindow {
         using var tabItem = ImRaii.TabItem("General");
         if (!tabItem) return;
 
-        using var scrollChild = ImRaii.Child("scrollArea", ImGuiHelpers.ScaledVector2(0, SaveDiscardOffset), false, ImGuiWindowFlags.HorizontalScrollbar);
+        using var scrollChild = ImRaii.Child("scrollArea", Vector2.Zero, false, ImGuiWindowFlags.HorizontalScrollbar);
         if (!scrollChild) return;
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "How to open");

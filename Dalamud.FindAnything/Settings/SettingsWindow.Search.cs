@@ -15,7 +15,7 @@ public partial class SettingsWindow {
         using var tabItem = ImRaii.TabItem("What to search");
         if (!tabItem) return;
 
-        using var scrollChild = ImRaii.Child("scrollArea", ImGuiHelpers.ScaledVector2(0, SaveDiscardOffset), false, ImGuiWindowFlags.HorizontalScrollbar);
+        using var scrollChild = ImRaii.Child("scrollArea", Vector2.Zero, false, ImGuiWindowFlags.HorizontalScrollbar);
         if (!scrollChild) return;
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "What to search");
@@ -103,7 +103,7 @@ public partial class SettingsWindow {
 
             ImGui.NextColumn();
 
-            using (ImRaii.ItemWidth(120)) {
+            using (ImRaii.ItemWidth(120 * ImGuiHelpers.GlobalScale)) {
                 var weight = searchWeights.GetValueOrDefault(search, SearchModule.DefaultWeight);
                 if (ImGui.InputInt($"##{search}-weight", ref weight, SearchModule.DefaultWeight / 10, SearchModule.DefaultWeight)) {
                     if (weight is > 0 and < SearchModule.DefaultWeight * 1000) {

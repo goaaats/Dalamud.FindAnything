@@ -15,7 +15,6 @@ namespace Dalamud.FindAnything.Settings;
 
 public partial class SettingsWindow : Window {
     private DateTime? finderOffsetChangeTime;
-    private const int SaveDiscardOffset = -40;
 
     private readonly FilterCombo<VirtualKey> virtualKeyFilterCombo =
         new FilterCombo<VirtualKey>(Enum.GetValues<VirtualKey>().Where(x => x != VirtualKey.LBUTTON).ToArray())
@@ -35,11 +34,17 @@ public partial class SettingsWindow : Window {
     }
 
     public override void Draw() {
-        using (var tabBar = ImRaii.TabBar("##mainTabs")) {
-            if (tabBar) {
-                DrawGeneralTab();
-                DrawSearchTab();
-                DrawMacrosTab();
+        var containerSize = ImGui.GetContentRegionAvail();
+        containerSize.Y -= ImGui.GetFrameHeight() + (ImGui.GetStyle().ItemSpacing.Y * 3) + (4 * ImGuiHelpers.GlobalScale);
+
+        using (ImRaii.Child("##tabContainer", containerSize, false)) {
+            using (var tabBar = ImRaii.TabBar("##mainTabs")) {
+                if (tabBar) {
+                    DrawGeneralTab();
+                    DrawSearchTab();
+                    DrawIpcTab();
+                    DrawMacrosTab();
+                }
             }
         }
 
