@@ -42,10 +42,14 @@ namespace Dalamud.FindAnything {
 
 
         public ISharedImmediateTexture GetIcon(uint iconId) {
-            return textureProvider.GetFromGameIcon(new GameIconLookup {
-                HiRes = false,
-                IconId = iconId,
-            });
+            try {
+                return textureProvider.GetFromGameIcon(new GameIconLookup {
+                    HiRes = false,
+                    IconId = iconId,
+                });
+            } catch {
+                return textureProvider.GetFromGameIcon(default);
+            }
         }
 
         private TextureCache(IDataManager data, ITextureProvider textureProvider) {
