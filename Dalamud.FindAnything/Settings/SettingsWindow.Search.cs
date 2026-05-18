@@ -5,12 +5,15 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 
 namespace Dalamud.FindAnything.Settings;
 
 public partial class SettingsWindow {
+    private int searchDragDropSource;
+
     private void DrawSearchTab() {
         using var tabItem = ImRaii.TabItem("What to search");
         if (!tabItem) return;
@@ -95,10 +98,31 @@ public partial class SettingsWindow {
 
             ImGui.SameLine();
 
-            if (isRequired) {
-                CheckboxLocked($"Search in {name}");
-            } else {
-                ImGui.CheckboxFlags($"Search in {name}", ref flags, (uint)search);
+            using (ImRaii.Group()) {
+                if (isRequired) {
+                    CheckboxLocked($"Search in {name}");
+                } else {
+                    ImGui.CheckboxFlags($"Search in {name}", ref flags, (uint)search);
+                }
+            }
+
+            using (var source = ImRaii.DragDropSource(ImGuiDragDropFlags.SourceAllowNullId)) {
+                if (source) {
+                    ImGui.SetDragDropPayload("SEARCH", ReadOnlySpan<byte>.Empty);
+                    ImGui.Text($"Search in {name}");
+                    searchDragDropSource = i;
+                }
+            }
+
+            using (var target = ImRaii.DragDropTarget()) {
+                if (target) {
+                    var payload = ImGui.AcceptDragDropPayload("SEARCH");
+                    if (!payload.IsNull) {
+                        var moving = order[searchDragDropSource];
+                        order.RemoveAt(searchDragDropSource);
+                        order.Insert(i, moving);
+                    }
+                }
             }
 
             ImGui.NextColumn();
@@ -128,6 +152,17 @@ public partial class SettingsWindow {
     }
 
     private static void CheckboxLocked(string text) {
+        var startPos = ImGui.GetCursorPos();
+        using (new ImRaii.ColorDisposable()
+                   .Push(ImGuiCol.CheckMark, 0)
+                   .Push(ImGuiCol.FrameBg, 0)
+                   .Push(ImGuiCol.FrameBgActive, 0)
+                   .Push(ImGuiCol.FrameBgHovered, 0)) {
+            var flags = 0;
+            ImGui.CheckboxFlags(text, ref flags, 0);
+        }
+
+        ImGui.SetCursorPos(startPos);
         using (new ImRaii.ColorDisposable()
                    .Push(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.TextDisabled))
                    .Push(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.FrameBg))
@@ -135,8 +170,5 @@ public partial class SettingsWindow {
                    .Push(ImGuiCol.ButtonHovered, ImGui.GetColorU32(ImGuiCol.FrameBgHovered))) {
             ImGuiComponents.IconButton(FontAwesomeIcon.Lock, new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight()));
         }
-        ImGui.SameLine();
-        ImGui.SetCursorPosX(ImGui.GetCursorPos().X - ImGui.GetStyle().ItemSpacing.X + ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.Text(text);
     }
 }
