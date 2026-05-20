@@ -152,12 +152,8 @@ internal class Teleporter(AetheryteManager aetheryteManager) {
         }
 
         public (TeleportResult, bool) Teleport(IAetheryteEntry entry) {
-            try {
-                if (teleportIpc.InvokeFunc(entry.AetheryteId, entry.SubIndex)) {
-                    return (TeleportResult.Success, showTeleportChatMessageIpc.InvokeFunc());
-                }
-            } catch (Exception ex) {
-                Service.Log.Error(ex, $"Error while attempting to use IPC teleport to teleport to {entry.AetheryteId}:{entry.SubIndex}");
+            if (teleportIpc.InvokeFunc(entry.AetheryteId, entry.SubIndex)) {
+                return (TeleportResult.Success, showTeleportChatMessageIpc.InvokeFunc());
             }
 
             return (TeleportResult.BadState, false);
