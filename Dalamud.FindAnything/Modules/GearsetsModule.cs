@@ -90,6 +90,7 @@ public sealed class GearsetsModule : SearchModule {
         { 39, "melee dps" },
         { 40, "healer" },
         { 41, "melee dps" },
-        { 42, "ranged dps" }
+        { 42, "ranged dps" },
+        { 43, "ducktamer" }
     }.ToFrozenDictionary();
 }
