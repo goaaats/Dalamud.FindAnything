@@ -20,7 +20,7 @@ public sealed class GearsetsModule : SearchModule {
                 normalizer.Searchable(gearset.Name),
                 normalizer.Searchable(cjRow.Name),
                 normalizer.SearchableAscii(cjRow.Abbreviation),
-                ClassJobRolesMap[gearset.ClassJob]
+                ClassJobRolesMap.GetValueOrDefault(gearset.ClassJob, string.Empty)
             );
             if (score > 0) {
                 ctx.AddResult(new GearsetSearchResult {
