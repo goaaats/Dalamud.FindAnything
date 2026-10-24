@@ -5,11 +5,13 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dalamud.FindAnything;
 
 [SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
-public sealed class FindAnythingPlugin : IDalamudPlugin {
+public sealed class FindAnythingPlugin : IAsyncDalamudPlugin {
     private const string CommandName = "/wotsit";
 
     public static FindAnythingPlugin Instance { get; private set; } = null!;
@@ -24,21 +26,23 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
     public static Normalizer Normalizer { get; private set; } = null!;
     public static RootLookup RootLookup { get; private set; } = null!;
 
-    private Finder Finder { get; }
-    private FinderActivator FinderActivator { get; }
-    private WindowSystem WindowSystem { get; }
-    private SettingsWindow SettingsWindow { get; }
-    private GameWindow GameWindow { get; }
+    private Finder Finder { get; set; } = null!;
+    private FinderActivator FinderActivator { get; set; } = null!;
+    private WindowSystem WindowSystem { get; set; } = null!;
+    private SettingsWindow SettingsWindow { get; set; } = null!;
+    private GameWindow GameWindow { get; set; } = null!;
 
     public FindAnythingPlugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<Service>();
         Instance = this;
+    }
 
-        ConfigManager = new ConfigManager();
+    public async Task LoadAsync(CancellationToken cancellationToken) {
         Normalizer = new Normalizer();
+        ConfigManager = new ConfigManager();
 
         TexCache = TextureCache.Load(Service.Data, Service.TextureProvider);
-        SearchDatabase = SearchDatabase.Load(Normalizer);
+        SearchDatabase = new SearchDatabase(Normalizer);
         GameStateCache = new GameStateCache();
         Ipc = new IpcSystem(Normalizer);
 
@@ -53,9 +57,9 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
 
         // UI
 
-        pluginInterface.UiBuilder.DisableCutsceneUiHide = true;
-        pluginInterface.UiBuilder.DisableUserUiHide = true;
-        pluginInterface.UiBuilder.OpenConfigUi += OpenSettings;
+        Service.PluginInterface.UiBuilder.DisableCutsceneUiHide = true;
+        Service.PluginInterface.UiBuilder.DisableUserUiHide = true;
+        Service.PluginInterface.UiBuilder.OpenConfigUi += OpenSettings;
 
         WindowSystem = new WindowSystem("wotsit");
 
@@ -67,7 +71,7 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
 
         WindowSystem.AddWindow(Finder);
 
-        pluginInterface.UiBuilder.Draw += WindowSystem.Draw;
+        Service.PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
 
         // Commands
 
@@ -79,9 +83,23 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
             HelpMessage = "Open the Wotsit settings.",
             ShowInHelp = false,
         });
+
+        // Init
+
+        SearchDatabase.InitBase();
+
+        await Service.Framework.Run(() => {
+            SearchDatabase.InitMainThread();
+        }, cancellationToken);
+
+        // Notify availability after load
+
+        _ = Service.Framework.RunOnTick(() => {
+            Ipc.NotifyAvailable();
+        }, delayTicks: 0, cancellationToken: cancellationToken);
     }
 
-    public void Dispose() {
+    public ValueTask DisposeAsync() {
         Service.PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         Service.CommandManager.RemoveHandler(CommandName);
         Service.CommandManager.RemoveHandler("/bountifuldn");
@@ -90,6 +108,8 @@ public sealed class FindAnythingPlugin : IDalamudPlugin {
 
         GameStateCache.Dispose();
         Ipc.Dispose();
+
+        return ValueTask.CompletedTask;
     }
 
     private void OnCommand(string command, string args) {

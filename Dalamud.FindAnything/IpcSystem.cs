@@ -1,4 +1,5 @@
 ﻿using Dalamud.Plugin.Ipc;
+using Dalamud.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,11 +43,13 @@ public sealed class IpcSystem : IDisposable {
 
         TrackedIpcs = new Dictionary<string, List<IpcBinding>>();
 
-        Service.Log.Verbose("[IPC] Firing FA.Available.");
+        isReady = true;
+    }
+
+    public void NotifyAvailable() {
+        Service.Log.Verbose($"[IPC] Firing FA.Available.");
         var cgAvailable = Service.PluginInterface.GetIpcProvider<bool>("FA.Available");
         cgAvailable.SendMessage();
-
-        isReady = true;
     }
 
     private bool IsAvailable() {

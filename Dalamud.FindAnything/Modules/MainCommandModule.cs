@@ -10,8 +10,8 @@ public sealed class MainCommandModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
-        foreach (var mainCommand in FindAnythingPlugin.SearchDatabase.GetAll<MainCommand>()) {
-            var searchable = mainCommand.Value.Searchable;
+        foreach (var (commandId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<MainCommand>()) {
+            var searchable = searchEntry.Searchable;
             if (searchable == "log out")
                 searchable = "logout";
 
@@ -19,9 +19,9 @@ public sealed class MainCommandModule : SearchModule {
             if (score > 0) {
                 ctx.AddResult(new MainCommandSearchResult {
                     Score = score * Weight,
-                    CommandId = mainCommand.Key,
-                    Name = mainCommand.Value.Display,
-                    Icon = FindAnythingPlugin.TexCache.MainCommandIcons[mainCommand.Key]
+                    MainCommandId = commandId,
+                    Name = searchEntry.Display,
+                    Icon = FindAnythingPlugin.TexCache.MainCommandIcons[commandId]
                 });
             }
 
@@ -34,12 +34,12 @@ public sealed class MainCommandModule : SearchModule {
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }
         public required int Score { get; init; }
-        public required uint CommandId { get; init; }
+        public required uint MainCommandId { get; init; }
 
-        public object Key => CommandId;
+        public object Key => MainCommandId;
 
         public unsafe void Selected() {
-            UIModule.Instance()->ExecuteMainCommand(CommandId);
+            UIModule.Instance()->ExecuteMainCommand(MainCommandId);
         }
     }
 }

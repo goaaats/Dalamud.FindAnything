@@ -1,5 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Enums;
-using Dalamud.Interface.Textures;
+﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
 
@@ -11,13 +10,14 @@ public sealed class MinionsModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInCombatDuty() || gameState.IsInCombat()) return;
 
+        var minionDict = FindAnythingPlugin.SearchDatabase.GetAll<Companion>();
         foreach (var minion in FindAnythingPlugin.GameStateCache.UnlockedMinions) {
-            var name = Service.SeStringEvaluator.EvaluateObjStr(ObjectKind.Companion, minion.RowId, Service.ClientState.ClientLanguage);
-            var score = matcher.Matches(normalizer.Searchable(name));
+            var minionEntry = minionDict[minion.RowId];
+            var score = matcher.Matches(minionEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new MinionResult {
                     Score = score * Weight,
-                    Name = name,
+                    Name = minionEntry.Display,
                     Minion = minion,
                 });
             }

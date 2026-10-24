@@ -262,7 +262,7 @@ public sealed class Finder : Window {
             // Debug scores
             // var scoreText = result.Score.ToString();
             // ImGui.TextColored(ImGuiColors.HealerGreen, scoreText);
-            // nameTextSize += ImGui.CalcTextSize(scoreText).X + scaledFour * 2;
+            // nameTextSize += ImGui.CalcTextSize(scoreText).X + ImGui.GetStyle().ItemSpacing.X * 2;
             // ImGui.SameLine();
 
             if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {

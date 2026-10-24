@@ -13,22 +13,21 @@ public sealed class DutyModule : SearchModule {
         if (gameState.IsInDuty()) return;
 
         foreach (var cfc in FindAnythingPlugin.GameStateCache.UnlockedDuties) {
-            if (cfc is not { ContentType.ValueNullable: { } contentType } row)
+            if (cfc is not { ContentType.ValueNullable: { } contentType })
                 continue;
 
             // Only include dungeon, trials, raids, ultimates
             if (contentType.RowId is not (2 or 4 or 5 or 28))
                 continue;
 
-            var dbEntry = FindAnythingPlugin.SearchDatabase.GetString<ContentFinderCondition>(cfc.RowId);
-
-            var score = matcher.Matches(dbEntry.Searchable);
+            var searchEntry = FindAnythingPlugin.SearchDatabase.Get<ContentFinderCondition>(cfc.RowId);
+            var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new DutySearchResult {
                     Score = score * Weight,
-                    CatName = row.Name.ToText(),
+                    CatName = cfc.Name.ToText(),
                     DataKey = cfc.RowId,
-                    Name = dbEntry.Display,
+                    Name = searchEntry.Display,
                     Icon = FindAnythingPlugin.TexCache.GetIcon(contentType.Icon),
                 });
             }
@@ -36,15 +35,13 @@ public sealed class DutyModule : SearchModule {
             if (ctx.OverLimit()) break;
         }
 
-        foreach (var contentRoulette in Service.Data.GetExcelSheet<ContentRoulette>()!.Where(x => x.IsInDutyFinder)) // Also filter !row 7 + 10 here, but not in Lumina schemas yet
-        {
-            var text = FindAnythingPlugin.SearchDatabase.GetString<ContentRoulette>(contentRoulette.RowId);
-
-            var score = matcher.Matches(text.Searchable);
+        foreach (var contentRoulette in Service.Data.GetExcelSheet<ContentRoulette>().Where(x => x.IsInDutyFinder)) {  // Also filter !row 7 + 10 here, but not in Lumina schemas yet
+            var seachEntry = FindAnythingPlugin.SearchDatabase.Get<ContentRoulette>(contentRoulette.RowId);
+            var score = matcher.Matches(seachEntry.Searchable);
             if (score > 0) {
                 var name = contentRoulette.Category.ToDalamudString().TextValue;
                 if (name.IsNullOrWhitespace())
-                    name = text.Display;
+                    name = seachEntry.Display;
 
                 ctx.AddResult(new ContentRouletteSearchResult {
                     Score = score * Weight,

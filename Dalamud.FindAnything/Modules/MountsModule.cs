@@ -25,11 +25,15 @@ public sealed class MountsModule : SearchModule {
 
         if (isInNoMountDuty || gameState.IsInCombat()) return;
 
+
+        var mountDict = FindAnythingPlugin.SearchDatabase.GetAll<Mount>();
         foreach (var mount in FindAnythingPlugin.GameStateCache.UnlockedMounts) {
-            var score = matcher.Matches(normalizer.Searchable(mount.Singular));
+            var mountEntry = mountDict[mount.RowId];
+            var score = matcher.Matches(mountEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new MountResult {
                     Score = score * Weight,
+                    Name = mountEntry.Display,
                     Mount = mount,
                 });
             }
@@ -40,7 +44,7 @@ public sealed class MountsModule : SearchModule {
 
     private class MountResult : ISearchResult {
         public string CatName => "Mount";
-        public string Name => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Mount.Singular.ToText());
+        public required string Name { get; init; }
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon(Mount.Icon);
         public required int Score { get; init; }
         public required Mount Mount { get; init; }

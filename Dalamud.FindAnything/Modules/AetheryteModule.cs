@@ -12,9 +12,17 @@ public sealed class AetheryteModule : SearchModule {
     private readonly AetheryteManager aetheryteManager;
     private readonly Teleporter teleporter;
 
+    private readonly string closestMarketSearchable;
+    private readonly string closestInnSearchable;
+    private readonly string closestDummySearchable;
+
     public AetheryteModule() {
         aetheryteManager = new AetheryteManager();
         teleporter = new Teleporter(aetheryteManager);
+
+        closestMarketSearchable = FindAnythingPlugin.Normalizer.SearchableAscii("Closest Market Board");
+        closestInnSearchable = FindAnythingPlugin.Normalizer.SearchableAscii("Closest Inn Room");
+        closestDummySearchable = FindAnythingPlugin.Normalizer.SearchableAscii("Closest Striking Dummy");
     }
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
@@ -29,10 +37,10 @@ public sealed class AetheryteModule : SearchModule {
 
         foreach (var aetheryte in FindAnythingPlugin.GameStateCache.AetheryteEntries) {
             var aetheryteName = aetheryteManager.GetAetheryteName(aetheryte);
-            var terriName = FindAnythingPlugin.SearchDatabase.GetString<TerritoryType>(aetheryte.TerritoryId);
+            var territoryTypeSearchEntry = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(aetheryte.TerritoryId);
             var score = matcher.MatchesAny(
                 normalizer.Searchable(aetheryteName),
-                terriName.Searchable
+                territoryTypeSearchEntry.Searchable
             );
 
             if (score > 0) {
@@ -41,13 +49,13 @@ public sealed class AetheryteModule : SearchModule {
                     Name = aetheryteName,
                     Data = aetheryte,
                     Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
-                    TerriName = terriName.Display,
+                    TerriName = territoryTypeSearchEntry.Display,
                     Teleporter = teleporter,
                 });
             }
 
-            marketScore = matcher.Matches(normalizer.SearchableAscii("Closest Market Board"));
-            innScore = matcher.Matches(normalizer.SearchableAscii("Closest Inn Room"));
+            marketScore = matcher.Matches(closestMarketSearchable);
+            innScore = matcher.Matches(closestInnSearchable);
             if (AetheryteManager.IsMarketBoardAetheryte(aetheryte.AetheryteId)) {
                 if (FindAnythingPlugin.Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.MarketBoard) && marketScore > 0)
                     marketBoardResults.Add(aetheryte);
@@ -58,7 +66,7 @@ public sealed class AetheryteModule : SearchModule {
                 }
             }
 
-            dummyScore = matcher.Matches(normalizer.SearchableAscii("Closest Striking Dummy"));
+            dummyScore = matcher.Matches(closestDummySearchable);
             if (FindAnythingPlugin.Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.StrikingDummy) &&
                 dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId)) {
                 strikingDummyResults.Add(aetheryte);
@@ -69,57 +77,53 @@ public sealed class AetheryteModule : SearchModule {
 
         if (marketBoardResults.Count > 0) {
             var closestMarketBoard = marketBoardResults.OrderBy(a1 => a1.GilCost).First();
-            var terriName = FindAnythingPlugin.SearchDatabase.GetString<TerritoryType>(closestMarketBoard.TerritoryId);
             ctx.AddResult(new AetheryteSearchResult {
                 Score = marketScore * Weight,
                 Name = "Closest Market Board",
                 Data = closestMarketBoard,
                 Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
-                TerriName = terriName.Display,
+                TerriName = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(closestMarketBoard.TerritoryId).Display,
                 Teleporter = teleporter,
             });
         }
 
         if (strikingDummyResults.Count > 0) {
             var closestStrikingDummy = strikingDummyResults.OrderBy(a1 => a1.GilCost).First();
-            var terriName = FindAnythingPlugin.SearchDatabase.GetString<TerritoryType>(closestStrikingDummy.TerritoryId);
             ctx.AddResult(new AetheryteSearchResult {
                 Score = dummyScore * Weight,
                 Name = "Closest Striking Dummy",
                 Data = closestStrikingDummy,
                 Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
-                TerriName = terriName.Display,
+                TerriName = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(closestStrikingDummy.TerritoryId).Display,
                 Teleporter = teleporter,
             });
         }
+
         if (innRoomResults.Count > 0) {
             var closestInnRoom = innRoomResults.OrderBy(a1 => a1.GilCost).First();
-            var terriName = FindAnythingPlugin.SearchDatabase.GetString<TerritoryType>(closestInnRoom.TerritoryId);
             ctx.AddResult(new AetheryteSearchResult {
                 Score = innScore * Weight,
                 Name = "Closest Inn Room",
                 Data = closestInnRoom,
                 Icon = FindAnythingPlugin.TexCache.InnRoomIcon,
-                TerriName = terriName.Display,
+                TerriName = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(closestInnRoom.TerritoryId).Display,
                 Teleporter = teleporter,
             });
         }
     }
 
     internal class AetheryteSearchResult : ISearchResult {
-        public string CatName {
-            get {
-                var name = "Aetherytes";
-                if (FindAnythingPlugin.Configuration.DoAetheryteGilCost) {
-                    name += $" ({TerriName} - {Data.GilCost} Gil)";
-                } else {
-                    name += $" ({TerriName})";
-                }
-
-                return name;
+        private string GetCatName() {
+            var name = "Aetherytes";
+            if (FindAnythingPlugin.Configuration.DoAetheryteGilCost) {
+                name += $" ({TerriName} - {Data.GilCost} Gil)";
+            } else {
+                name += $" ({TerriName})";
             }
+            return name;
         }
 
+        public string CatName => field ??= GetCatName();
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }
         public required int Score { get; init; }

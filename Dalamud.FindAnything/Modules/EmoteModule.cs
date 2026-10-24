@@ -8,15 +8,15 @@ namespace Dalamud.FindAnything.Modules;
 public sealed class EmoteModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Emote;
 
-    public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
+  public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
-        foreach (var emoteRow in FindAnythingPlugin.GameStateCache.UnlockedEmotes) {
-            var text = FindAnythingPlugin.SearchDatabase.GetString<Emote>(emoteRow.RowId);
-            var slashCmd = emoteRow.TextCommand.Value;
+        foreach (var emote in FindAnythingPlugin.GameStateCache.UnlockedEmotes) {
+            var entry = FindAnythingPlugin.SearchDatabase.Get<Emote>(emote.RowId);
+            var slashCmd = emote.TextCommand.Value;
 
             var score = matcher.MatchesAny(
-                text.Searchable,
+                entry.Searchable,
                 slashCmd.Command.ToText(),
                 slashCmd.Alias.ToText(),
                 slashCmd.ShortCommand.ToText(),
@@ -26,9 +26,9 @@ public sealed class EmoteModule : SearchModule {
             if (score > 0) {
                 ctx.AddResult(new EmoteSearchResult {
                     Score = score * Weight,
-                    Name = text.Display,
+                    Name = entry.Display,
                     SlashCommand = slashCmd.Command.ToText(),
-                    Icon = FindAnythingPlugin.TexCache.GetIcon(emoteRow.Icon)
+                    Icon = FindAnythingPlugin.TexCache.GetIcon(emote.Icon)
                 });
             }
 

@@ -28,12 +28,10 @@ public class CraftingRecipeLookup : ILookup {
             return LookupResult.Empty;
         }
 
-        var recipeDict = FindAnythingPlugin.SearchDatabase.GetAll<Recipe>();
-
         var group = baseResult.RecipeGroup;
+        var recipeDict = FindAnythingPlugin.SearchDatabase.GetAll<Recipe>();
         foreach (var recipe in group.Recipes) {
             var recipeEntry = recipeDict[recipe.RowId];
-
             var score = criteria.HasMatchString() ? matcher.Matches(GetSearchableCraftType(recipe.CraftType)) : 1;
             if (score > 0) {
                 ctx.AddResult(new CraftingLookupResult {

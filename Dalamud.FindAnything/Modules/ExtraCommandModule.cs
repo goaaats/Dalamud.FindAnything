@@ -10,14 +10,14 @@ public sealed class ExtraCommandModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
-        foreach (var extraCommand in FindAnythingPlugin.SearchDatabase.GetAll<ExtraCommand>()) {
-            var score = matcher.Matches(extraCommand.Value.Searchable);
+        foreach (var (extraCommandId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<ExtraCommand>()) {
+            var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new ExtraCommandSearchResult {
                     Score = score * Weight,
-                    CommandId = extraCommand.Key,
-                    Name = extraCommand.Value.Display,
-                    Icon = FindAnythingPlugin.TexCache.ExtraCommandIcons[extraCommand.Key]
+                    ExtraCommandId = extraCommandId,
+                    Name = searchEntry.Display,
+                    Icon = FindAnythingPlugin.TexCache.ExtraCommandIcons[extraCommandId]
                 });
 
                 if (ctx.OverLimit()) break;
@@ -30,12 +30,12 @@ public sealed class ExtraCommandModule : SearchModule {
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }
         public required int Score { get; init; }
-        public required uint CommandId { get; init; }
+        public required uint ExtraCommandId { get; init; }
 
-        public object Key => CommandId;
+        public object Key => ExtraCommandId;
 
         public unsafe void Selected() {
-            UIModule.Instance()->GetExtraCommandHelper()->ExecuteExtraCommand((int)CommandId);
+            UIModule.Instance()->GetExtraCommandHelper()->ExecuteExtraCommand((int)ExtraCommandId);
         }
     }
 }

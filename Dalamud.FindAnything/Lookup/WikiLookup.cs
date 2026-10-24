@@ -42,16 +42,16 @@ public class WikiLookup : ILookup {
             Query = criteria.SemanticString,
         });
 
-        foreach (var cfc in FindAnythingPlugin.SearchDatabase.GetAll<ContentFinderCondition>()) {
-            if (FindAnythingPlugin.Configuration.WikiModeNoSpoilers && Array.IndexOf(FindAnythingPlugin.GameStateCache.UnlockedDutyKeys, cfc.Key) == -1)
+        foreach (var (cfcId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<ContentFinderCondition>()) {
+            if (FindAnythingPlugin.Configuration.WikiModeNoSpoilers && Array.IndexOf(FindAnythingPlugin.GameStateCache.UnlockedDutyKeys, cfcId) == -1)
                 continue;
 
-            var score = matcher.Matches(cfc.Value.Searchable);
+            var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0)
                 ctx.AddResult(new WikiDataResult {
                     Score = score,
-                    Name = cfc.Value.Display,
-                    DataKey = cfc.Key,
+                    Name = searchEntry.Display,
+                    DataKey = cfcId,
                     CatName = "Duty",
                     DataCategory = WikiDataResult.Category.Instance,
                 });
@@ -59,13 +59,13 @@ public class WikiLookup : ILookup {
             if (ctx.OverLimit()) break;
         }
 
-        foreach (var quest in FindAnythingPlugin.SearchDatabase.GetAll<Quest>()) {
-            var score = matcher.Matches(quest.Value.Searchable);
+        foreach (var (questId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<Quest>()) {
+            var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0)
                 ctx.AddResult(new WikiDataResult {
                     Score = score,
-                    Name = quest.Value.Display,
-                    DataKey = quest.Key,
+                    Name = searchEntry.Display,
+                    DataKey = questId,
                     CatName = "Quest",
                     DataCategory = WikiDataResult.Category.Quest,
                 });
@@ -73,13 +73,13 @@ public class WikiLookup : ILookup {
             if (ctx.OverLimit()) break;
         }
 
-        foreach (var item in FindAnythingPlugin.SearchDatabase.GetAll<Item>()) {
-            var score = matcher.Matches(item.Value.Searchable);
+        foreach (var (itemId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<Item>()) {
+            var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0)
                 ctx.AddResult(new WikiDataResult {
                     Score = score,
-                    Name = item.Value.Display,
-                    DataKey = item.Key,
+                    Name = searchEntry.Display,
+                    DataKey = itemId,
                     CatName = "Item",
                     DataCategory = WikiDataResult.Category.Item,
                 });

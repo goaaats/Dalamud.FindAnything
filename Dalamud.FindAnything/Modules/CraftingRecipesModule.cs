@@ -64,23 +64,23 @@ public sealed class CraftingRecipesModule : SearchModule {
         }
     }
 
-    public static unsafe void CraftingLogOpenRecipe(Recipe recipe) {
+    private static unsafe void CraftingLogOpenRecipe(Recipe recipe) {
         AgentRecipeNote.Instance()->OpenRecipeByRecipeId(recipe.RowId);
     }
 
-    public static unsafe void CraftingLogSearchRecipeItem(Recipe recipe) {
+    private static unsafe void CraftingLogSearchRecipeItem(Recipe recipe) {
         if (recipe.ItemResult.ValueNullable is not { RowId: > 0 } itemResult)
             return;
         AgentRecipeNote.Instance()->SearchRecipeByItemId(itemResult.RowId);
     }
 
-    public static unsafe void CraftingLogSearchItem(Item item) {
+    private static unsafe void CraftingLogSearchItem(Item item) {
         if (item.RowId == 0)
             return;
         AgentRecipeNote.Instance()->SearchRecipeByItemId(item.RowId);
     }
 
-    public static string GetCraftTypeName(Recipe recipe) {
+    private static string GetCraftTypeName(Recipe recipe) {
         if (recipe.CraftType.ValueNullable is { } craftType) {
             return craftType.Name.ToText();
         }
@@ -108,7 +108,7 @@ public sealed class CraftingRecipesModule : SearchModule {
     }
 
     public class CraftingItemSingleResult : ISearchResult {
-        public string CatName => $"Crafting Recipe ({GetCraftTypeName(Recipe)})";
+        public string CatName => field ??= $"Crafting Recipe ({GetCraftTypeName(Recipe)})";
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }
         public required int Score { get; init; }
