@@ -7,7 +7,6 @@ using Lumina.Text.ReadOnly;
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace Dalamud.FindAnything;
 
@@ -34,6 +33,20 @@ public class SearchDatabaseLoader(Normalizer normalizer) {
         loaderData.Add(typeof(T), data.ToFrozenDictionary());
     }
 
+    private void Load<T>(Func<T, string?> extractor) where T : struct, IExcelRow<T> {
+        var data = new Dictionary<uint, SearchEntry>();
+        foreach (var row in Service.Data.GetExcelSheet<T>()) {
+            if (extractor(row) is not { } str || str.Length == 0)
+                continue;
+
+            data.Add(row.RowId, new SearchEntry {
+                Display = str,
+                Searchable = normalizer.Searchable(str),
+            });
+        }
+        loaderData.Add(typeof(T), data.ToFrozenDictionary());
+    }
+
     public void LoadBase() {
         Load<ContentFinderCondition>(r => r.Name);
         Load<ContentRoulette>(r => r.Name);
@@ -54,7 +67,6 @@ public class SearchDatabaseLoader(Normalizer normalizer) {
                 return item.Name;
             return null;
         });
-        Load<Mount>(r => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(r.Singular.ToText()));
     }
 
     public FrozenDictionary<Type, FrozenDictionary<uint, SearchEntry>> LoadMainThread() {
@@ -64,6 +76,7 @@ public class SearchDatabaseLoader(Normalizer normalizer) {
             return Service.SeStringEvaluator.EvaluateActStr(ActionKind.MainCommand, r.RowId, Service.ClientState.ClientLanguage);
         });
         Load<Companion>(r => Service.SeStringEvaluator.EvaluateObjStr(ObjectKind.Companion, r.RowId, Service.ClientState.ClientLanguage));
+        Load<Mount>(r => Service.SeStringEvaluator.EvaluateActStr(ActionKind.Mount, r.RowId, Service.ClientState.ClientLanguage));
 
         return loaderData.ToFrozenDictionary();
     }
