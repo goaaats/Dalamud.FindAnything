@@ -237,52 +237,46 @@ public sealed class Finder : Window {
         var selectedScrollPos = 0f;
         var fastModeScrollPos = ImGui.GetScrollY();
 
-        for (var i = 0; i < results.Length; i++) {
-            var result = results[i];
+        var disableMouse = FindAnythingPlugin.Configuration.DisableMouseSelection && !isQuickSelect;
+        var selectableFlags = disableMouse ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
 
-            if (i == SelectedIndex - SelectionScrollOffset) {
-                selectedScrollPos = ImGui.GetCursorPosY();
-            }
+        using (ImRaii.PushStyle(ImGuiStyleVar.DisabledAlpha, 1f, disableMouse)) {
+            for (var i = 0; i < results.Length; i++) {
+                if (i == SelectedIndex - SelectionScrollOffset) {
+                    selectedScrollPos = ImGui.GetCursorPosY();
+                }
 
-            // FAST MODE (but makes newly appearing icons be blank for 1 frame more often)
-            if (!ImGui.IsItemVisible() && float.Abs(fastModeScrollPos - ImGui.GetCursorPosY()) > textSize.Y * 2) {
-                ImGui.Selectable($"X###faEntry{i}", false, ImGuiSelectableFlags.None, selectableSize);
-                continue;
-            }
+                // FAST MODE (but makes newly appearing icons be blank for 1 frame more often)
+                if (!ImGui.IsItemVisible() && float.Abs(fastModeScrollPos - ImGui.GetCursorPosY()) > textSize.Y * 2) {
+                    ImGui.Selectable($"X###faEntry{i}", false, ImGuiSelectableFlags.None, selectableSize);
+                    continue;
+                }
 
-            var selectableFlags = ImGuiSelectableFlags.None;
-            var disableMouse = FindAnythingPlugin.Configuration.DisableMouseSelection && !isQuickSelect;
-            if (disableMouse) {
-                selectableFlags = ImGuiSelectableFlags.Disabled;
-                ImGui.PushStyleVar(ImGuiStyleVar.DisabledAlpha, 1f);
-            }
+                var result = results[i];
+                var nameTextSize = ImGui.CalcTextSize(result.Name).X;
 
-            var nameTextSize = ImGui.CalcTextSize(result.Name).X;
+                // Debug scores
+                // var scoreText = result.Score.ToString();
+                // ImGui.TextColored(ImGuiColors.HealerGreen, scoreText);
+                // nameTextSize += ImGui.CalcTextSize(scoreText).X + smallPadding * 2;
+                // ImGui.SameLine();
 
-            // Debug scores
-            // var scoreText = result.Score.ToString();
-            // ImGui.TextColored(ImGuiColors.HealerGreen, scoreText);
-            // nameTextSize += ImGui.CalcTextSize(scoreText).X + ImGui.GetStyle().ItemSpacing.X * 2;
-            // ImGui.SameLine();
+                if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {
+                    clickedIndex = i;
+                }
 
-            if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {
-                clickedIndex = i;
-            }
+                ImGui.SameLine(nameTextSize + smallPadding);
+                ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
 
-            if (disableMouse)
-                ImGui.PopStyleVar();
+                if (i < 9 && FindAnythingPlugin.Configuration.QuickSelectKey != VirtualKey.NO_KEY) {
+                    ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
+                    ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
+                }
 
-            ImGui.SameLine(nameTextSize + smallPadding);
-            ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
-
-            if (i < 9 && FindAnythingPlugin.Configuration.QuickSelectKey != VirtualKey.NO_KEY) {
-                ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
-                ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
-            }
-
-            if (result.Icon != null) {
-                ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
-                ImGui.Image(result.Icon.GetWrapOrEmpty().Handle, iconSize);
+                if (result.Icon != null) {
+                    ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
+                    ImGui.Image(result.Icon.GetWrapOrEmpty().Handle, iconSize);
+                }
             }
         }
 
