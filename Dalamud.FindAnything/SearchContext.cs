@@ -3,7 +3,7 @@
 namespace Dalamud.FindAnything;
 
 public class SearchContext {
-    private const int MaxToSearch = 100;
+    private const int MaxToSearch = 200;
 
     public readonly SearchCriteria Criteria;
     public readonly List<ISearchResult> Results = [];
