@@ -234,55 +234,52 @@ public sealed class Finder : Window {
         }
 
         var clickedIndex = -1;
-        var selectedScrollPos = 0f;
-        var fastModeScrollPos = ImGui.GetScrollY();
 
         var disableMouse = FindAnythingPlugin.Configuration.DisableMouseSelection && !isQuickSelect;
         var selectableFlags = disableMouse ? ImGuiSelectableFlags.Disabled : ImGuiSelectableFlags.None;
 
         using (ImRaii.PushStyle(ImGuiStyleVar.DisabledAlpha, 1f, disableMouse)) {
-            for (var i = 0; i < results.Length; i++) {
-                if (i == SelectedIndex - SelectionScrollOffset) {
-                    selectedScrollPos = ImGui.GetCursorPosY();
+            var clipper = ImGui.ImGuiListClipper();
+            clipper.Begin(results.Length);
+            try {
+                while (clipper.Step()) {
+                    for (var i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+
+                        var result = results[i];
+                        var nameTextSize = ImGui.CalcTextSize(result.Name).X;
+
+                        // Debug scores
+                        // var scoreText = result.Score.ToString();
+                        // ImGui.TextColored(ImGuiColors.HealerGreen, scoreText);
+                        // nameTextSize += ImGui.CalcTextSize(scoreText).X + smallPadding * 2;
+                        // ImGui.SameLine();
+
+                        if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {
+                            clickedIndex = i;
+                        }
+
+                        ImGui.SameLine(nameTextSize + smallPadding);
+                        ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
+
+                        if (i < 9 && FindAnythingPlugin.Configuration.QuickSelectKey != VirtualKey.NO_KEY) {
+                            ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
+                            ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
+                        }
+
+                        if (result.Icon != null) {
+                            ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
+                            ImGui.Image(result.Icon.GetWrapOrEmpty().Handle, iconSize);
+                        }
+                    }
                 }
-
-                // FAST MODE (but makes newly appearing icons be blank for 1 frame more often)
-                if (!ImGui.IsItemVisible() && float.Abs(fastModeScrollPos - ImGui.GetCursorPosY()) > textSize.Y * 2) {
-                    ImGui.Selectable($"X###faEntry{i}", false, ImGuiSelectableFlags.None, selectableSize);
-                    continue;
-                }
-
-                var result = results[i];
-                var nameTextSize = ImGui.CalcTextSize(result.Name).X;
-
-                // Debug scores
-                // var scoreText = result.Score.ToString();
-                // ImGui.TextColored(ImGuiColors.HealerGreen, scoreText);
-                // nameTextSize += ImGui.CalcTextSize(scoreText).X + smallPadding * 2;
-                // ImGui.SameLine();
-
-                if (ImGui.Selectable($"{result.Name}###faEntry{i}", i == SelectedIndex, selectableFlags, selectableSize)) {
-                    clickedIndex = i;
-                }
-
-                ImGui.SameLine(nameTextSize + smallPadding);
-                ImGui.TextColored(ImGuiColors.DalamudGrey, result.CatName);
-
-                if (i < 9 && FindAnythingPlugin.Configuration.QuickSelectKey != VirtualKey.NO_KEY) {
-                    ImGui.SameLine(size.X - iconSize.X * 1.75f - scrollbarWidth - windowPadding);
-                    ImGui.TextColored(ImGuiColors.DalamudGrey, (i + 1).ToString());
-                }
-
-                if (result.Icon != null) {
-                    ImGui.SameLine(size.X - iconSize.X - scrollbarWidth - windowPadding);
-                    ImGui.Image(result.Icon.GetWrapOrEmpty().Handle, iconSize);
-                }
+            } finally {
+                clipper.End();
             }
         }
 
         if (resetScroll) {
             if (SelectedIndex > 0) {
-                ImGui.SetScrollY(selectedScrollPos);
+                ImGui.SetScrollY((selectableSize.Y + ImGui.GetStyle().ItemInnerSpacing.Y) * (SelectedIndex - SelectionScrollOffset));
             } else {
                 ImGui.SetScrollY(0);
             }
@@ -373,4 +370,5 @@ public sealed class Finder : Window {
             finder.SelectedIndex = Math.Min(finder.results.Length - 1, finder.SelectedIndex + MaxOnePage);
         }
     }
+
 }
