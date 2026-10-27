@@ -6,6 +6,8 @@ namespace Dalamud.FindAnything.Modules;
 public sealed class ChatCommandModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.None;
 
+    private const uint ChatIconId = 66473;
+
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (!gameState.IsInCombatDuty() && ctx.Criteria.CleanString.StartsWith('/')) {
             ctx.AddResult(new ChatCommandSearchResult {
@@ -18,7 +20,7 @@ public sealed class ChatCommandModule : SearchModule {
     private class ChatCommandSearchResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => $"Run chat command \"{Command}\"";
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.ChatIcon;
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(ChatIconId);
         public required int Score { get; init; }
         public required string Command { get; init; }
 

@@ -29,7 +29,7 @@ public sealed class MacroLinksModule : SearchModule {
     private class MacroLinkSearchResult : ISearchResult {
         public string CatName => "Macros";
         public string Name => Entry.SearchName.Split(';', StringSplitOptions.TrimEntries).First();
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon((uint)Entry.IconId);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon((uint)Entry.IconId);
         public required int Score { get; init; }
         public required Configuration.MacroEntry Entry { get; init; }
 

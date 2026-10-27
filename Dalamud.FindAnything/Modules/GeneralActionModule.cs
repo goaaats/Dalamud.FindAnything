@@ -30,15 +30,17 @@ public sealed class GeneralActionModule : SearchModule {
                     GeneralActionId = generalActionId,
                     Score = score * Weight,
                     Name = searchEntry.Display,
-                    Icon = FindAnythingPlugin.TexCache.GeneralActionIcons[generalActionId]
                 });
         }
     }
 
-    public class GeneralActionSearchResult : ISearchResult {
+    private static int GetIconId(uint extraCommandId)
+        => Service.Data.GetExcelSheet<GeneralAction>().GetRow(extraCommandId).Icon;
+
+    private class GeneralActionSearchResult : ISearchResult {
         public string CatName => "General Actions";
         public required string Name { get; init; }
-        public required ISharedImmediateTexture Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(GetIconId(GeneralActionId));
         public required int Score { get; init; }
         public required uint GeneralActionId { get; init; }
 

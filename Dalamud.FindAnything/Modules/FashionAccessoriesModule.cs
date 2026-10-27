@@ -24,7 +24,7 @@ public sealed class FashionAccessoriesModule : SearchModule {
     private class FashionAccessoryResult : ISearchResult {
         public string CatName => "Fashion Accessory";
         public string Name => Ornament.Singular.ToText();
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Ornament.Icon);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(Ornament.Icon);
         public required int Score { get; init; }
         public required Ornament Ornament { get; init; }
 

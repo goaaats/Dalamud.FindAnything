@@ -4,15 +4,19 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
 using NCalc;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Dalamud.FindAnything.Modules;
 
 public sealed class MathsModule : SearchModule {
-    private object? lastAcceptedExpressionResult;
-
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Maths;
+
+    private object? lastAcceptedExpressionResult;
+    private readonly FileInfo gameIconPath;
+
+    private const uint MathsIconId = 62409;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         CheckExpression(ctx);
@@ -22,6 +26,9 @@ public sealed class MathsModule : SearchModule {
     public MathsModule() {
         Expression.CacheEnabled = true;
         Task.Run(() => new Expression("1+1").Evaluate()); // Warm up evaluator, takes like 100ms
+
+        gameIconPath = new FileInfo(Path.Combine(
+            Service.PluginInterface.AssemblyLocation.Directory!.FullName, "noses", "Normal.png"));
     }
 
     private void CheckExpression(SearchContext ctx) {
@@ -105,14 +112,14 @@ public sealed class MathsModule : SearchModule {
     private void CheckOthers(SearchContext ctx, FuzzyMatcher matcher) {
         var score = matcher.Matches("dn farm");
         if (score > 0) {
-            ctx.AddResult(new GameSearchResult { Score = score * DefaultWeight });
+            ctx.AddResult(new GameSearchResult { Score = score * DefaultWeight, IconPath = gameIconPath });
         }
     }
 
     private class ExpressionResult : ISearchResult {
         public string CatName => string.Empty;
-        public string Name => !HasError ? $" = {Result}" : " = ERROR";
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.MathsIcon;
+        public string Name => field ??= !HasError ? $" = {Result}" : " = ERROR";
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(MathsIconId);
         public int Score => 0;
         public required MathsModule? Module { get; init; }
         public required object? Result { get; init; }
@@ -139,7 +146,8 @@ public sealed class MathsModule : SearchModule {
     private class GameSearchResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => "DN Farm";
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GameIcon;
+        public required FileInfo IconPath { get; init; }
+        public ISharedImmediateTexture Icon => field ??= Service.TextureProvider.GetFromFile(IconPath);
         public required int Score { get; init; }
 
         public object Key => true;

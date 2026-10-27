@@ -8,6 +8,8 @@ public static class HintProvider {
     private static readonly Configuration.HintKind StartHintLevel = Enum.GetValues<Configuration.HintKind>().First();
     private static readonly Configuration.HintKind NoHintLevel = Enum.GetValues<Configuration.HintKind>().Last() + 1;
 
+    private const uint HintIconId = 66453;
+
     public static HintResult? NextHint() {
         if (FindAnythingPlugin.Configuration.HintLevel == NoHintLevel)
             return null;
@@ -43,7 +45,7 @@ public static class HintProvider {
             _ => throw new ArgumentOutOfRangeException($"Unknown HintKind: {HintLevel}"),
         };
 
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.HintIcon;
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(HintIconId);
         public int Score => 0;
         public required Configuration.HintKind HintLevel { get; init; }
 

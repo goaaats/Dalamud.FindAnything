@@ -8,6 +8,8 @@ namespace Dalamud.FindAnything.Lookup;
 public class EmoteModeLookup : ILookup {
     private static EmoteModule.EmoteSearchResult? _baseResult;
 
+    private const uint EmoteIconId = 66420;
+
     public static void SetBaseResult(EmoteModule.EmoteSearchResult result) {
         _baseResult = result;
     }
@@ -38,7 +40,7 @@ public class EmoteModeLookup : ILookup {
             _ => throw new ArgumentOutOfRangeException(),
         };
 
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.EmoteIcon;
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(EmoteIconId);
         public required int Score { get; init; }
         public required EmoteModule.EmoteModeChoice Choice { get; init; }
 

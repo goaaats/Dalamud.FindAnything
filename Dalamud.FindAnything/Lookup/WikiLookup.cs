@@ -10,6 +10,8 @@ namespace Dalamud.FindAnything.Lookup;
 public class WikiLookup : ILookup {
     private readonly History history = new();
 
+    private const uint WikiIconId = 66404;
+
     public string GetPlaceholder() => "Search in wikis...";
 
     public LookupResult Lookup(SearchCriteria criteria) {
@@ -103,7 +105,7 @@ public class WikiLookup : ILookup {
 
         public required string CatName { get; init; }
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.WikiIcon;
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(WikiIconId);
         public required int Score { get; init; }
         public required uint DataKey { get; init; }
         public required Category DataCategory { get; init; }
@@ -120,8 +122,8 @@ public class WikiLookup : ILookup {
 
     public class WikiTextResult : ISearchResult {
         public string CatName => string.Empty;
-        public string Name => $"Search for \"{Query}\" in wikis...";
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.WikiIcon;
+        public string Name => field ??= $"Search for \"{Query}\" in wikis...";
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(WikiIconId);
         public required int Score { get; init; }
         public required string Query { get; init; }
 

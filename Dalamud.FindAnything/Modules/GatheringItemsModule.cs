@@ -26,7 +26,7 @@ public sealed class GatheringItemsModule : SearchModule {
         public string CatName => "Gathering Item";
         public required string Name { get; init; }
         private uint? IconId => field ??= GetGatheredItem(GatheringItemId)?.Icon ?? 0u;
-        public ISharedImmediateTexture? Icon => IconId is { } validIcon and > 0 ? FindAnythingPlugin.TexCache.GetIcon(validIcon) : null;
+        public ISharedImmediateTexture? Icon => IconId is { } validIcon and > 0 ? Utils.GetIcon(validIcon) : null;
         public required int Score { get; init; }
         public required uint GatheringItemId { get; init; }
 

@@ -17,7 +17,6 @@ public sealed class ExtraCommandModule : SearchModule {
                     Score = score * Weight,
                     ExtraCommandId = extraCommandId,
                     Name = searchEntry.Display,
-                    Icon = FindAnythingPlugin.TexCache.ExtraCommandIcons[extraCommandId]
                 });
 
                 if (ctx.OverLimit()) break;
@@ -25,10 +24,13 @@ public sealed class ExtraCommandModule : SearchModule {
         }
     }
 
+    private static int GetIconId(uint extraCommandId)
+        => Service.Data.GetExcelSheet<ExtraCommand>().GetRow(extraCommandId).Icon;
+
     private class ExtraCommandSearchResult : ISearchResult {
         public string CatName => "Extra Commands";
         public required string Name { get; init; }
-        public required ISharedImmediateTexture? Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(GetIconId(ExtraCommandId));
         public required int Score { get; init; }
         public required uint ExtraCommandId { get; init; }
 

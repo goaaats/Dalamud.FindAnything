@@ -12,6 +12,8 @@ public class WikiSiteLookup : ILookup {
     private static ISearchResult? _baseResult;
     private static bool _teamcraftLocalFailed;
 
+    private const uint WikiIconId = 66404;
+
     public static void SetBaseResult(ISearchResult result) {
         _baseResult = result;
     }
@@ -84,8 +86,8 @@ public class WikiSiteLookup : ILookup {
         }
 
         public string CatName => string.Empty;
-        public string Name => $"Open on {Site}";
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.WikiIcon;
+        public string Name => field ??= $"Open on {Site}";
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(WikiIconId);
         public required int Score { get; init; }
         public required SiteChoice Site { get; init; }
 

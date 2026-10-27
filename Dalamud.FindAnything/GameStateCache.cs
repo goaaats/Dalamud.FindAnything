@@ -10,7 +10,7 @@ using InstanceContent = Lumina.Excel.Sheets.InstanceContent;
 namespace Dalamud.FindAnything;
 
 public sealed unsafe class GameStateCache : IDisposable {
-    public record Gearset(int Index, string Name, uint ClassJob);
+    public record Gearset(int Index, string Name, uint ClassJobId);
 
     private bool checkUnlocks = true;
 

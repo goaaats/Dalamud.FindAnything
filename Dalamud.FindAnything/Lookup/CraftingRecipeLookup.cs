@@ -37,7 +37,7 @@ public class CraftingRecipeLookup : ILookup {
                 ctx.AddResult(new CraftingLookupResult {
                     Score = score,
                     Name = recipeEntry.Display,
-                    Icon = FindAnythingPlugin.TexCache.GetIcon(group.Item.Icon),
+                    Icon = Utils.GetIcon(group.Item.Icon),
                     Recipe = recipe,
                 });
             }

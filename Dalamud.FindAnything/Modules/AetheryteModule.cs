@@ -1,6 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Interface.Textures;
-using Lumina.Excel.Sheets;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,6 +14,9 @@ public sealed class AetheryteModule : SearchModule {
     private readonly string closestMarketSearchable;
     private readonly string closestInnSearchable;
     private readonly string closestDummySearchable;
+
+    private const uint AetheryteIconId = 66417;
+    private const uint InnRoomIconId = 66419;
 
     public AetheryteModule() {
         aetheryteManager = new AetheryteManager();
@@ -48,7 +50,7 @@ public sealed class AetheryteModule : SearchModule {
                     Score = score * Weight,
                     Name = aetheryteName,
                     Data = aetheryte,
-                    Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
+                    IconId = AetheryteIconId,
                     TerriName = territoryTypeSearchEntry.Display,
                     Teleporter = teleporter,
                 });
@@ -67,8 +69,7 @@ public sealed class AetheryteModule : SearchModule {
             }
 
             dummyScore = matcher.Matches(closestDummySearchable);
-            if (FindAnythingPlugin.Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.StrikingDummy) &&
-                dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId)) {
+            if (FindAnythingPlugin.Configuration.AetheryteShortcuts.HasFlag(Configuration.AetheryteAdditionalShortcut.StrikingDummy) && dummyScore > 0 && AetheryteManager.IsStrikingDummyAetheryte(aetheryte.AetheryteId)) {
                 strikingDummyResults.Add(aetheryte);
             }
 
@@ -81,7 +82,7 @@ public sealed class AetheryteModule : SearchModule {
                 Score = marketScore * Weight,
                 Name = "Closest Market Board",
                 Data = closestMarketBoard,
-                Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
+                IconId = AetheryteIconId,
                 TerriName = FindAnythingPlugin.SearchDatabase.TerritoryType[closestMarketBoard.TerritoryId].Display,
                 Teleporter = teleporter,
             });
@@ -93,7 +94,7 @@ public sealed class AetheryteModule : SearchModule {
                 Score = dummyScore * Weight,
                 Name = "Closest Striking Dummy",
                 Data = closestStrikingDummy,
-                Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
+                IconId = AetheryteIconId,
                 TerriName = FindAnythingPlugin.SearchDatabase.TerritoryType[closestStrikingDummy.TerritoryId].Display,
                 Teleporter = teleporter,
             });
@@ -105,7 +106,7 @@ public sealed class AetheryteModule : SearchModule {
                 Score = innScore * Weight,
                 Name = "Closest Inn Room",
                 Data = closestInnRoom,
-                Icon = FindAnythingPlugin.TexCache.InnRoomIcon,
+                IconId = InnRoomIconId,
                 TerriName = FindAnythingPlugin.SearchDatabase.TerritoryType[closestInnRoom.TerritoryId].Display,
                 Teleporter = teleporter,
             });
@@ -125,7 +126,8 @@ public sealed class AetheryteModule : SearchModule {
 
         public string CatName => field ??= GetCatName();
         public required string Name { get; init; }
-        public required ISharedImmediateTexture? Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(IconId);
+        public required uint IconId { get; init; }
         public required int Score { get; init; }
         public required IAetheryteEntry Data { get; init; }
         public required string TerriName { get; init; }

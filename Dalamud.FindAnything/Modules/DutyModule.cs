@@ -7,6 +7,8 @@ namespace Dalamud.FindAnything.Modules;
 public sealed class DutyModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Duty;
 
+    private readonly uint contentTypeDutyRouletteIconId = Service.Data.GetExcelSheet<ContentType>().GetRow(1).Icon;
+
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInDuty()) return;
 
@@ -37,6 +39,7 @@ public sealed class DutyModule : SearchModule {
             if (score > 0) {
                 ctx.AddResult(new ContentRouletteSearchResult {
                     Score = score * Weight,
+                    IconId = contentTypeDutyRouletteIconId,
                     ContentRouletteId = rouletteId,
                     Name = searchEntry.Display,
                 });
@@ -49,7 +52,7 @@ public sealed class DutyModule : SearchModule {
     private record DutySearchResult : ISearchResult {
         public string CatName => field ??= ContentFinderCondition.Name.ToText();
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(ContentType.Icon);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(ContentType.Icon);
         public required int Score { get; init; }
         public required ContentFinderCondition ContentFinderCondition { get; init; }
         public required ContentType ContentType { get; init; }
@@ -64,7 +67,8 @@ public sealed class DutyModule : SearchModule {
     private record ContentRouletteSearchResult : ISearchResult {
         public string CatName => "Duty Roulette";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.RoulettesIcon;
+        public required uint IconId { get; init; }
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(IconId);
         public required int Score { get; init; }
         public required uint ContentRouletteId { get; init; }
 

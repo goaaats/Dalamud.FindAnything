@@ -7,6 +7,9 @@ namespace Dalamud.FindAnything.Modules;
 public sealed class InternalModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Internal;
 
+    private const uint WikiModeIconId = 66404;
+    private const uint PluginInstallerIconId = 66472;
+
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         foreach (var kind in Enum.GetValues<InternalSearchResultKind>()) {
             var score = matcher.Matches(normalizer.SearchableAscii(GetNameForKind(kind)));
@@ -20,13 +23,15 @@ public sealed class InternalModule : SearchModule {
     }
 
     private class InternalSearchResult : ISearchResult {
-        public string CatName => GetCatNameForKind(Kind);
-        public string Name => GetNameForKind(Kind);
+        public string CatName => field ??= GetCatNameForKind(Kind);
+        public string Name => field ??= GetNameForKind(Kind);
 
-        public ISharedImmediateTexture Icon => Kind switch {
-            InternalSearchResultKind.WikiMode => FindAnythingPlugin.TexCache.WikiIcon,
-            _ => FindAnythingPlugin.TexCache.PluginInstallerIcon,
+        private uint IconId => Kind switch {
+            InternalSearchResultKind.WikiMode => WikiModeIconId,
+            _ => PluginInstallerIconId,
         };
+
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(IconId);
 
         public required int Score { get; init; }
         public required InternalSearchResultKind Kind { get; init; }

@@ -23,7 +23,9 @@ public sealed class CoordinatesModule : SearchModule {
 
     private readonly TerritoryDatabase territoryDatabase = new();
 
-    public bool ShowAll => true;
+    private bool ShowAll => true;
+
+    private const uint FootprintIconId = 63977;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (CoordUtils.Parse(ctx.Criteria.MatchString) is not { } parsed)
@@ -86,7 +88,7 @@ public sealed class CoordinatesModule : SearchModule {
     public class CoordinatesSearchResult : ISearchResult {
         public string CatName => string.Empty;
         public string Name => $"\xE05E {Coords.MapName} (X: {Coords.X}, Y: {Coords.Y})";
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.ChatIcon;
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(FootprintIconId);
         public required int Score { get; init; }
         public required Coordinates Coords { get; init; }
 

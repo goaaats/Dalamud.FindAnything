@@ -90,7 +90,7 @@ public sealed class CraftingRecipesModule : SearchModule {
     private class CraftingRecipeResult : ISearchResult {
         public string CatName => field ??= $"Crafting Recipe ({GetCraftTypeName(Recipe)})";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Item.Icon);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(Item.Icon);
         public required int Score { get; init; }
         public required Recipe Recipe { get; init; }
         public required Item Item { get; set; }
@@ -110,7 +110,7 @@ public sealed class CraftingRecipesModule : SearchModule {
     public class CraftingItemSingleResult : ISearchResult {
         public string CatName => field ??= $"Crafting Recipe ({GetCraftTypeName(Recipe)})";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Item.Icon);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(Item.Icon);
         public required int Score { get; init; }
         public required Recipe Recipe { get; init; }
         public required Item Item { get; init; }
@@ -132,7 +132,7 @@ public sealed class CraftingRecipesModule : SearchModule {
             ? $"Crafting Recipe ({GetCraftTypeName(recipe)})"
             : "Crafting Recipes";
         public required string Name { get; init; }
-        public ISharedImmediateTexture? Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(RecipeGroup.Item.Icon);
+        public ISharedImmediateTexture? Icon => field ??= Utils.GetIcon(RecipeGroup.Item.Icon);
         public required int Score { get; init; }
         public required RecipeGroup RecipeGroup { get; init; }
 

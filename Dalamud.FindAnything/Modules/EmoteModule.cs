@@ -40,7 +40,7 @@ public sealed class EmoteModule : SearchModule {
                 ? $"Emote ({SlashCommand})"
                 : "Emote";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Emote.Icon);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(Emote.Icon);
         public required int Score { get; init; }
         public required Emote Emote { get; init; }
 

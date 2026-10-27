@@ -21,7 +21,6 @@ public sealed class MainCommandModule : SearchModule {
                     Score = score * Weight,
                     MainCommandId = commandId,
                     Name = searchEntry.Display,
-                    Icon = FindAnythingPlugin.TexCache.MainCommandIcons[commandId]
                 });
             }
 
@@ -29,10 +28,13 @@ public sealed class MainCommandModule : SearchModule {
         }
     }
 
+    private static int GetIconId(uint extraCommandId)
+        => Service.Data.GetExcelSheet<MainCommand>().GetRow(extraCommandId).Icon;
+
     private record MainCommandSearchResult : ISearchResult {
         public string CatName => "Commands";
         public required string Name { get; init; }
-        public required ISharedImmediateTexture? Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(GetIconId(MainCommandId));
         public required int Score { get; init; }
         public required uint MainCommandId { get; init; }
 

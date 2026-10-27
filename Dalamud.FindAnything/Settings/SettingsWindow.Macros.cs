@@ -182,7 +182,7 @@ public partial class SettingsWindow {
 
         ImGui.NextColumn();
 
-        var iconTex = FindAnythingPlugin.TexCache.GetIcon((uint)macro.IconId);
+        var iconTex = Utils.GetIcon((uint)macro.IconId);
         using (var wrap = iconTex.GetWrapOrEmpty()) {
             ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight()));
             ImGui.SameLine();

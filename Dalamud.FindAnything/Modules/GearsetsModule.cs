@@ -3,6 +3,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -14,13 +15,13 @@ public sealed class GearsetsModule : SearchModule {
 
         var cj = Service.Data.GetExcelSheet<ClassJob>();
         foreach (var gearset in FindAnythingPlugin.GameStateCache.Gearsets) {
-            var cjRow = cj.GetRow(gearset.ClassJob);
+            var cjRow = cj.GetRow(gearset.ClassJobId);
 
             var score = matcher.MatchesAny(
                 normalizer.Searchable(gearset.Name),
                 normalizer.Searchable(cjRow.Name),
                 normalizer.SearchableAscii(cjRow.Abbreviation),
-                ClassJobRolesMap.GetValueOrDefault(gearset.ClassJob, string.Empty)
+                ClassJobRolesMap.GetValueOrDefault(gearset.ClassJobId, string.Empty)
             );
             if (score > 0) {
                 ctx.AddResult(new GearsetSearchResult {
@@ -34,7 +35,7 @@ public sealed class GearsetsModule : SearchModule {
     private class GearsetSearchResult : ISearchResult {
         public string CatName => "Gearset";
         public string Name => Gearset.Name;
-        public ISharedImmediateTexture? Icon => FindAnythingPlugin.TexCache.ClassJobIcons[Gearset.ClassJob];
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(ClassJobIconMap[Gearset.ClassJobId]);
         public required int Score { get; init; }
         public required GameStateCache.Gearset Gearset { get; init; }
 
@@ -93,4 +94,38 @@ public sealed class GearsetsModule : SearchModule {
         { 42, "ranged dps" },
         { 43, "ducktamer" }
     }.ToFrozenDictionary();
+
+    public static readonly FrozenDictionary<uint, uint> ClassJobIconMap = Service.Data.GetExcelSheet<ClassJob>()
+        .ToDictionary(cj => cj.RowId, GetIconForJob)
+        .ToFrozenDictionary();
+
+    private static uint GetIconForJob(ClassJob classJob) {
+        if (classJob.JobIndex != 0)
+            return 62400u + classJob.JobIndex;
+
+        return 62300u + classJob.RowId switch {
+            1u => 1u,
+            2u => 2u,
+            3u => 3u,
+            4u => 4u,
+            5u => 5u,
+            6u => 6u,
+            7u => 7u,
+            8u => 10u,
+            9u => 11u,
+            10u => 12u,
+            11u => 13u,
+            12u => 14u,
+            13u => 15u,
+            14u => 16u,
+            15u => 17u,
+            16u => 18u,
+            17u => 19u,
+            18u => 20u,
+
+            26u => 8u,
+            29u => 9u,
+            _ => 0u,
+        };
+    }
 }

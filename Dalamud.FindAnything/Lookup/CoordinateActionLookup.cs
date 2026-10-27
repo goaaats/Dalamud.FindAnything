@@ -7,6 +7,9 @@ namespace Dalamud.FindAnything.Lookup;
 public class CoordinateActionLookup : ILookup {
     private static CoordinatesModule.CoordinatesSearchResult? _baseResult;
 
+    private const uint AetheryteIconId = 60453;
+    private const uint FlagIconId = 60561;
+
     public static void SetBaseResult(CoordinatesModule.CoordinatesSearchResult result) {
         _baseResult = result;
     }
@@ -48,8 +51,8 @@ public class CoordinateActionLookup : ILookup {
         public string Name => GetActionName();
 
         public ISharedImmediateTexture Icon => field ??= TeleportDestination is not null
-            ? FindAnythingPlugin.TexCache.GetIcon(60453)
-            : FindAnythingPlugin.TexCache.GetIcon(60561);
+            ? Utils.GetIcon(AetheryteIconId)
+            : Utils.GetIcon(FlagIconId);
 
         public required int Score { get; init; }
 

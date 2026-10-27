@@ -27,7 +27,7 @@ public sealed class MinionsModule : SearchModule {
     private class MinionResult : ISearchResult {
         public string CatName => "Minion";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Minion.Icon);
+        public ISharedImmediateTexture Icon => field ??= Utils.GetIcon(Minion.Icon);
         public required int Score { get; init; }
         public required Companion Minion { get; init; }
 

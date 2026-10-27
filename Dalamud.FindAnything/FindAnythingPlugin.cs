@@ -18,7 +18,6 @@ public sealed class FindAnythingPlugin : IAsyncDalamudPlugin {
     public static Configuration Configuration => ConfigManager.Config;
     public static ConfigManager ConfigManager { get; private set; } = null!;
 
-    public static TextureCache TexCache { get; private set; } = null!;
     public static SearchDatabase SearchDatabase { get; private set; } = null!;
     public static GameStateCache GameStateCache { get; private set; } = null!;
     public static IpcSystem Ipc { get; private set; } = null!;
@@ -41,7 +40,6 @@ public sealed class FindAnythingPlugin : IAsyncDalamudPlugin {
         Normalizer = new Normalizer();
         ConfigManager = new ConfigManager();
 
-        TexCache = TextureCache.Load(Service.Data, Service.TextureProvider);
         SearchDatabase = new SearchDatabase();
         GameStateCache = new GameStateCache();
         Ipc = new IpcSystem(Normalizer);

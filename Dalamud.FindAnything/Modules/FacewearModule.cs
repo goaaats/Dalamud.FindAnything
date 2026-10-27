@@ -32,8 +32,8 @@ public sealed class FacewearModule : SearchModule {
                 : GlassesStyle.Name.ToText();
         public ISharedImmediateTexture Icon => field ??=
             GlassesSelection is { } glasses
-                ? FindAnythingPlugin.TexCache.GetIcon((uint)glasses.Icon)
-                : FindAnythingPlugin.TexCache.GetIcon((uint)GlassesStyle.Icon);
+                ? Utils.GetIcon((uint)glasses.Icon)
+                : Utils.GetIcon((uint)GlassesStyle.Icon);
         public required int Score { get; init; }
         public required GlassesStyle GlassesStyle { get; init; }
 
