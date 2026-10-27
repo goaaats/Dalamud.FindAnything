@@ -10,7 +10,7 @@ public sealed class ExtraCommandModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
-        foreach (var (extraCommandId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<ExtraCommand>()) {
+        foreach (var (extraCommandId, searchEntry) in FindAnythingPlugin.SearchDatabase.ExtraCommand) {
             var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new ExtraCommandSearchResult {

@@ -22,7 +22,7 @@ public sealed class FindAnythingPlugin : IAsyncDalamudPlugin {
     public static SearchDatabase SearchDatabase { get; private set; } = null!;
     public static GameStateCache GameStateCache { get; private set; } = null!;
     public static IpcSystem Ipc { get; private set; } = null!;
-    public static AetheryteManager AetheryteManager { get; set; } = null!;
+    public static AetheryteManager AetheryteManager { get; private set; } = null!;
     public static Normalizer Normalizer { get; private set; } = null!;
     public static RootLookup RootLookup { get; private set; } = null!;
 
@@ -42,7 +42,7 @@ public sealed class FindAnythingPlugin : IAsyncDalamudPlugin {
         ConfigManager = new ConfigManager();
 
         TexCache = TextureCache.Load(Service.Data, Service.TextureProvider);
-        SearchDatabase = new SearchDatabase(Normalizer);
+        SearchDatabase = new SearchDatabase();
         GameStateCache = new GameStateCache();
         Ipc = new IpcSystem(Normalizer);
 
@@ -84,9 +84,7 @@ public sealed class FindAnythingPlugin : IAsyncDalamudPlugin {
             ShowInHelp = false,
         });
 
-        // Init
-
-        SearchDatabase.InitBase();
+        // Do main thread stuff
 
         await Service.Framework.Run(() => {
             SearchDatabase.InitMainThread();

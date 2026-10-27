@@ -26,9 +26,9 @@ public sealed class MountsModule : SearchModule {
         if (isInNoMountDuty || gameState.IsInCombat()) return;
 
 
-        var mountDict = FindAnythingPlugin.SearchDatabase.GetAll<Mount>();
+        var mountTable = FindAnythingPlugin.SearchDatabase.Mount;
         foreach (var mount in FindAnythingPlugin.GameStateCache.UnlockedMounts) {
-            var mountEntry = mountDict[mount.RowId];
+            var mountEntry = mountTable[mount];
             var score = matcher.Matches(mountEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new MountResult {

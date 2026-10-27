@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
@@ -14,6 +15,15 @@ public static class Extensions {
                 return displayName;
             }
             return self.ToString();
+        }
+    }
+
+    extension<TSource>(IEnumerable<TSource> source) {
+        public IEnumerable<TResult> SelectNotNull<TResult>(Func<TSource, TResult?> selector) where TResult : struct {
+            foreach (var element in source) {
+                if (selector(element) is { } result)
+                    yield return result;
+            }
         }
     }
 

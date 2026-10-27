@@ -8,7 +8,7 @@ public sealed class GatheringItemsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.GatheringItems;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        foreach (var (gatheringItemId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<GatheringItem>()) {
+        foreach (var (gatheringItemId, searchEntry) in FindAnythingPlugin.SearchDatabase.GatheringItem) {
             var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new GatheringItemResult {

@@ -10,7 +10,7 @@ public sealed class MainCommandModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
-        foreach (var (commandId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<MainCommand>()) {
+        foreach (var (commandId, searchEntry) in FindAnythingPlugin.SearchDatabase.MainCommand) {
             var searchable = searchEntry.Searchable;
             if (searchable == "log out")
                 searchable = "logout";

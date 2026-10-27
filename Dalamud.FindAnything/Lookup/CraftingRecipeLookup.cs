@@ -29,9 +29,9 @@ public class CraftingRecipeLookup : ILookup {
         }
 
         var group = baseResult.RecipeGroup;
-        var recipeDict = FindAnythingPlugin.SearchDatabase.GetAll<Recipe>();
+        var recipeTable = FindAnythingPlugin.SearchDatabase.Recipe;
         foreach (var recipe in group.Recipes) {
-            var recipeEntry = recipeDict[recipe.RowId];
+            var recipeEntry = recipeTable[recipe];
             var score = criteria.HasMatchString() ? matcher.Matches(GetSearchableCraftType(recipe.CraftType)) : 1;
             if (score > 0) {
                 ctx.AddResult(new CraftingLookupResult {

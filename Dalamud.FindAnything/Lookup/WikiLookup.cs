@@ -42,7 +42,7 @@ public class WikiLookup : ILookup {
             Query = criteria.SemanticString,
         });
 
-        foreach (var (cfcId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<ContentFinderCondition>()) {
+        foreach (var (cfcId, searchEntry) in FindAnythingPlugin.SearchDatabase.ContentFinderCondition) {
             if (FindAnythingPlugin.Configuration.WikiModeNoSpoilers && Array.IndexOf(FindAnythingPlugin.GameStateCache.UnlockedDutyKeys, cfcId) == -1)
                 continue;
 
@@ -59,7 +59,7 @@ public class WikiLookup : ILookup {
             if (ctx.OverLimit()) break;
         }
 
-        foreach (var (questId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<Quest>()) {
+        foreach (var (questId, searchEntry) in FindAnythingPlugin.SearchDatabase.Quest) {
             var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0)
                 ctx.AddResult(new WikiDataResult {
@@ -73,7 +73,7 @@ public class WikiLookup : ILookup {
             if (ctx.OverLimit()) break;
         }
 
-        foreach (var (itemId, searchEntry) in FindAnythingPlugin.SearchDatabase.GetAll<Item>()) {
+        foreach (var (itemId, searchEntry) in FindAnythingPlugin.SearchDatabase.Item) {
             var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0)
                 ctx.AddResult(new WikiDataResult {

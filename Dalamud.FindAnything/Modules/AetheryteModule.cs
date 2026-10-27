@@ -37,7 +37,7 @@ public sealed class AetheryteModule : SearchModule {
 
         foreach (var aetheryte in FindAnythingPlugin.GameStateCache.AetheryteEntries) {
             var aetheryteName = aetheryteManager.GetAetheryteName(aetheryte);
-            var territoryTypeSearchEntry = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(aetheryte.TerritoryId);
+            var territoryTypeSearchEntry = FindAnythingPlugin.SearchDatabase.TerritoryType[aetheryte.TerritoryId];
             var score = matcher.MatchesAny(
                 normalizer.Searchable(aetheryteName),
                 territoryTypeSearchEntry.Searchable
@@ -82,7 +82,7 @@ public sealed class AetheryteModule : SearchModule {
                 Name = "Closest Market Board",
                 Data = closestMarketBoard,
                 Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
-                TerriName = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(closestMarketBoard.TerritoryId).Display,
+                TerriName = FindAnythingPlugin.SearchDatabase.TerritoryType[closestMarketBoard.TerritoryId].Display,
                 Teleporter = teleporter,
             });
         }
@@ -94,7 +94,7 @@ public sealed class AetheryteModule : SearchModule {
                 Name = "Closest Striking Dummy",
                 Data = closestStrikingDummy,
                 Icon = FindAnythingPlugin.TexCache.AetheryteIcon,
-                TerriName = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(closestStrikingDummy.TerritoryId).Display,
+                TerriName = FindAnythingPlugin.SearchDatabase.TerritoryType[closestStrikingDummy.TerritoryId].Display,
                 Teleporter = teleporter,
             });
         }
@@ -106,7 +106,7 @@ public sealed class AetheryteModule : SearchModule {
                 Name = "Closest Inn Room",
                 Data = closestInnRoom,
                 Icon = FindAnythingPlugin.TexCache.InnRoomIcon,
-                TerriName = FindAnythingPlugin.SearchDatabase.Get<TerritoryType>(closestInnRoom.TerritoryId).Display,
+                TerriName = FindAnythingPlugin.SearchDatabase.TerritoryType[closestInnRoom.TerritoryId].Display,
                 Teleporter = teleporter,
             });
         }

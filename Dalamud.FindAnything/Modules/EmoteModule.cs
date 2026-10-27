@@ -12,11 +12,11 @@ public sealed class EmoteModule : SearchModule {
         if (gameState.IsInEvent()) return;
 
         foreach (var emote in FindAnythingPlugin.GameStateCache.UnlockedEmotes) {
-            var entry = FindAnythingPlugin.SearchDatabase.Get<Emote>(emote.RowId);
+            var emoteEntry = FindAnythingPlugin.SearchDatabase.Emote[emote];
             var slashCmd = emote.TextCommand.Value;
 
             var score = matcher.MatchesAny(
-                entry.Searchable,
+                emoteEntry.Searchable,
                 slashCmd.Command.ToText(),
                 slashCmd.Alias.ToText(),
                 slashCmd.ShortCommand.ToText(),
@@ -26,7 +26,7 @@ public sealed class EmoteModule : SearchModule {
             if (score > 0) {
                 ctx.AddResult(new EmoteSearchResult {
                     Score = score * Weight,
-                    Name = entry.Display,
+                    Name = emoteEntry.Display,
                     SlashCommand = slashCmd.Command.ToText(),
                     Icon = FindAnythingPlugin.TexCache.GetIcon(emote.Icon)
                 });

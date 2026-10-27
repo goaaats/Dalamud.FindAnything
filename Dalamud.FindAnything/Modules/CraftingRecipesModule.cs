@@ -17,9 +17,9 @@ public sealed class CraftingRecipesModule : SearchModule {
     }
 
     private void SearchRecipes(SearchContext ctx, FuzzyMatcher matcher) {
-        var recipeDict = FindAnythingPlugin.SearchDatabase.GetAll<Recipe>();
+        var recipeTable = FindAnythingPlugin.SearchDatabase.Recipe;
         foreach (var recipe in FindAnythingPlugin.GameStateCache.UnlockedRecipes) {
-            var recipeEntry = recipeDict[recipe.RowId];
+            var recipeEntry = recipeTable[recipe];
             var score = matcher.Matches(recipeEntry.Searchable);
             if (score > 0) {
                 if (recipe.ItemResult.ValueNullable is { } itemResult) {
@@ -37,16 +37,16 @@ public sealed class CraftingRecipesModule : SearchModule {
     }
 
     private void SearchItems(SearchContext ctx, FuzzyMatcher matcher) {
-        var itemDict = FindAnythingPlugin.SearchDatabase.GetAll<Item>();
+        var craftableItemTable = FindAnythingPlugin.SearchDatabase.CraftableItem;
         foreach (var group in FindAnythingPlugin.GameStateCache.UnlockedRecipeGroups) {
-            var itemEntry = itemDict[group.Item.RowId];
-            var score = matcher.Matches(itemEntry.Searchable);
+            var craftableItemEntry = craftableItemTable[group.Item];
+            var score = matcher.Matches(craftableItemEntry.Searchable);
             if (score > 0) {
                 if (group.Recipes.Length == 1) {
                     ctx.AddResult(new CraftingItemSingleResult {
                         Score = score * Weight,
                         Recipe = group.Recipes[0],
-                        Name = itemEntry.Display,
+                        Name = craftableItemEntry.Display,
                         Icon = FindAnythingPlugin.TexCache.GetIcon(group.Item.Icon),
                     });
 
@@ -54,7 +54,7 @@ public sealed class CraftingRecipesModule : SearchModule {
                     ctx.AddResult(new CraftingItemMergedResult {
                         Score = score * Weight,
                         RecipeGroup = group,
-                        Name = itemEntry.Display,
+                        Name = craftableItemEntry.Display,
                         Icon = FindAnythingPlugin.TexCache.GetIcon(group.Item.Icon),
                     });
                 }
@@ -89,7 +89,7 @@ public sealed class CraftingRecipesModule : SearchModule {
     }
 
     private class CraftingRecipeResult : ISearchResult {
-        public string CatName => $"Crafting Recipe ({GetCraftTypeName(Recipe)})";
+        public string CatName => field ??=$"Crafting Recipe ({GetCraftTypeName(Recipe)})";
         public required string Name { get; init; }
         public required ISharedImmediateTexture? Icon { get; init; }
         public required int Score { get; init; }
@@ -127,7 +127,7 @@ public sealed class CraftingRecipesModule : SearchModule {
     }
 
     public class CraftingItemMergedResult : ISearchResult {
-        public string CatName => RecipeSelection is { } recipe
+        public string CatName => field ??= RecipeSelection is { } recipe
             ? $"Crafting Recipe ({GetCraftTypeName(recipe)})"
             : "Crafting Recipes";
         public required string Name { get; init; }

@@ -20,7 +20,7 @@ public sealed class DutyModule : SearchModule {
             if (contentType.RowId is not (2 or 4 or 5 or 28))
                 continue;
 
-            var searchEntry = FindAnythingPlugin.SearchDatabase.Get<ContentFinderCondition>(cfc.RowId);
+            var searchEntry = FindAnythingPlugin.SearchDatabase.ContentFinderCondition[cfc];
             var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new DutySearchResult {
@@ -36,12 +36,12 @@ public sealed class DutyModule : SearchModule {
         }
 
         foreach (var contentRoulette in Service.Data.GetExcelSheet<ContentRoulette>().Where(x => x.IsInDutyFinder)) {  // Also filter !row 7 + 10 here, but not in Lumina schemas yet
-            var seachEntry = FindAnythingPlugin.SearchDatabase.Get<ContentRoulette>(contentRoulette.RowId);
-            var score = matcher.Matches(seachEntry.Searchable);
+            var searchEntry = FindAnythingPlugin.SearchDatabase.ContentRoulette[contentRoulette];
+            var score = matcher.Matches(searchEntry.Searchable);
             if (score > 0) {
                 var name = contentRoulette.Category.ToDalamudString().TextValue;
                 if (name.IsNullOrWhitespace())
-                    name = seachEntry.Display;
+                    name = searchEntry.Display;
 
                 ctx.AddResult(new ContentRouletteSearchResult {
                     Score = score * Weight,

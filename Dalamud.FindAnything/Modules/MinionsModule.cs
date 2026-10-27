@@ -10,9 +10,9 @@ public sealed class MinionsModule : SearchModule {
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInCombatDuty() || gameState.IsInCombat()) return;
 
-        var minionDict = FindAnythingPlugin.SearchDatabase.GetAll<Companion>();
+        var minionTable = FindAnythingPlugin.SearchDatabase.Companion;
         foreach (var minion in FindAnythingPlugin.GameStateCache.UnlockedMinions) {
-            var minionEntry = minionDict[minion.RowId];
+            var minionEntry = minionTable[minion];
             var score = matcher.Matches(minionEntry.Searchable);
             if (score > 0) {
                 ctx.AddResult(new MinionResult {
