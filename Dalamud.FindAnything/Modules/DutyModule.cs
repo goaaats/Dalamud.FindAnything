@@ -1,8 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
-using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
-using System.Linq;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -25,28 +23,22 @@ public sealed class DutyModule : SearchModule {
             if (score > 0) {
                 ctx.AddResult(new DutySearchResult {
                     Score = score * Weight,
-                    CatName = cfc.Name.ToText(),
-                    DataKey = cfc.RowId,
+                    ContentFinderCondition = cfc,
+                    ContentType = contentType,
                     Name = searchEntry.Display,
-                    Icon = FindAnythingPlugin.TexCache.GetIcon(contentType.Icon),
                 });
             }
 
             if (ctx.OverLimit()) break;
         }
 
-        foreach (var contentRoulette in Service.Data.GetExcelSheet<ContentRoulette>().Where(x => x.IsInDutyFinder)) {  // Also filter !row 7 + 10 here, but not in Lumina schemas yet
-            var searchEntry = FindAnythingPlugin.SearchDatabase.ContentRoulette[contentRoulette];
-            var score = matcher.Matches(searchEntry.Searchable);
+        foreach (var (rouletteId, searchEntry) in FindAnythingPlugin.SearchDatabase.ContentRoulette) {
+            var score = matcher.MatchesAny(searchEntry.Searchables);
             if (score > 0) {
-                var name = contentRoulette.Category.ToDalamudString().TextValue;
-                if (name.IsNullOrWhitespace())
-                    name = searchEntry.Display;
-
                 ctx.AddResult(new ContentRouletteSearchResult {
                     Score = score * Weight,
-                    DataKey = (byte)contentRoulette.RowId,
-                    Name = name,
+                    ContentRouletteId = rouletteId,
+                    Name = searchEntry.Display,
                 });
             }
 
@@ -55,16 +47,17 @@ public sealed class DutyModule : SearchModule {
     }
 
     private record DutySearchResult : ISearchResult {
-        public required string CatName { get; init; }
+        public string CatName => field ??= ContentFinderCondition.Name.ToText();
         public required string Name { get; init; }
-        public required ISharedImmediateTexture Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(ContentType.Icon);
         public required int Score { get; init; }
-        public required uint DataKey { get; init; }
+        public required ContentFinderCondition ContentFinderCondition { get; init; }
+        public required ContentType ContentType { get; init; }
 
-        public object Key => DataKey;
+        public object Key => ContentFinderCondition.RowId;
 
         public unsafe void Selected() {
-            AgentContentsFinder.Instance()->OpenRegularDuty(DataKey);
+            AgentContentsFinder.Instance()->OpenRegularDuty(ContentFinderCondition.RowId);
         }
     }
 
@@ -73,12 +66,12 @@ public sealed class DutyModule : SearchModule {
         public required string Name { get; init; }
         public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.RoulettesIcon;
         public required int Score { get; init; }
-        public required byte DataKey { get; init; }
+        public required uint ContentRouletteId { get; init; }
 
-        public object Key => DataKey;
+        public object Key => ContentRouletteId;
 
         public unsafe void Selected() {
-            AgentContentsFinder.Instance()->OpenRouletteDuty(DataKey);
+            AgentContentsFinder.Instance()->OpenRouletteDuty((byte)ContentRouletteId);
         }
     }
 }

@@ -68,7 +68,7 @@ public sealed class PluginSettingsModule : SearchModule {
                         CatName = plugin.Key,
                         Name = ipcBinding.Display,
                         Guid = ipcBinding.Guid,
-                        Icon = FindAnythingPlugin.TexCache.GetIcon(ipcBinding.IconId),
+                        IconId = ipcBinding.IconId,
                     });
 
                     // Limit IPC results to 25 per plugin
@@ -82,7 +82,7 @@ public sealed class PluginSettingsModule : SearchModule {
     private class PluginSettingsSearchResult : ISearchResult {
         public string CatName => "Other Plugins";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.PluginInstallerIcon;
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.PluginInstallerIcon;
         public required int Score { get; init; }
         public required IExposedPlugin Plugin { get; init; }
 
@@ -110,7 +110,8 @@ public sealed class PluginSettingsModule : SearchModule {
     private class IpcSearchResult : ISearchResult {
         public required string CatName { get; init; }
         public required string Name { get; init; }
-        public required ISharedImmediateTexture? Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(IconId);
+        public required uint IconId { get; init; }
         public required int Score { get; init; }
         public required string Guid { get; init; }
 

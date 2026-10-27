@@ -26,7 +26,7 @@ public sealed class CollectionModule : SearchModule {
     private class CollectionResult : ISearchResult {
         public string CatName => "Collection";
         public string Name => McGuffinUiData.Name.ToText();
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon(McGuffinUiData.Icon);
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(McGuffinUiData.Icon);
         public required int Score { get; init; }
         public required McGuffin McGuffin { get; init; }
         public required McGuffinUIData McGuffinUiData { get; init; }

@@ -8,7 +8,7 @@ namespace Dalamud.FindAnything.Modules;
 public sealed class EmoteModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Emote;
 
-  public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
+    public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         if (gameState.IsInEvent()) return;
 
         foreach (var emote in FindAnythingPlugin.GameStateCache.UnlockedEmotes) {
@@ -27,8 +27,7 @@ public sealed class EmoteModule : SearchModule {
                 ctx.AddResult(new EmoteSearchResult {
                     Score = score * Weight,
                     Name = emoteEntry.Display,
-                    SlashCommand = slashCmd.Command.ToText(),
-                    Icon = FindAnythingPlugin.TexCache.GetIcon(emote.Icon)
+                    Emote = emote,
                 });
             }
 
@@ -37,26 +36,21 @@ public sealed class EmoteModule : SearchModule {
     }
 
     public class EmoteSearchResult : ISearchResult {
-        public string CatName {
-            get {
-                var cat = "Emote";
-                if (FindAnythingPlugin.Configuration.ShowEmoteCommand)
-                    cat += $" ({SlashCommand})";
-
-                return cat;
-            }
-        }
-
+        public string CatName => field ??= FindAnythingPlugin.Configuration.ShowEmoteCommand
+                ? $"Emote ({SlashCommand})"
+                : "Emote";
         public required string Name { get; init; }
-        public required ISharedImmediateTexture? Icon { get; init; }
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Emote.Icon);
         public required int Score { get; init; }
-        public required string SlashCommand { get; init; }
+        public required Emote Emote { get; init; }
 
-        public object Key => SlashCommand;
+        public object Key => Emote.RowId;
 
         public bool CloseFinder => FindAnythingPlugin.Configuration.EmoteMode != Configuration.EmoteMotionMode.Ask;
 
         public Configuration.EmoteMotionMode MotionMode { get; set; } = FindAnythingPlugin.Configuration.EmoteMode;
+
+        private string? SlashCommand => Emote.TextCommand.ValueNullable?.Command.ToText();
 
         public void Selected() {
             if (MotionMode == Configuration.EmoteMotionMode.Ask) {
@@ -66,8 +60,8 @@ public sealed class EmoteModule : SearchModule {
             }
 
             var cmd = SlashCommand;
-            if (!cmd.StartsWith('/'))
-                throw new Exception($"SlashCommand prop does not actually start with a slash: {SlashCommand}");
+            if (cmd is null || !cmd.StartsWith('/'))
+                throw new Exception($"Emote {Emote.RowId} has missing or invalid slash command ({cmd})");
 
             if (MotionMode == Configuration.EmoteMotionMode.AlwaysMotion)
                 cmd += " motion";

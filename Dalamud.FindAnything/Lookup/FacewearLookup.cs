@@ -46,7 +46,7 @@ public class FacewearLookup : ILookup {
     public class FacewearResult : ISearchResult {
         public string CatName => "Facewear";
         public string Name => Glasses.Name.ToText();
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon((uint)Glasses.Icon);
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon((uint)Glasses.Icon);
         public required int Score { get; init; }
         public required Glasses Glasses { get; init; }
 

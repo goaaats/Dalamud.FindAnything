@@ -45,7 +45,7 @@ public sealed class MountsModule : SearchModule {
     private class MountResult : ISearchResult {
         public string CatName => "Mount";
         public required string Name { get; init; }
-        public ISharedImmediateTexture Icon => FindAnythingPlugin.TexCache.GetIcon(Mount.Icon);
+        public ISharedImmediateTexture Icon => field ??= FindAnythingPlugin.TexCache.GetIcon(Mount.Icon);
         public required int Score { get; init; }
         public required Mount Mount { get; init; }
 

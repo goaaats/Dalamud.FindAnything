@@ -47,7 +47,7 @@ public class CoordinateActionLookup : ILookup {
         public string CatName => string.Empty;
         public string Name => GetActionName();
 
-        public ISharedImmediateTexture Icon => TeleportDestination is not null
+        public ISharedImmediateTexture Icon => field ??= TeleportDestination is not null
             ? FindAnythingPlugin.TexCache.GetIcon(60453)
             : FindAnythingPlugin.TexCache.GetIcon(60561);
 

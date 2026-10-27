@@ -11,14 +11,13 @@ using System.Linq;
 
 namespace Dalamud.FindAnything;
 
-public struct SearchEntry {
-    public string Searchable;
-    public string Display;
-}
+public record struct SearchEntry(string Display, string Searchable);
+
+public record struct MultiSearchEntry(string Display, string[] Searchables);
 
 public sealed class SearchDatabase {
     public SearchTable<ContentFinderCondition> ContentFinderCondition { get; }
-    public SearchTable<ContentRoulette> ContentRoulette { get; }
+    public MultiSearchTable<ContentRoulette> ContentRoulette { get; }
     public SearchTable<TerritoryType> TerritoryType { get; }
     public SearchTable<ExtraCommand> ExtraCommand { get; }
     public SearchTable<GeneralAction> GeneralAction { get; }
@@ -34,11 +33,17 @@ public sealed class SearchDatabase {
     public SearchTable<Mount> Mount { get; private set; } = SearchTable<Mount>.Empty;
 
     public SearchDatabase() {
+        var normalizer = FindAnythingPlugin.Normalizer;
+
         ContentFinderCondition = Sheet<ContentFinderCondition>()
             .Display(r => r.Name);
 
         ContentRoulette = Sheet<ContentRoulette>()
-            .Display(r => r.Name);
+            .Where(r => r.IsInDutyFinder)
+            .Display(r => new MultiSearchEntry(
+                r.Name.ToText(),
+                [normalizer.Searchable(r.Category), normalizer.Searchable(r.Name)]
+            ));
 
         TerritoryType = Sheet<TerritoryType>()
             .Display(r => r.PlaceName.ValueNullable?.Name);
@@ -109,11 +114,22 @@ public sealed class SearchTable<T> where T : struct, IExcelRow<T> {
     public FrozenDictionary<uint, SearchEntry>.Enumerator GetEnumerator() => entries.GetEnumerator();
 }
 
+public sealed class MultiSearchTable<T> where T : struct, IExcelRow<T> {
+    public static readonly MultiSearchTable<T> Empty = new(FrozenDictionary<uint, MultiSearchEntry>.Empty);
+
+    private readonly FrozenDictionary<uint, MultiSearchEntry> entries;
+
+    internal MultiSearchTable(FrozenDictionary<uint, MultiSearchEntry> entries) => this.entries = entries;
+
+    public MultiSearchEntry this[uint rowId] => entries[rowId];
+    public MultiSearchEntry this[T row] => entries[row.RowId];
+
+    public FrozenDictionary<uint, MultiSearchEntry>.Enumerator GetEnumerator() => entries.GetEnumerator();
+}
+
 public static class SearchTableExtensions {
-    private static SearchEntry CreateEntry(string text) => new() {
-        Display = text,
-        Searchable = FindAnythingPlugin.Normalizer.Searchable(text),
-    };
+    private static SearchEntry CreateEntry(string text) =>
+        new(text, FindAnythingPlugin.Normalizer.Searchable(text));
 
     extension<T>(IEnumerable<T> rows) where T : struct, IExcelRow<T> {
         public SearchTable<T> Display(Func<T, ReadOnlySeString?> display) {
@@ -126,13 +142,22 @@ public static class SearchTableExtensions {
                 .Display(r => display(r) is { Length: not 0 } str ? CreateEntry(str) : null);
         }
 
-        private SearchTable<T> Display(Func<T, SearchEntry?> entry) {
+        public SearchTable<T> Display(Func<T, SearchEntry?> entry) {
             var data = new Dictionary<uint, SearchEntry>();
             foreach (var row in rows) {
                 if (entry(row) is { } e)
                     data.Add(row.RowId, e);
             }
             return new SearchTable<T>(data.ToFrozenDictionary());
+        }
+
+        public MultiSearchTable<T> Display(Func<T, MultiSearchEntry?> entry) {
+            var data = new Dictionary<uint, MultiSearchEntry>();
+            foreach (var row in rows) {
+                if (entry(row) is { } e)
+                    data.Add(row.RowId, e);
+            }
+            return new MultiSearchTable<T>(data.ToFrozenDictionary());
         }
     }
 }

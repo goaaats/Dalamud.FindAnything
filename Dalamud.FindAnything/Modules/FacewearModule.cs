@@ -22,15 +22,15 @@ public sealed class FacewearModule : SearchModule {
     }
 
     public class FacewearStyleResult : ISearchResult {
-        public string CatName =>
+        public string CatName => field ??=
             GlassesSelection is not null
                 ? "Facewear"
                 : "Facewear Style";
-        public string Name =>
+        public string Name => field ??=
             GlassesSelection is { } glasses
                 ? $"{GlassesStyle.Name.ToText()} ({glasses.Name.ToText()})"
                 : GlassesStyle.Name.ToText();
-        public ISharedImmediateTexture Icon =>
+        public ISharedImmediateTexture Icon => field ??=
             GlassesSelection is { } glasses
                 ? FindAnythingPlugin.TexCache.GetIcon((uint)glasses.Icon)
                 : FindAnythingPlugin.TexCache.GetIcon((uint)GlassesStyle.Icon);
