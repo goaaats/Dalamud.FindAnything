@@ -16,6 +16,7 @@ public partial class SettingsWindow {
     private VirtualKey comboModifier2Key;
     private VirtualKey comboKey;
     private VirtualKey wikiComboKey;
+    private bool disableInputCaptureInKeyboundBrawler;
     private bool preventPassthrough;
     private List<Configuration.MacroEntry> macros = [];
     private Configuration.MacroSearchDirection macroLinksSearch;
@@ -68,6 +69,7 @@ public partial class SettingsWindow {
         comboModifierKey = config.ComboModifier;
         comboModifier2Key = config.ComboModifier2;
         wikiComboKey = config.WikiComboKey;
+        disableInputCaptureInKeyboundBrawler = config.DisableOpenInKeyboundBrawler;
         preventPassthrough = config.PreventPassthrough;
         macros = config.MacroLinks.Select(x => new Configuration.MacroEntry(x)).ToList();
         macroLinksSearch = config.MacroLinksSearchDirection;
@@ -127,6 +129,7 @@ public partial class SettingsWindow {
         config.ComboModifier = comboModifierKey;
         config.ComboModifier2 = comboModifier2Key;
         config.WikiComboKey = wikiComboKey;
+        config.DisableOpenInKeyboundBrawler = disableInputCaptureInKeyboundBrawler;
         config.PreventPassthrough = preventPassthrough;
 
         config.MacroLinks = macros;

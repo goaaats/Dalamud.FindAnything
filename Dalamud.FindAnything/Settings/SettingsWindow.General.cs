@@ -74,6 +74,10 @@ public partial class SettingsWindow {
 
         VirtualKeySelect("Quick Select Key", ref quickSelectKey);
 
+        ImGuiHelpers.ScaledDummy(5);
+
+        ImGui.Checkbox("Don't capture keyboard inputs during Keybound Brawler", ref disableInputCaptureInKeyboundBrawler);
+
         DrawSpacedSeparator();
 
         ImGui.TextColored(ImGuiColors.DalamudGrey, "Search mode");

@@ -46,6 +46,8 @@ public class Configuration : IPluginConfiguration {
 
     public VirtualKey QuickSelectKey { get; set; } = VirtualKey.CONTROL;
 
+    public bool DisableOpenInKeyboundBrawler { get; set; } = false;
+
     public bool WikiModeNoSpoilers { get; set; } = true;
     public bool TeamCraftForceBrowser { get; set; } = false;
     public bool DisableMouseSelection { get; set; } = false;

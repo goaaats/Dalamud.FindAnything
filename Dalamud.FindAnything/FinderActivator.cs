@@ -40,6 +40,9 @@ public sealed class FinderActivator : IDisposable {
         if (Input.Disabled)
             return;
 
+        if (Service.ClientState.TerritoryType == 1359 && FindAnythingPlugin.Configuration.DisableOpenInKeyboundBrawler)
+            return;
+
         Input.Update();
 
         // Always do this even if the finder is closed or unopenable, because CheckOpenWithCombo needs to prevent input passthrough
