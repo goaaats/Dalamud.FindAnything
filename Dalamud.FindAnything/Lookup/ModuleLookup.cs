@@ -44,11 +44,10 @@ public sealed class ModuleLookup : ILookup {
             new ChatCommandModule(),
         ];
 
-        allModules = [
-            .. orderedModules,
-            .. fixedPositionModules,
-            .. constantModules
-        ];
+        allModules = orderedModules
+            .Concat(fixedPositionModules)
+            .Concat(constantModules)
+            .ToArray();
 
         Configure(FindAnythingPlugin.Configuration);
         FindAnythingPlugin.ConfigManager.OnChange += Configure;
@@ -61,11 +60,12 @@ public sealed class ModuleLookup : ILookup {
             module.Configure(config);
         }
 
-        activeModules = [
-            .. orderedModules.OrderBy(x => config.Order.IndexOf(x.SearchSetting)),
-            .. fixedPositionModules.Where(x => config.ToSearchV3.HasFlag(x.SearchSetting)),
-            .. constantModules
-        ];
+        activeModules = new List<SearchModule>()
+            .Concat(orderedModules.OrderBy(x => config.Order.IndexOf(x.SearchSetting)))
+            .Concat(fixedPositionModules)
+            .Where(x => config.ToSearchV3.HasFlag(x.SearchSetting))
+            .Concat(constantModules)
+            .ToArray();
 
         // foreach (var activeModule in activeModules) {
         //     Service.Log.Debug($"  {activeModule.GetType().Name} ({activeModule.SearchSetting})");
