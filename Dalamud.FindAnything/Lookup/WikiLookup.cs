@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using Dalamud.Utility;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using Lumina.Extensions;
 using System;
 using System.Web;
@@ -26,7 +26,7 @@ public class WikiLookup : ILookup {
             var score = matcher.Matches("here");
             if (score > 0) {
                 var terriContent = Service.Data.GetExcelSheet<ContentFinderCondition>()
-                    .FirstOrNull(x => x.TerritoryType.RowId == Service.ClientState.TerritoryType);
+                    .FirstOrNull(x => x.TerritoryType.RowId == Service.ClientState.TerritoryType.RowId);
                 if (terriContent != null) {
                     ctx.AddResult(new WikiDataResult {
                         Score = int.MaxValue,

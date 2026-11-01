@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -10,7 +10,7 @@ public sealed class DutyModule : SearchModule {
     private readonly uint contentTypeDutyRouletteIconId = Service.Data.GetExcelSheet<ContentType>().GetRow(1).Icon;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInDuty()) return;
+        if (GameState.IsInDuty()) return;
 
         foreach (var cfc in FindAnythingPlugin.GameStateCache.UnlockedDuties) {
             if (cfc is not { ContentType.ValueNullable: { } contentType })

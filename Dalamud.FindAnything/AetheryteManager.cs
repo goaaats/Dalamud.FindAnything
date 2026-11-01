@@ -1,5 +1,4 @@
-﻿using Dalamud.Game;
-using Dalamud.Game.ClientState.Aetherytes;
+﻿using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
@@ -8,10 +7,11 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.STD;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using Dalamud.Common;
 
 namespace Dalamud.FindAnything;
 
@@ -174,9 +174,8 @@ internal class Teleporter(AetheryteManager aetheryteManager) {
             }
         }
 
-        private static unsafe StdVector<TeleportInfo> GetList() {
-            return Telepo.Instance()->TeleportList;
-        }
+        private static unsafe StdVector<TeleportInfo> GetList()
+            => Telepo.Instance()->TeleportList;
 
         public static unsafe TeleportResult Teleport(IAetheryteEntry entry) {
             try {
@@ -189,9 +188,9 @@ internal class Teleporter(AetheryteManager aetheryteManager) {
                 if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 5) != 0)
                     return TeleportResult.BadState;
 
-                if (Telepo.Instance()->Teleport(entry.AetheryteId, entry.SubIndex)) {
+                if (Telepo.Instance()->Teleport(entry.AetheryteId, entry.SubIndex))
                     return TeleportResult.Success;
-                }
+
             } catch (Exception ex) {
                 Service.Log.Error(ex, $"Error while attempting to use built-in teleport to teleport to {entry.AetheryteId}:{entry.SubIndex}");
             }

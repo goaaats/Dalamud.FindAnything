@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -8,7 +8,7 @@ public sealed class MinionsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Minions;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInCombatDuty() || gameState.IsInCombat()) return;
+        if (GameState.IsInCombatDuty() || GameState.IsInCombat()) return;
 
         var minionTable = FindAnythingPlugin.SearchDatabase.Companion;
         foreach (var minion in FindAnythingPlugin.GameStateCache.UnlockedMinions) {

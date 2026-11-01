@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ public sealed class GearsetsModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Gearsets;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInCombat()) return;
+        if (GameState.IsInCombat()) return;
 
         var cj = Service.Data.GetExcelSheet<ClassJob>();
         foreach (var gearset in FindAnythingPlugin.GameStateCache.Gearsets) {

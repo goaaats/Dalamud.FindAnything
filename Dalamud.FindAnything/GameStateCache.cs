@@ -1,11 +1,11 @@
 ﻿using Dalamud.Game.ClientState.Aetherytes;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using InstanceContent = Lumina.Excel.Sheets.InstanceContent;
+using Lumina.Excel;
+using InstanceContent = Dalamud.Excel.Sheets.InstanceContent;
 
 namespace Dalamud.FindAnything;
 

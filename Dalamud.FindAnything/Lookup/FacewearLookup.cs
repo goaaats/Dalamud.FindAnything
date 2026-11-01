@@ -1,6 +1,6 @@
 ﻿using Dalamud.FindAnything.Modules;
 using Dalamud.Interface.Textures;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Lookup;
 

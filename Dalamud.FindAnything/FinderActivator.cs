@@ -40,7 +40,8 @@ public sealed class FinderActivator : IDisposable {
         if (Input.Disabled)
             return;
 
-        if (Service.ClientState.TerritoryType == 1359 && FindAnythingPlugin.Configuration.DisableOpenInKeyboundBrawler)
+        // IntendedUse 65 seems to be specifically for KeyboundBrawler for now.
+        if (Service.ClientState.TerritoryType.ValueNullable?.TerritoryIntendedUse.RowId is 65 && FindAnythingPlugin.Configuration.DisableOpenInKeyboundBrawler)
             return;
 
         Input.Update();

@@ -1,19 +1,19 @@
 ﻿using Dalamud.FindAnything.Lookup;
 using Dalamud.Game.ClientState.Aetherytes;
 using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
-using LuminaMap = Lumina.Excel.Sheets.Map;
+using Dalamud.Game.Chat;
+using Dalamud.Utility;
+using LuminaMap = Dalamud.Excel.Sheets.Map;
 using TerritoryIntendedUseEnum = FFXIVClientStructs.FFXIV.Client.Enums.TerritoryIntendedUse;
 
 namespace Dalamud.FindAnything.Modules;
@@ -188,23 +188,18 @@ public static partial class CoordUtils {
     public record ParseResult(decimal X, decimal Y, string Remainder);
 
     public static void PlaceFlag(Coordinates coordinates) {
-        var mapLinkPayload = coordinates.MapLinkPayload();
-
-        Service.GameGui.OpenMapWithMapLink(mapLinkPayload);
-        GetClosestAetheryte(mapLinkPayload);
+        Service.GameGui.OpenMapWithMapLink(coordinates.TerritoryType.RowId, coordinates.Map.RowId, new Vector3());
+        GetClosestAetheryte(coordinates);
     }
 
     public static void PrintToChat(Coordinates coordinate) {
-        Service.ChatGui.Print(new XivChatEntry { Message = coordinate.SeStringLink() });
+        Service.ChatGui.Print(new PrintableChatMessage { Message = coordinate.SeStringLink() });
     }
 
-    public static IAetheryteEntry? GetClosestAetheryte(MapLinkPayload mapLink) {
-        if (mapLink.Map.ValueNullable is not { } map)
-            return null;
-
-        var linkPosition = new Vector2(mapLink.XCoord, mapLink.YCoord);
+    public static IAetheryteEntry? GetClosestAetheryte(Coordinates coordinates) {
+        var linkPosition = new Vector2((float) coordinates.X, (float) coordinates.Y);
         var candidateAetherytes = Service.Aetherytes
-            .Where(e => e.AetheryteData is { ValueNullable: { IsAetheryte: true } aetheryte } && aetheryte.Map.RowId == mapLink.Map.RowId)
+            .Where(e => e.AetheryteData is { ValueNullable: { IsAetheryte: true } aetheryte } && aetheryte.Map.RowId == coordinates.Map.RowId)
             .ToArray();
 
         var closestDistance = float.MaxValue;
@@ -215,7 +210,7 @@ public static partial class CoordUtils {
             if (marker.DataType != 3) continue; // Aetheryte
             foreach (var aetheryte in candidateAetherytes) {
                 if (aetheryte.AetheryteData.RowId == marker.DataKey.RowId) {
-                    var markerPosition = new Vector2(PixelToMap(marker.X, map.SizeFactor), PixelToMap(marker.Y, map.SizeFactor));
+                    var markerPosition = new Vector2(PixelToMap(marker.X, coordinates.Map.SizeFactor), PixelToMap(marker.Y, coordinates.Map.SizeFactor));
                     var distance = Vector2.Distance(linkPosition, markerPosition);
                     Service.Log.Debug($"Found aetheryte {aetheryte.AetheryteData.Value.PlaceName.Value.Name} ({markerPosition.X}, {markerPosition.Y}) with distance {distance}");
                     if (distance < closestDistance) {
@@ -323,7 +318,5 @@ public record Coordinates {
         // $"[{TerritoryType.RowId}/{Map.RowId}] <{(TerritoryType.Map.ValueNullable?.PriorityUI ?? 0) != 0}=>{CoordUtils.CanUseMapLink(TerritoryType)}> {TerritoryType.Name} {CoordUtils.GetDisplayName(TerritoryType)}";
         $"{CoordUtils.GetDisplayName(TerritoryType, Map)}";
 
-    public MapLinkPayload MapLinkPayload() => new(TerritoryType.RowId, Map.RowId, (float)X, (float)Y);
-
-    public SeString SeStringLink() => SeString.CreateMapLink(TerritoryType.RowId, Map.RowId, (float)X, (float)Y);
+    public ReadOnlySeString SeStringLink() => SeString.CreateMapLink(new WorldCoordinate(TerritoryType.RowId, Map.RowId, (float) X, (float) Y, 0.0f));
 }
