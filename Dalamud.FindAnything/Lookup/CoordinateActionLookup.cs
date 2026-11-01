@@ -35,7 +35,7 @@ public class CoordinateActionLookup : ILookup {
             TeleportDestination = null,
         });
 
-        if (CoordUtils.GetClosestAetheryte(baseResult.Coords.MapLinkPayload()) is { } closestAetheryte) {
+        if (CoordUtils.GetClosestAetheryte(baseResult.Coords) is { } closestAetheryte) {
             ctx.AddResult(new CoordinateActionResult {
                 Score = 1,
                 BaseResult = baseResult,

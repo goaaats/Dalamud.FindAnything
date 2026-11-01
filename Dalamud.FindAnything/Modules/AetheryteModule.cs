@@ -28,7 +28,7 @@ public sealed class AetheryteModule : SearchModule {
     }
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInDuty() || gameState.IsInCombat()) return;
+        if (GameState.IsInDuty() || GameState.IsInCombat()) return;
 
         var marketBoardResults = new List<IAetheryteEntry>();
         var strikingDummyResults = new List<IAetheryteEntry>();

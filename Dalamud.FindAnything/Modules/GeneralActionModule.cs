@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -8,10 +8,10 @@ public sealed class GeneralActionModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.GeneralAction;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInEvent()) return;
+        if (GameState.IsInEvent()) return;
 
-        var hasMelding = Service.UnlockState.IsUnlockLinkUnlocked(66175, 0);         // Waking the Spirit
-        var hasAdvancedMelding = Service.UnlockState.IsUnlockLinkUnlocked(66176, 0); // Melding Materia Muchly
+        var hasMelding = Service.UnlockState.IsUnlockLinkUnlocked(66175);         // Waking the Spirit
+        var hasAdvancedMelding = Service.UnlockState.IsUnlockLinkUnlocked(66176); // Melding Materia Muchly
 
         foreach (var (generalActionId, searchEntry) in FindAnythingPlugin.SearchDatabase.GeneralAction) {
             // Skip invalid entries, jump, etc

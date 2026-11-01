@@ -9,7 +9,7 @@ public sealed class ChatCommandModule : SearchModule {
     private const uint ChatIconId = 66473;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (!gameState.IsInCombatDuty() && ctx.Criteria.CleanString.StartsWith('/')) {
+        if (!GameState.IsInCombatDuty() && ctx.Criteria.CleanString.StartsWith('/')) {
             ctx.AddResult(new ChatCommandSearchResult {
                 Score = int.MaxValue,
                 Command = ctx.Criteria.CleanString,

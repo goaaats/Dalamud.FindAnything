@@ -1,7 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.Sheets;
-using System.Globalization;
+using Dalamud.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -10,21 +9,14 @@ public sealed class MountsModule : SearchModule {
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
         // This is nasty, should just use TerritoryIntendedUse...
-        var isInNoMountDuty = gameState.IsInCombatDuty();
+        var isInNoMountDuty = GameState.IsInCombatDuty();
 
-        if (Service.ClientState.TerritoryType != 0) {
-            var currentTerri = Service.Data.GetExcelSheet<TerritoryType>()?
-                .GetRow(Service.ClientState.TerritoryType);
-
-            if (currentTerri != null && currentTerri.Value.ContentFinderCondition.RowId != 0) {
-                var type = currentTerri.Value.ContentFinderCondition.Value.ContentType.RowId;
-                if (type is 26 or 29 or 38) // Eureka, Bozja, Occult Crescent
-                    isInNoMountDuty = false;
-            }
+        // Eureka, Bozja, Occult Crescent
+        if (Service.ClientState.TerritoryType is { IsValid: true, Value.ContentFinderCondition: { IsValid: true, Value.ContentType.RowId: 26 or 29 or 38} } ) {
+            isInNoMountDuty = false;
         }
 
-        if (isInNoMountDuty || gameState.IsInCombat()) return;
-
+        if (isInNoMountDuty || GameState.IsInCombat()) return;
 
         var mountTable = FindAnythingPlugin.SearchDatabase.Mount;
         foreach (var mount in FindAnythingPlugin.GameStateCache.UnlockedMounts) {

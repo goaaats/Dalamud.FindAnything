@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 
 namespace Dalamud.FindAnything.Modules;
 
@@ -8,7 +8,7 @@ public sealed class MainCommandModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.MainCommand;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInEvent()) return;
+        if (GameState.IsInEvent()) return;
 
         foreach (var (commandId, searchEntry) in FindAnythingPlugin.SearchDatabase.MainCommand) {
             var searchable = searchEntry.Searchable;

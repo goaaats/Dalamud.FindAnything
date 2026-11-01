@@ -1,6 +1,6 @@
 ﻿using Dalamud.FindAnything.Lookup;
 using Dalamud.Interface.Textures;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using System;
 
 namespace Dalamud.FindAnything.Modules;
@@ -9,7 +9,7 @@ public sealed class EmoteModule : SearchModule {
     public override Configuration.SearchSetting SearchSetting => Configuration.SearchSetting.Emote;
 
     public override void Search(SearchContext ctx, Normalizer normalizer, FuzzyMatcher matcher, GameState gameState) {
-        if (gameState.IsInEvent()) return;
+        if (GameState.IsInEvent()) return;
 
         foreach (var emote in FindAnythingPlugin.GameStateCache.UnlockedEmotes) {
             var emoteEntry = FindAnythingPlugin.SearchDatabase.Emote[emote];

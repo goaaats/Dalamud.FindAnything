@@ -1,7 +1,7 @@
 ﻿using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Lumina.Excel.Sheets;
+using Dalamud.Excel.Sheets;
 using NCalc;
 using System;
 using System.IO;
